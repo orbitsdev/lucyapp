@@ -8,7 +8,17 @@ class AuthController extends GetxController {
   
   final RxString selectedRole = 'Teller'.obs;
   final RxBool isLoading = false.obs;
-  final RxBool rememberMe = false.obs;
+  final RxBool rememberMe = true.obs;
+  
+  @override
+  void onInit() {
+    super.onInit();
+    // Pre-fill credentials for demo purposes
+    usernameController.text = 'demo';
+    passwordController.text = 'password';
+    // Show password by default for the demo
+    rememberMe.value = true;
+  }
   
   void setRole(String role) {
     selectedRole.value = role;

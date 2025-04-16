@@ -75,22 +75,22 @@ class AppRoutes {
     GetPage(
       name: userManagement,
       page: () => const UserManagementScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: generateHits,
       page: () => const GenerateHitsScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: summary,
       page: () => const SummaryScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: betWin,
       page: () => const BetWinScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     
     // Teller routes
@@ -102,42 +102,42 @@ class AppRoutes {
     GetPage(
       name: newBet,
       page: () => const NewBetScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: claim,
       page: () => const ClaimScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: printer,
       page: () => const PrinterSetupScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: cancelDoc,
       page: () => const CancelDocScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: sales,
       page: () => const SalesScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: tally,
       page: () => const TallySheetScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: combination,
       page: () => const CombinationScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: soldOut,
       page: () => const SoldOutScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     
     // Customer routes
@@ -149,22 +149,22 @@ class AppRoutes {
     GetPage(
       name: placeBet,
       page: () => const PlaceBetScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: history,
       page: () => const HistoryScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: hits,
       page: () => const HitsScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: results,
       page: () => const ResultsScreen(),
-      transition: Transition.rightToLeft,
+      transition: Transition.cupertino,
     ),
   ];
 }
