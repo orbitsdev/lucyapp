@@ -1,6 +1,6 @@
-# GAMBLE Mobile App Workflow
+# Lucky Betting App Workflow
 
-This document outlines the complete flow of processes in the GAMBLE Mobile App, from user login to betting operations and administrative functions.
+This document outlines the complete flow of processes in the Lucky Betting App, from user login to betting operations and administrative functions.
 
 ## 1. User Authentication Flow
 
@@ -27,20 +27,35 @@ Visual representation:
 The Dashboard serves as the central hub, providing access to all application features:
 
 ```
-Dashboard
+Dashboard (Coordinator)
+  ├── User Management
+  ├── Generate Hits
+  ├── Summary Reports
+  │   └── Summary Detail
+  ├── Commission (formerly Bet Win)
+  ├── System Administration
+  │   ├── Game Configuration
+  │   └── Financial Reports
+  └── Teller Functions
+      ├── New Bet
+      ├── Claim
+      └── Sales
+
+Dashboard (Teller)
   ├── New Bet
-  ├── History
-  ├── Hits
   ├── Claim
   ├── Printer Setup
   ├── Cancel Document
   ├── Sales
   ├── Tally Sheet
   ├── Combination
-  ├── Generate Hits
-  ├── Summary
-  ├── Bet Win
   └── Sold Out
+
+Dashboard (Customer)
+  ├── Place Bet
+  ├── History
+  ├── Hits
+  └── Results
 ```
 
 ## 3. New Bet Process
@@ -97,43 +112,37 @@ Visual representation:
                                                                      +----------------+
 ```
 
-## 6. Generate Hits Flow
+## 6. Commission Process
 
 ```
-Generate Hits Screen → Select Draw Date → Enter Winning Numbers → Generate Hits → View Results
-```
-
-Visual representation:
-```
-+----------------+     +----------------+     +----------------+     +----------------+
-| Generate Hits  | --> | Select Draw    | --> | Enter Winning  | --> | Generate Hits  |
-| Screen         |     | Date           |     | Numbers        |     |                |
-+----------------+     +----------------+     +----------------+     +----------------+
-                                                                            |
-                                                                            v
-                                                                     +----------------+
-                                                                     | View Results   |
-                                                                     | and Winners    |
-                                                                     +----------------+
-```
-
-## 7. Summary Reports Flow
-
-```
-Summary Screen → Select Report Type → Set Parameters → Generate Report → View/Print Report
+Commission Screen → View Commission Information → Select Date → View Commission Details
 ```
 
 Visual representation:
 ```
 +----------------+     +----------------+     +----------------+     +----------------+
-| Summary Screen | --> | Select Report  | --> | Set Parameters | --> | Generate       |
-|                |     | Type           |     | (Date, etc.)   |     | Report         |
+| Commission     | --> | View Commission| --> | Select Date    | --> | View Commission|
+| Screen         |     | Information    |     | with Picker    |     | Details        |
++----------------+     +----------------+     +----------------+     +----------------+
+```
+
+## 7. Summary Report Process
+
+```
+Summary Screen → View Total Cards → Search Tellers → Select Teller → View Detailed Breakdown
+```
+
+Visual representation:
+```
++----------------+     +----------------+     +----------------+     +----------------+
+| Summary Screen | --> | View Total     | --> | Search and     | --> | Select Teller  |
+|                |     | Sales & Hits   |     | Filter Tellers |     |                |
 +----------------+     +----------------+     +----------------+     +----------------+
                                                                             |
                                                                             v
                                                                      +----------------+
-                                                                     | View/Print     |
-                                                                     | Report         |
+                                                                     | View Detailed  |
+                                                                     | Breakdown      |
                                                                      +----------------+
 ```
 
@@ -198,7 +207,42 @@ Visual representation:
                                                                      +----------------+
 ```
 
-## 11. Combination Generator Flow
+## 11. Coordinator Administrative Process
+
+```
+Coordinator Dashboard → Select Administrative Function → Configure Settings → Save Changes
+```
+
+Visual representation:
+```
++----------------+     +----------------+     +----------------+     +----------------+
+| Coordinator    | --> | Select Admin   | --> | Configure      | --> | Save Changes   |
+| Dashboard      |     | Function       |     | Settings       |     |                |
++----------------+     +----------------+     +----------------+     +----------------+
+```
+
+## 12. Coordinator as Teller Process
+
+```
+Coordinator Dashboard → Select Teller Function → Perform Teller Operations
+```
+
+Visual representation:
+```
++----------------+     +----------------+     +----------------+
+| Coordinator    | --> | Select Teller  | --> | New Bet        |
+| Dashboard      |     | Function       |     | Claim          |
++----------------+     +----------------+     | Sales          |
+                                              +----------------+
+                                                      |
+                                                      v
+                                              +----------------+
+                                              | Perform Teller |
+                                              | Operations     |
+                                              +----------------+
+```
+
+## 13. Combination Generator Flow
 
 ```
 Combination Screen → Select Game Type → Enter Parameters → Generate Combinations → View/Save Combinations

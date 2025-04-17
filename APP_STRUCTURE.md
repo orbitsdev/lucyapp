@@ -1,6 +1,6 @@
-# GAMBLE Mobile App Structure
+# Lucky Betting App Structure
 
-This document outlines the proposed structure for the GAMBLE Mobile App, organizing screens by user role and module to avoid confusion and improve maintainability.
+This document outlines the structure for the Lucky Betting app, organizing screens by user role and module to avoid confusion and improve maintainability.
 
 ## 1. User Roles
 
@@ -33,12 +33,12 @@ The application will support three distinct user roles:
 
 ## 2. Login Screen Redesign
 
-The login screen will be redesigned to include three clear options for users to identify their role:
+The login screen includes three clear options for users to identify their role:
 
 ```
 +-----------------------------------------------+
 |                                               |
-|              GAMBLE Mobile App                |
+|              Lucky Betting App                |
 |                                               |
 +-----------------------------------------------+
 |                                               |
@@ -139,10 +139,17 @@ lib/
 ```
 - Login Screen
 - Coordinator Dashboard
-- Generate Hits Screen
-- Bet Win Screen
-- Summary Screen
 - User Management Screen
+- Game Configuration Screen
+- Generate Hits Screen
+- Summary Screen
+- Summary Detail Screen
+- Commission Screen (formerly Bet Win Screen)
+- Financial Reports Screen
+- Teller Functions:
+  - Teller New Bet Screen
+  - Teller Claim Screen
+  - Teller Sales Screen
 - All Teller Screens (for oversight)
 ```
 

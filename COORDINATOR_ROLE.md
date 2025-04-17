@@ -1,10 +1,10 @@
 # Coordinator Role Guide
 
-This document outlines the responsibilities, workflows, and features available to users with the **Coordinator** role in the GAMBLE Mobile App.
+This document outlines the responsibilities, workflows, and features available to users with the **Coordinator** role in the Lucky Betting app.
 
 ## Role Overview
 
-The Coordinator is the administrative user with the highest level of access in the system. Coordinators manage the overall betting operations, including user management, game configuration, and financial reporting.
+The Coordinator is the administrative user with the highest level of access in the system. Coordinators manage the overall betting operations, including user management, game configuration, financial reporting, and can also perform teller functions when needed.
 
 ```
 +---------------------+
@@ -19,6 +19,7 @@ The Coordinator is the administrative user with the highest level of access in t
 | • Set Win Numbers   |
 | • Generate Reports  |
 | • Monitor Sales     |
+| • Act as Teller     |
 +---------------------+
 ```
 
@@ -31,7 +32,7 @@ The Coordinator is the administrative user with the highest level of access in t
 +----------------+     +----------------+     +----------------+
 ```
 
-1. Open the GAMBLE Mobile App
+1. Open the Lucky Betting app
 2. Enter username and password
 3. Select the "Coordinator" role
 4. Click the Login button
@@ -86,7 +87,32 @@ The Coordinator is the administrative user with the highest level of access in t
 5. Enable/disable specific games or game types
 6. Set draw schedules and cut-off times
 
-### 3. Setting Winning Numbers
+### 3. Commission
+
+```
++----------------+     +----------------+     +----------------+
+| Coordinator    | --> | Commission     | --> | View Commission|
+| Dashboard      |     | Screen         |     | Percentages    |
++----------------+     +----------------+     +----------------+
+                                                      |
+                                                      v
+                                              +----------------+
+                                              | Select Date &  |
+                                              | View Details   |
+                                              +----------------+
+```
+
+**Steps:**
+1. From the Coordinator Dashboard, select "Commission"
+2. View the commission information
+3. Select a date using the date picker
+4. View commission percentages and amounts:
+   - Commission Percentage standard
+   - Commission Earn via Cashier
+   - Total Commission Percentage
+   - Total Commission Amount
+
+### 4. Setting Winning Numbers
 
 ```
 +----------------+     +----------------+     +----------------+
@@ -116,39 +142,30 @@ The Coordinator is the administrative user with the highest level of access in t
 6. Review the list of winning tickets and amounts
 7. Confirm and publish results
 
-### 4. Financial Reporting
+### 5. Financial Reporting
 
 ```
 +----------------+     +----------------+     +----------------+
-| Coordinator    | --> | Summary        | --> | Select Report  |
-| Dashboard      |     | Reports        |     | Type and Date  |
+| Coordinator    | --> | Summary        | --> | Search & View  |
+| Dashboard      |     | Reports        |     | Teller Data    |
 +----------------+     +----------------+     +----------------+
                                                       |
                                                       v
                                               +----------------+
                                               | View Detailed  |
-                                              | Reports        |
-                                              +----------------+
-                                                      |
-                                                      v
-                                              +----------------+
-                                              | Export/Print   |
-                                              | Reports        |
+                                              | Breakdown      |
                                               +----------------+
 ```
 
 **Steps:**
-1. From the Coordinator Dashboard, tap "Summary"
-2. Select the report type:
-   - Sales Report
-   - Winning Report
-   - Teller Performance
-   - Game Performance
-3. Set the date range for the report
-4. Generate and view the detailed report
-5. Export or print the report as needed
+1. From the Coordinator Dashboard, select "Summary Reports"
+2. View the summary cards for Total Sales and Total Hits
+3. Use the search field to filter tellers by name
+4. View the list of tellers with their sales totals
+5. Click "View" on a teller to see detailed breakdown by draw time (2PM, 5PM, 9PM)
+6. Analyze sales, hits, and profit for each time slot
 
-### 5. Bet Win Management
+### 6. Bet Win Management
 
 ```
 +----------------+     +----------------+     +----------------+
@@ -176,6 +193,27 @@ The Coordinator is the administrative user with the highest level of access in t
 4. Approve or adjust payout amounts
 5. Authorize large payouts that exceed Teller limits
 6. Generate payout reports
+
+### 7. System Administration
+
+```
++----------------+     +----------------+     +----------------+
+| Coordinator    | --> | System         | --> | Configure      |
+| Dashboard      |     | Administration |     | System Settings|
++----------------+     +----------------+     +----------------+
+                              |
+                              v
+                      +----------------+
+                      | Access Teller  |
+                      | Functions      |
+                      +----------------+
+```
+
+**Steps:**
+1. From the Coordinator Dashboard, select "System Administration"
+2. Configure global system settings
+3. Manage system parameters
+4. Access teller functions (New Bet, Claim, Sales)
 
 ## Dashboard Overview
 
@@ -237,13 +275,13 @@ The Coordinator Dashboard provides a comprehensive overview of the betting opera
 
 ## Color Scheme and UI Elements
 
-The Coordinator interface uses a deep blue color scheme (#1a237e) to visually distinguish it from other roles:
+The Coordinator interface uses a deep red color scheme (#d32f2f) to visually distinguish it from other roles:
 
 ```
-Primary Color: #1a237e (Deep Blue)
-Secondary Color: #534bae
+Primary Color: #d32f2f (Red)
+Secondary Color: #ff6659
 Text on Primary: #ffffff
-Accent Color: #ff9100
+Accent Color: #9a0007
 ```
 
 This color scheme is applied consistently across all Coordinator screens to provide a cohesive and recognizable experience.
