@@ -274,32 +274,32 @@ class DashboardScreen extends StatelessWidget {
                 route: AppRoutes.tally,
               ),
               
-              // Additional Tools
-              Padding(
-                padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
-                child: Text(
-                  'ADDITIONAL TOOLS',
-                  style: TextStyle(
-                    color: AppColors.primaryRed,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              // // Additional Tools
+              // Padding(
+              //   padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
+              //   child: Text(
+              //     'ADDITIONAL TOOLS',
+              //     style: TextStyle(
+              //       color: AppColors.primaryRed,
+              //       fontSize: 14,
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
               
-              DashboardCard(
-                title: 'COMBINATION',
-                icon: Icons.grid_3x3,
-                color: const Color(0xFF9C27B0),
-                route: AppRoutes.combination,
-              ),
+              // DashboardCard(
+              //   title: 'COMBINATION',
+              //   icon: Icons.grid_3x3,
+              //   color: const Color(0xFF9C27B0),
+              //   route: AppRoutes.combination,
+              // ),
               
-              DashboardCard(
-                title: 'SOLD OUT',
-                icon: Icons.block,
-                color: const Color(0xFF7B1FA2),
-                route: AppRoutes.soldOut,
-              ),
+              // DashboardCard(
+              //   title: 'SOLD OUT',
+              //   icon: Icons.block,
+              //   color: const Color(0xFF7B1FA2),
+              //   route: AppRoutes.soldOut,
+              // ),
               
               const SizedBox(height: 24),
             ]),

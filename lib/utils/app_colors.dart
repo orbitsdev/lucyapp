@@ -16,7 +16,7 @@ class AppColors {
   static const Color printerColor = Color(0xFF8D6E63);
   static const Color cancelColor = Color(0xFFC62828);
   static const Color salesColor = Color(0xFFE91E63);
-  static const Color tallyColor = Color(0xFF5D4037);
+  static const Color tallyColor = Color(0xFFF44336);
   static const Color comboColor = Color(0xFF7B1FA2);
   static const Color generateColor = Color(0xFF00838F);
   static const Color summaryColor = Color(0xFF558B2F);
