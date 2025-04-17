@@ -234,10 +234,10 @@ class DashboardScreen extends StatelessWidget {
               ),
               
               DashboardCard(
-                title: 'CANCEL DOC',
+                title: 'CANCEL BET',
                 icon: Icons.cancel,
                 color: const Color(0xFFFFC107),
-                route: AppRoutes.cancelDoc,
+                route: AppRoutes.cancelBet,
               ),
               
               // Equipment & Reports

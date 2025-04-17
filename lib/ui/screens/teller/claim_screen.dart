@@ -1,50 +1,43 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
-import 'package:bettingapp/widgets/photo_proof_widget.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ClaimController extends GetxController {
-  final Rx<File?> image = Rx<File?>(null);
+  final RxString scannedQrCode = ''.obs;
   final RxBool isLoading = false.obs;
-  final ImagePicker _picker = ImagePicker();
+  final RxBool hasScanned = false.obs;
+  final scannerController = MobileScannerController();
   
   @override
   void onInit() {
     super.onInit();
-    // Take a picture when the screen loads
-    takePicture();
+    // No need to automatically scan on init
   }
   
-  Future<void> takePicture() async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.camera,
-        preferredCameraDevice: CameraDevice.rear,
-        imageQuality: 80,
-      );
-      
-      if (pickedFile != null) {
-        image.value = File(pickedFile.path);
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to take picture: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+  @override
+  void onClose() {
+    scannerController.dispose();
+    super.onClose();
+  }
+  
+  void scanQrCode() {
+    // Reset the scanned state when starting a new scan
+    if (hasScanned.value) {
+      hasScanned.value = false;
+      scannedQrCode.value = '';
+      scannerController.start();
     }
   }
   
   Future<void> saveClaim() async {
-    if (image.value == null) {
+    if (scannedQrCode.value.isEmpty || !hasScanned.value) {
       Get.snackbar(
         'Error',
-        'Please take a picture first',
+        'Please scan a QR code first',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -62,7 +55,7 @@ class ClaimController extends GetxController {
     // Show success message
     Get.snackbar(
       'Success',
-      'Claim saved successfully',
+      'Claim processed successfully',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -84,7 +77,7 @@ class ClaimScreen extends StatelessWidget {
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text('CLAIM'),
-        backgroundColor: AppColors.claimColor,
+        backgroundColor: AppColors.primaryRed, 
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
@@ -93,7 +86,7 @@ class ClaimScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Instructions
+          // Instructions - Keeping the original content
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
@@ -133,30 +126,122 @@ class ClaimScreen extends StatelessWidget {
             ),
           ),
           
-          // Photo Preview and Buttons
+          // QR Code Scan Result or Scanner
           Expanded(
-            child: Obx(() => PhotoProofWidget(
-              image: controller.image.value,
-              onRetake: () => controller.takePicture(),
-              onSave: () => controller.saveClaim(),
-            )),
+            child: Obx(() => controller.hasScanned.value
+              ? Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.qr_code_scanner,
+                        size: 64,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'QR Code Scanned Successfully',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ticket ID: ${controller.scannedQrCode.value}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => controller.scanQrCode(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Scan Again'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade200,
+                          foregroundColor: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Container(
+                  margin: const EdgeInsets.all(16),
+                  clipBehavior: Clip.hardEdge,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: MobileScanner(
+                          controller: controller.scannerController,
+                          onDetect: (capture) {
+                            final List<Barcode> barcodes = capture.barcodes;
+                            for (final barcode in barcodes) {
+                              if (barcode.rawValue != null && !controller.hasScanned.value) {
+                                // Update state
+                                controller.scannedQrCode.value = barcode.rawValue!;
+                                controller.hasScanned.value = true;
+                                
+                                // Optional: provide feedback
+                                HapticFeedback.mediumImpact();
+                                
+                                // Stop scanning
+                                controller.scannerController.stop();
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        color: AppColors.primaryRed.withOpacity(0.8),
+                        child: const Text(
+                          'Position QR code in the scanner area',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ),
           ),
           
-          // Save Button
+          // Submit Button
           Padding(
             padding: const EdgeInsets.all(16),
             child: Obx(() => ElevatedButton(
-              onPressed: controller.isLoading.value || controller.image.value == null
+              onPressed: controller.isLoading.value || !controller.hasScanned.value
                   ? null
                   : () => controller.saveClaim(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.claimColor,
+                backgroundColor: AppColors.primaryRed, 
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                disabledBackgroundColor: AppColors.claimColor.withOpacity(0.6),
+                disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.6), 
               ),
               child: controller.isLoading.value
                   ? const SizedBox(

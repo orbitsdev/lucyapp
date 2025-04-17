@@ -3,37 +3,58 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:bettingapp/widgets/stats_table.dart';
+import 'package:intl/intl.dart';
 
 class SalesController extends GetxController {
-  final RxString selectedTimeframe = 'Today'.obs;
+  final Rx<DateTime> selectedDate = DateTime.now().obs;
+  final RxString selectedSchedule = 'All'.obs;
   
-  final List<String> timeframes = [
-    'Today', 
-    'Yesterday', 
-    'This Week', 
-    'This Month'
-  ];
+  // Available schedule options
+  final List<String> schedules = ['All', '2 pm', '5 pm', '9 pm'];
   
   // Sample data for the sales table
-  final List<String> columns = ['BET', 'HITS'];
+  final List<String> columns = ['Sales', 'Bet', 'Hits'];
   
   final List<String> rowLabels = [
-    'GRAND TOTAL',
-    '11AM',
-    '3P',
-    '4PM',
-    '9PM',
-    'x40x'
+    'Profit',
+    '2 PM',
+    '5 PM',
+    '9 PM'
   ];
   
+  // Sample data with the new structure
   final List<List<String>> rows = [
-    ['PHP 343,400', 'PHP 155,550'],
-    ['PHP 221,035', 'PHP 142,425'],
-    ['PHP 221,035', 'PHP 142,425'],
-    ['PHP 221,035', 'PHP 142,425'],
-    ['PHP 221,035', 'PHP 142,425'],
-    ['PHP 221,035', 'PHP 142,425'],
+    ['1500', '1500', '500'],  // Profit row (calculated as Bet - Hits)
+    ['500', '500', '200'],    // 2 PM data
+    ['500', '500', '150'],    // 5 PM data
+    ['500', '500', '150'],    // 9 PM data
   ];
+  
+  // Get formatted date
+  String get formattedDate {
+    return DateFormat('MMM dd, yyyy').format(selectedDate.value);
+  }
+  
+  // Change date
+  void changeDate(DateTime date) {
+    selectedDate.value = date;
+    // In a real app, you would fetch data for the selected date here
+  }
+  
+  // Set schedule filter
+  void setScheduleFilter(String schedule) {
+    selectedSchedule.value = schedule;
+    // In a real app, you would filter data based on the selected schedule
+  }
+  
+  // Calculate profit
+  int calculateProfit() {
+    // In a real app, this would calculate based on actual data
+    // For now, using the sample data: Bet - Hits
+    int totalBet = 1500;
+    int totalHits = 500;
+    return totalBet - totalHits;
+  }
 }
 
 class SalesScreen extends StatelessWidget {
@@ -47,7 +68,7 @@ class SalesScreen extends StatelessWidget {
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text('SALES'),
-        backgroundColor: AppColors.salesColor,
+        backgroundColor: AppColors.primaryRed, // Changed to red color scheme
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
@@ -55,10 +76,10 @@ class SalesScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Timeframe Dropdown
+          // Date Picker and Schedule Filter
           Container(
             margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -70,32 +91,90 @@ class SalesScreen extends StatelessWidget {
                 ),
               ],
             ),
-            child: Obx(() => DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: controller.selectedTimeframe.value,
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down),
-                iconSize: 24,
-                elevation: 16,
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontSize: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Date Picker
+                InkWell(
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: controller.selectedDate.value,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2025),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: AppColors.primaryRed, // Changed to red color scheme
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null) {
+                      controller.changeDate(picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Obx(() => Text(
+                          controller.formattedDate,
+                          style: const TextStyle(fontSize: 16),
+                        )),
+                        const Icon(Icons.calendar_today, size: 20),
+                      ],
+                    ),
+                  ),
                 ),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    controller.selectedTimeframe.value = newValue;
-                  }
-                },
-                items: controller.timeframes
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            )),
-          ),
+                
+                const SizedBox(height: 16),
+                
+                // Schedule Filter
+                Row(
+                  children: [
+                    const Text(
+                      'Schedule Filter:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Obx(() => DropdownButton<String>(
+                        value: controller.selectedSchedule.value,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            controller.setScheduleFilter(newValue);
+                          }
+                        },
+                        items: controller.schedules
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      )),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms)
+            .slideY(begin: 0.1, end: 0, duration: 300.ms),
           
           // Sales Stats Table
           Expanded(
@@ -104,8 +183,8 @@ class SalesScreen extends StatelessWidget {
                 columns: controller.columns,
                 rows: controller.rows,
                 rowLabels: controller.rowLabels,
-                headerColor: AppColors.salesColor,
-                showTotal: false, // Grand total is already included in the data
+                headerColor: AppColors.primaryRed, // Changed to red color scheme
+                showTotal: false, // Profit row is already included in the data
               ).animate()
                 .fadeIn(duration: 300.ms)
                 .slideY(begin: 0.1, end: 0, duration: 300.ms),

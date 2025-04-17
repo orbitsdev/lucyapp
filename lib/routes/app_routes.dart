@@ -14,7 +14,7 @@ import 'package:bettingapp/ui/screens/teller/dashboard_screen.dart' as teller;
 import 'package:bettingapp/ui/screens/teller/new_bet_screen.dart';
 import 'package:bettingapp/ui/screens/teller/claim_screen.dart';
 import 'package:bettingapp/ui/screens/teller/printer_setup_screen.dart';
-import 'package:bettingapp/ui/screens/teller/cancel_doc_screen.dart';
+import 'package:bettingapp/ui/screens/teller/cancel_bet_screen.dart';
 import 'package:bettingapp/ui/screens/teller/sales_screen.dart';
 import 'package:bettingapp/ui/screens/teller/tally_sheet_screen.dart';
 import 'package:bettingapp/ui/screens/teller/combination_screen.dart';
@@ -46,7 +46,7 @@ class AppRoutes {
   static const String newBet = '/teller/new-bet';
   static const String claim = '/teller/claim';
   static const String printer = '/teller/printer';
-  static const String cancelDoc = '/teller/cancel-doc';
+  static const String cancelBet = '/teller/cancel-bet';
   static const String sales = '/teller/sales';
   static const String tally = '/teller/tally';
   static const String combination = '/teller/combination';
@@ -115,8 +115,8 @@ class AppRoutes {
       transition: Transition.cupertino,
     ),
     GetPage(
-      name: cancelDoc,
-      page: () => const CancelDocScreen(),
+      name: cancelBet,
+      page: () => const CancelBetScreen(),
       transition: Transition.cupertino,
     ),
     GetPage(
