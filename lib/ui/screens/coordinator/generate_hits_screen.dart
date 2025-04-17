@@ -4,20 +4,50 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 
-class GenerateHitsController extends GetxController {
+class ViewHitsController extends GetxController {
   final Rx<DateTime> selectedDate = DateTime.now().obs;
-  final RxString selectedSchedule = '11AM'.obs;
-  final RxString winningCombination = ''.obs;
+  final RxString selectedSchedule = 'All Schedules'.obs;
+  final RxString searchQuery = ''.obs;
   final RxBool isLoading = false.obs;
-  final RxBool hasResults = false.obs;
-  final RxList<Map<String, dynamic>> hits = <Map<String, dynamic>>[].obs;
+  final RxBool hasResults = true.obs; // Default to true to show sample data
   
   final List<String> schedules = [
+    'All Schedules',
     '11AM',
-    '3P',
+    '2PM',
     '4PM',
     '9PM',
   ];
+  
+  // Sample data for hits
+  final RxList<Map<String, dynamic>> hits = <Map<String, dynamic>>[
+    {'winningCombination': '225', 'schedule': '2PM', 'date': '2025-04-17', 'totalBets': 42, 'totalAmount': 8400},
+    {'winningCombination': '118', 'schedule': '11AM', 'date': '2025-04-17', 'totalBets': 36, 'totalAmount': 7200},
+    {'winningCombination': '345', 'schedule': '4PM', 'date': '2025-04-16', 'totalBets': 28, 'totalAmount': 5600},
+    {'winningCombination': '678', 'schedule': '9PM', 'date': '2025-04-16', 'totalBets': 31, 'totalAmount': 6200},
+    {'winningCombination': '901', 'schedule': '2PM', 'date': '2025-04-16', 'totalBets': 25, 'totalAmount': 5000},
+  ].obs;
+  
+  List<Map<String, dynamic>> get filteredHits {
+    return hits.where((hit) {
+      // Filter by date
+      final hitDate = DateTime.parse(hit['date']);
+      final selectedDateStr = DateFormat('yyyy-MM-dd').format(selectedDate.value);
+      final hitDateStr = DateFormat('yyyy-MM-dd').format(hitDate);
+      
+      final matchesDate = hitDateStr == selectedDateStr;
+      
+      // Filter by schedule
+      final matchesSchedule = selectedSchedule.value == 'All Schedules' || 
+                             hit['schedule'] == selectedSchedule.value;
+      
+      // Filter by search query
+      final matchesSearch = searchQuery.isEmpty || 
+                           hit['winningCombination'].contains(searchQuery.value);
+      
+      return matchesDate && matchesSchedule && matchesSearch;
+    }).toList();
+  }
   
   Future<void> selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -25,6 +55,17 @@ class GenerateHitsController extends GetxController {
       initialDate: selectedDate.value,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primaryRed,
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     
     if (picked != null && picked != selectedDate.value) {
@@ -32,38 +73,12 @@ class GenerateHitsController extends GetxController {
     }
   }
   
-  Future<void> generateHits() async {
-    if (winningCombination.value.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter the winning combination',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-    
-    isLoading.value = true;
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-    
-    // Generate sample hits data
-    hits.value = List.generate(
-      10,
-      (index) => {
-        'draw': selectedSchedule.value,
-        'combo': winningCombination.value,
-        'bet': '${(index * 123) % 1000}'.padLeft(3, '0'),
-        'amount': (index + 1) * 50,
-        'docNo': 'DOC-${10000 + index}',
-        'withdraw': (index % 3 == 0),
-      },
-    );
-    
-    isLoading.value = false;
-    hasResults.value = true;
+  void updateSearchQuery(String query) {
+    searchQuery.value = query;
+  }
+  
+  void updateSelectedSchedule(String schedule) {
+    selectedSchedule.value = schedule;
   }
 }
 
@@ -72,13 +87,13 @@ class GenerateHitsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(GenerateHitsController());
+    final controller = Get.put(ViewHitsController());
     
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('GENERATE HITS'),
-        backgroundColor: AppColors.generateColor,
+        title: const Text('View Generate Hits'),
+        backgroundColor: AppColors.primaryRed,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
@@ -86,7 +101,7 @@ class GenerateHitsScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Input Form
+          // Filter Section
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
@@ -104,148 +119,126 @@ class GenerateHitsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date Picker
-                const Text(
-                  'Date',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                // Info Box
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryRed.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Obx(() => InkWell(
-                  onTap: () => controller.selectDate(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          DateFormat('MMMM dd, yyyy').format(controller.selectedDate.value),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: AppColors.primaryRed,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Generating hits is for super admin only. Coordinators can only view hits.',
                           style: TextStyle(
-                            color: AppColors.primaryText,
-                            fontSize: 16,
+                            color: AppColors.primaryRed,
+                            fontSize: 14,
                           ),
                         ),
-                        const Spacer(),
-                        Icon(
-                          Icons.calendar_today,
-                          color: AppColors.secondaryText,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                )),
-                
-                const SizedBox(height: 16),
-                
-                // Schedule Dropdown
-                const Text(
-                  'Schedule',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Obx(() => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                const SizedBox(height: 16),
+                
+                // First row: Date and Schedule
+                Row(
+                  children: [
+                    // Date Picker
+                    Expanded(
+                      child: Obx(() => InkWell(
+                        onTap: () => controller.selectDate(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: AppColors.primaryRed,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                DateFormat('MMM dd, yyyy').format(controller.selectedDate.value),
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )),
+                    ),
+                    const SizedBox(width: 12),
+                    
+                    // Schedule Dropdown
+                    Expanded(
+                      child: Obx(() => Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: controller.selectedSchedule.value,
+                            isExpanded: true,
+                            icon: const Icon(Icons.keyboard_arrow_down, size: 20),
+                            elevation: 16,
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 14,
+                            ),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                controller.updateSelectedSchedule(newValue);
+                              }
+                            },
+                            items: controller.schedules
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      )),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Second row: Search
+                Container(
+                  height: 40,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: controller.selectedSchedule.value,
-                      isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      iconSize: 24,
-                      elevation: 16,
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 16,
-                      ),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          controller.selectedSchedule.value = newValue;
-                        }
-                      },
-                      items: controller.schedules
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                  child: TextField(
+                    onChanged: controller.updateSearchQuery,
+                    decoration: InputDecoration(
+                      hintText: 'Search combination...',
+                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade600, size: 20),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
-                )),
-                
-                const SizedBox(height: 16),
-                
-                // Winning Combination Input
-                const Text(
-                  'Winning Combination',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Obx(() => TextField(
-                  onChanged: (value) => controller.winningCombination.value = value,
-                  controller: TextEditingController(text: controller.winningCombination.value),
-                  keyboardType: TextInputType.number,
-                  maxLength: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Enter 3-digit combination',
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                )),
-                
-                const SizedBox(height: 16),
-                
-                // Generate Button
-                SizedBox(
-                  width: double.infinity,
-                  child: Obx(() => ElevatedButton(
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : () => controller.generateHits(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.generateColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor: AppColors.generateColor.withOpacity(0.6),
-                    ),
-                    child: controller.isLoading.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text(
-                            'GENERATE HITS',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  )),
                 ),
               ],
             ),
@@ -254,10 +247,32 @@ class GenerateHitsScreen extends StatelessWidget {
             .slideY(begin: 0.1, end: 0, duration: 300.ms),
           
           // Results Table
-          Obx(() => controller.hasResults.value
-              ? Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
+          Obx(() {
+            final filteredHits = controller.filteredHits;
+            return Expanded(
+              child: filteredHits.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No hits found',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -271,179 +286,202 @@ class GenerateHitsScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // Table Header
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: AppColors.generateColor,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(8),
-                              topRight: Radius.circular(8),
-                            ),
-                          ),
-                          child: const Row(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  'DRAW',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  'COMBO',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  'BET',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  'AMOUNT',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'DOC NO.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  'WITHDRAW',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                        // Table Body
+                        // Table Header and Body in a single scrollable container
                         Expanded(
-                          child: ListView.builder(
-                            itemCount: controller.hits.length,
-                            itemBuilder: (context, index) {
-                              final hit = controller.hits[index];
-                              return Container(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: index.isEven ? Colors.grey.shade50 : Colors.white,
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey.shade200,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: 360, // Set a minimum width that works on most phones
+                              child: Column(
+                                children: [
+                                  // Table Header
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryRed,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(8),
+                                        topRight: Radius.circular(8),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 120,
+                                          padding: EdgeInsets.only(left: 16),
+                                          child: Text(
+                                            'Winning',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 80,
+                                          child: Text(
+                                            'Schedule',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 60,
+                                          child: Text(
+                                            'Bets',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 100,
+                                          padding: EdgeInsets.only(right: 16),
+                                          child: Text(
+                                            'Amount',
+                                            textAlign: TextAlign.right,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 1,
-                                      child: Text(
-                                        hit['draw'],
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: Text(
-                                        hit['combo'],
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: Text(
-                                        hit['bet'],
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: Text(
-                                        'PHP ${hit['amount']}',
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        hit['docNo'],
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: hit['withdraw']
-                                          ? Icon(
-                                              Icons.check_circle,
-                                              color: Colors.green,
-                                              size: 20,
-                                            )
-                                          : Icon(
-                                              Icons.cancel,
-                                              color: Colors.red,
-                                              size: 20,
+                                  
+                                  // Table Body
+                                  Expanded(
+                                    child: ListView.builder(
+                                      itemCount: filteredHits.length,
+                                      itemBuilder: (context, index) {
+                                        final hit = filteredHits[index];
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          decoration: BoxDecoration(
+                                            color: index.isEven ? Colors.grey.shade50 : Colors.white,
+                                            border: Border(
+                                              bottom: BorderSide(
+                                                color: Colors.grey.shade200,
+                                              ),
                                             ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              // Winning Combination
+                                              Container(
+                                                width: 120,
+                                                padding: EdgeInsets.only(left: 16),
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 36,
+                                                      height: 36,
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.primaryRed.withOpacity(0.1),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Center(
+                                                        child: Text(
+                                                          hit['winningCombination'],
+                                                          style: TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 16,
+                                                            color: AppColors.primaryRed,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      hit['winningCombination'],
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 16,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              
+                                              // Schedule
+                                              Container(
+                                                width: 80,
+                                                child: Center(
+                                                  child: Container(
+                                                    padding: EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.primaryRed.withOpacity(0.1),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: Text(
+                                                      hit['schedule'],
+                                                      textAlign: TextAlign.center,
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w500,
+                                                        color: AppColors.primaryRed,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              
+                                              // Total Bets
+                                              Container(
+                                                width: 60,
+                                                child: Text(
+                                                  hit['totalBets'].toString(),
+                                                  textAlign: TextAlign.center,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                              
+                                              // Total Amount
+                                              Container(
+                                                width: 100,
+                                                padding: EdgeInsets.only(right: 16),
+                                                child: Text(
+                                                  '₱${NumberFormat('#,###').format(hit['totalAmount'])}',
+                                                  textAlign: TextAlign.right,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ).animate()
+                                          .fadeIn(duration: 300.ms, delay: (index * 30).ms)
+                                          .slideY(begin: 0.1, end: 0, duration: 300.ms);
+                                      },
                                     ),
-                                  ],
-                                ),
-                              ).animate()
-                                .fadeIn(duration: 300.ms, delay: (index * 30).ms)
-                                .slideY(begin: 0.1, end: 0, duration: 300.ms);
-                            },
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                )
-              : const Expanded(
-                  child: Center(
-                    child: Text(
-                      'Enter the winning combination and generate hits',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-          ),
+            );
+          }),
         ],
       ),
     );
