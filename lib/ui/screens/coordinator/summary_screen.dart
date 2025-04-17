@@ -2,82 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
-import 'package:bettingapp/widgets/date_dropdown.dart';
-import 'package:bettingapp/widgets/location_dropdown.dart';
 import 'package:intl/intl.dart';
+import 'package:bettingapp/routes/app_routes.dart';
 
 class SummaryController extends GetxController {
-  final RxString selectedLocation = 'All Locations'.obs;
-  final RxString selectedTimeframe = 'This Month'.obs;
+  final RxString searchQuery = ''.obs;
   final RxBool isLoading = false.obs;
-  final RxMap<String, dynamic> summaryData = <String, dynamic>{}.obs;
   
-  final List<String> locations = [
-    'All Locations',
-    'Davao',
-    'Isulan',
-    'Tacurong',
-    'S2',
-    'S3',
-    'L2',
-    'L3',
-    '4D',
-    'P3'
-  ];
+  // Sample data for tellers
+  final RxList<Map<String, dynamic>> tellers = <Map<String, dynamic>>[
+    {'name': 'Ma. Theresa', 'sales': 12500, 'hits': 3500, 'profit': 9000},
+    {'name': 'Tina', 'sales': 5000, 'hits': 1200, 'profit': 3800},
+    {'name': 'John', 'sales': 8700, 'hits': 2300, 'profit': 6400},
+    {'name': 'Mike', 'sales': 6800, 'hits': 1800, 'profit': 5000},
+    {'name': 'Sarah', 'sales': 9500, 'hits': 2500, 'profit': 7000},
+  ].obs;
   
-  final List<String> timeframes = [
-    'Today',
-    'Yesterday',
-    'This Week',
-    'This Month',
-    'Custom'
-  ];
+  // Computed properties
+  int get totalSales => tellers.fold(0, (sum, teller) => sum + teller['sales'] as int);
+  int get totalHits => tellers.fold(0, (sum, teller) => sum + teller['hits'] as int);
   
-  @override
-  void onInit() {
-    super.onInit();
-    // Load initial summary data
-    loadSummaryData();
+  List<Map<String, dynamic>> get filteredTellers {
+    if (searchQuery.isEmpty) {
+      return tellers;
+    }
+    
+    return tellers.where((teller) => 
+      teller['name'].toString().toLowerCase().contains(searchQuery.value.toLowerCase())
+    ).toList();
   }
   
-  Future<void> loadSummaryData() async {
-    isLoading.value = true;
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Sample summary data
-    summaryData.value = {
-      'totalBets': 1245,
-      'totalAmount': 348903,
-      'totalHits': 287,
-      'hitsAmount': 155550,
-      'netProfit': 193353,
-      'profitPercentage': 55.4,
-      'topCombinations': [
-        {'combo': '123', 'count': 87, 'amount': 8700},
-        {'combo': '456', 'count': 65, 'amount': 6500},
-        {'combo': '789', 'count': 54, 'amount': 5400},
-        {'combo': '234', 'count': 43, 'amount': 4300},
-        {'combo': '567', 'count': 32, 'amount': 3200},
-      ],
-      'dailyStats': [
-        {'date': DateTime.now().subtract(const Duration(days: 6)), 'bets': 178, 'hits': 42, 'profit': 27600},
-        {'date': DateTime.now().subtract(const Duration(days: 5)), 'bets': 192, 'hits': 38, 'profit': 31200},
-        {'date': DateTime.now().subtract(const Duration(days: 4)), 'bets': 165, 'hits': 35, 'profit': 26000},
-        {'date': DateTime.now().subtract(const Duration(days: 3)), 'bets': 201, 'hits': 45, 'profit': 31100},
-        {'date': DateTime.now().subtract(const Duration(days: 2)), 'bets': 187, 'hits': 40, 'profit': 29400},
-        {'date': DateTime.now().subtract(const Duration(days: 1)), 'bets': 210, 'hits': 47, 'profit': 32600},
-        {'date': DateTime.now(), 'bets': 112, 'hits': 40, 'profit': 14453},
-      ],
-    };
-    
-    isLoading.value = false;
+  void updateSearchQuery(String query) {
+    searchQuery.value = query;
   }
   
-  void updateFilters() {
-    // In a real app, this would fetch data based on the selected filters
-    loadSummaryData();
+  void viewTellerDetails(Map<String, dynamic> teller) {
+    Get.toNamed(AppRoutes.summaryDetail, arguments: teller);
   }
 }
 
@@ -91,8 +51,8 @@ class SummaryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('SUMMARY'),
-        backgroundColor: AppColors.summaryColor,
+        title: const Text('Summary Reports'),
+        backgroundColor: AppColors.primaryRed,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
@@ -100,395 +60,224 @@ class SummaryScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Filters
+          // Search Bar
           Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              onChanged: controller.updateSearchQuery,
+              decoration: InputDecoration(
+                hintText: 'Search teller...',
+                prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms)
+            .slideY(begin: 0.1, end: 0, duration: 300.ms),
+          
+          // Summary Cards
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
               children: [
-                // Location Dropdown
-                Obx(() => LocationDropdown(
-                  value: controller.selectedLocation.value,
-                  onChanged: (value) {
-                    controller.selectedLocation.value = value;
-                    controller.updateFilters();
-                  },
-                  locations: controller.locations,
-                )),
-                
-                // Timeframe Dropdown
-                Obx(() => DateDropdown(
-                  value: controller.selectedTimeframe.value,
-                  onChanged: (value) {
-                    controller.selectedTimeframe.value = value;
-                    controller.updateFilters();
-                  },
-                  options: controller.timeframes,
-                )),
+                // Total Sales Card
+                Expanded(
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryRed,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Obx(() => Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'TOTAL SALES',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '₱${NumberFormat('#,###').format(controller.totalSales)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                      ],
+                    )),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Total Hits Card
+                Expanded(
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryRed,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Obx(() => Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'TOTAL HITS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '₱${NumberFormat('#,###').format(controller.totalHits)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                      ],
+                    )),
+                  ),
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 100.ms)
+            .slideY(begin: 0.1, end: 0, duration: 300.ms),
+          
+          const SizedBox(height: 16),
+          
+          // Teller List Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            color: Colors.grey.shade200,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Teller Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Total Sales',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: SizedBox(),
+                ),
               ],
             ),
           ),
           
-          // Summary Content
+          // Teller List
           Expanded(
-            child: Obx(() => controller.isLoading.value
-                ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-                    onRefresh: () => controller.loadSummaryData(),
-                    child: ListView(
-                      padding: const EdgeInsets.all(16),
+            child: Obx(() => ListView.builder(
+              itemCount: controller.filteredTellers.length,
+              itemBuilder: (context, index) {
+                final teller = controller.filteredTellers[index];
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.grey.shade200,
+                      ),
+                    ),
+                  ),
+                  child: ListTile(
+                    title: Row(
                       children: [
-                        // Key Stats Cards
-                        Row(
-                          children: [
-                            // Total Bets
-                            Expanded(
-                              child: _buildStatCard(
-                                title: 'Total Bets',
-                                value: controller.summaryData['totalBets'].toString(),
-                                icon: Icons.confirmation_number,
-                                color: AppColors.primaryBlue,
-                              ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            teller['name'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
                             ),
-                            const SizedBox(width: 16),
-                            // Total Hits
-                            Expanded(
-                              child: _buildStatCard(
-                                title: 'Total Hits',
-                                value: controller.summaryData['totalHits'].toString(),
-                                icon: Icons.emoji_events,
-                                color: AppColors.hitsColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Financial Stats
-                        Row(
-                          children: [
-                            // Total Amount
-                            Expanded(
-                              child: _buildStatCard(
-                                title: 'Total Amount',
-                                value: 'PHP ${NumberFormat('#,###').format(controller.summaryData['totalAmount'])}',
-                                icon: Icons.account_balance_wallet,
-                                color: AppColors.newBetColor,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            // Net Profit
-                            Expanded(
-                              child: _buildStatCard(
-                                title: 'Net Profit',
-                                value: 'PHP ${NumberFormat('#,###').format(controller.summaryData['netProfit'])}',
-                                icon: Icons.trending_up,
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        
-                        // Profit Percentage Card
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Profit Percentage',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              LinearProgressIndicator(
-                                value: controller.summaryData['profitPercentage'] / 100,
-                                backgroundColor: Colors.grey.shade200,
-                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
-                                minHeight: 8,
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            '₱${NumberFormat('#,###').format(teller['sales'])}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: ElevatedButton(
+                            onPressed: () => controller.viewTellerDetails(teller),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryRed,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  '${controller.summaryData['profitPercentage']}%',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.success,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ).animate()
-                          .fadeIn(duration: 300.ms, delay: 200.ms)
-                          .slideY(begin: 0.1, end: 0, duration: 300.ms),
-                        const SizedBox(height: 24),
-                        
-                        // Top Combinations
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Top Combinations',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ...List.generate(
-                                controller.summaryData['topCombinations'].length,
-                                (index) {
-                                  final combo = controller.summaryData['topCombinations'][index];
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.comboColor.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              combo['combo'],
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.comboColor,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${combo['count']} bets',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              Text(
-                                                'PHP ${NumberFormat('#,###').format(combo['amount'])}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: AppColors.secondaryText,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        // Progress indicator
-                                        SizedBox(
-                                          width: 100,
-                                          child: LinearProgressIndicator(
-                                            value: combo['count'] / controller.summaryData['topCombinations'][0]['count'],
-                                            backgroundColor: Colors.grey.shade200,
-                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.comboColor),
-                                            minHeight: 8,
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ).animate()
-                                    .fadeIn(duration: 300.ms, delay: 300.ms + (index * 50).ms)
-                                    .slideX(begin: 0.1, end: 0, duration: 300.ms);
-                                },
-                              ),
-                            ],
+                            ),
+                            child: const Text(
+                              'View',
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        
-                        // Daily Stats
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Daily Statistics',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ...List.generate(
-                                controller.summaryData['dailyStats'].length,
-                                (index) {
-                                  final stat = controller.summaryData['dailyStats'][index];
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: Row(
-                                      children: [
-                                        // Date
-                                        SizedBox(
-                                          width: 100,
-                                          child: Text(
-                                            DateFormat('MMM dd').format(stat['date']),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        // Bets
-                                        Expanded(
-                                          child: Text(
-                                            '${stat['bets']} bets',
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                        // Hits
-                                        Expanded(
-                                          child: Text(
-                                            '${stat['hits']} hits',
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                        // Profit
-                                        Expanded(
-                                          child: Text(
-                                            'PHP ${NumberFormat('#,###').format(stat['profit'])}',
-                                            textAlign: TextAlign.right,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.success,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ).animate()
-                                    .fadeIn(duration: 300.ms, delay: 400.ms + (index * 50).ms)
-                                    .slideX(begin: 0.1, end: 0, duration: 300.ms);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
-            ),
+                ).animate()
+                  .fadeIn(duration: 300.ms, delay: (index * 50).ms)
+                  .slideY(begin: 0.1, end: 0, duration: 300.ms);
+              },
+            )),
           ),
         ],
       ),
     );
-  }
-  
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 20,
-                ),
-              ),
-              const Spacer(),
-              Icon(
-                Icons.more_horiz,
-                color: Colors.grey.shade400,
-                size: 20,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.secondaryText,
-            ),
-          ),
-        ],
-      ),
-    ).animate()
-      .fadeIn(duration: 300.ms, delay: 100.ms)
-      .slideY(begin: 0.1, end: 0, duration: 300.ms);
   }
 }

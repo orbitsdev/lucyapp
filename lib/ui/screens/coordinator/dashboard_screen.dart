@@ -224,6 +224,43 @@ class DashboardScreen extends StatelessWidget {
               ),
               
               const SizedBox(height: 24),
+              
+              // Teller Functions Section
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'TELLER FUNCTIONS',
+                  style: TextStyle(
+                    color: AppColors.primaryRed,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              DashboardCard(
+                title: 'NEW BET',
+                icon: Icons.add_circle,
+                color: AppColors.primaryRed.withOpacity(0.7),
+                route: AppRoutes.tellerNewBet,
+              ),
+              
+              DashboardCard(
+                title: 'CLAIM',
+                icon: Icons.monetization_on,
+                color: AppColors.primaryRed.withOpacity(0.6),
+                route: AppRoutes.tellerClaim,
+              ),
+              
+              DashboardCard(
+                title: 'SALES',
+                icon: Icons.receipt_long,
+                color: AppColors.primaryRed.withOpacity(0.5),
+                route: AppRoutes.tellerSales,
+              ),
+              
+              const SizedBox(height: 24),
             ]),
           ),
         ],

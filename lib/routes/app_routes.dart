@@ -6,8 +6,12 @@ import 'package:bettingapp/ui/screens/auth/login_screen.dart';
 import 'package:bettingapp/ui/screens/coordinator/dashboard_screen.dart' as coordinator;
 import 'package:bettingapp/ui/screens/coordinator/generate_hits_screen.dart';
 import 'package:bettingapp/ui/screens/coordinator/summary_screen.dart';
+import 'package:bettingapp/ui/screens/coordinator/summary_detail_screen.dart';
 import 'package:bettingapp/ui/screens/coordinator/bet_win_screen.dart';
 import 'package:bettingapp/ui/screens/coordinator/user_management_screen.dart';
+import 'package:bettingapp/ui/screens/coordinator/teller_new_bet_screen.dart';
+import 'package:bettingapp/ui/screens/coordinator/teller_claim_screen.dart';
+import 'package:bettingapp/ui/screens/coordinator/teller_sales_screen.dart';
 
 // Teller screens
 import 'package:bettingapp/ui/screens/teller/dashboard_screen.dart' as teller;
@@ -40,7 +44,13 @@ class AppRoutes {
   static const String userManagement = '/coordinator/user-management';
   static const String generateHits = '/coordinator/generate-hits';
   static const String summary = '/coordinator/summary';
+  static const String summaryDetail = '/coordinator/summary/detail';
   static const String betWin = '/coordinator/bet-win';
+  
+  // Coordinator acting as teller routes
+  static const String tellerNewBet = '/coordinator/teller/new-bet';
+  static const String tellerClaim = '/coordinator/teller/claim';
+  static const String tellerSales = '/coordinator/teller/sales';
   
   // Teller routes
   static const String newBet = '/teller/new-bet';
@@ -88,8 +98,30 @@ class AppRoutes {
       transition: Transition.cupertino,
     ),
     GetPage(
+      name: summaryDetail,
+      page: () => const SummaryDetailScreen(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
       name: betWin,
       page: () => const BetWinScreen(),
+      transition: Transition.cupertino,
+    ),
+    
+    // Coordinator acting as teller routes
+    GetPage(
+      name: tellerNewBet,
+      page: () => const TellerNewBetScreen(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: tellerClaim,
+      page: () => const TellerClaimScreen(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: tellerSales,
+      page: () => const TellerSalesScreen(),
       transition: Transition.cupertino,
     ),
     
