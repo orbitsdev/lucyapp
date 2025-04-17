@@ -19,10 +19,10 @@ class DashboardScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
-            backgroundColor: const Color(0xFF00796B), // Teal Green for Teller
+            backgroundColor: AppColors.primaryRed,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                color: const Color(0xFF00796B),
+                color: AppColors.primaryRed,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -39,7 +39,7 @@ class DashboardScreen extends StatelessWidget {
                             backgroundColor: Colors.white,
                             child: ClipOval(
                               child: CachedNetworkImage(
-                                imageUrl: 'https://ui-avatars.com/api/?name=Teller&background=00796B&color=fff',
+                                imageUrl: 'https://ui-avatars.com/api/?name=Teller&background=C62828&color=fff',
                                 placeholder: (context, url) => const CircularProgressIndicator(),
                                 errorWidget: (context, url, error) => const Icon(Icons.person),
                                 fit: BoxFit.cover,
@@ -58,9 +58,9 @@ class DashboardScreen extends StatelessWidget {
                               color: Colors.white,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.edit,
-                              color: Color(0xFF00796B),
+                              color: AppColors.primaryRed,
                               size: 16,
                             ),
                           ),
@@ -89,7 +89,7 @@ class DashboardScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
-                        'OPERATIONS STAFF',
+                        'MANILA BRANCH',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -138,29 +138,61 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Today\'s Sales',
-                    style: TextStyle(
-                      color: Color(0xFF00796B),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '₱ 12,450',
-                    style: TextStyle(
-                      color: Color(0xFF00796B),
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Today\'s Sales',
+                            style: TextStyle(
+                              color: AppColors.primaryRed,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '₱ 12,450',
+                            style: TextStyle(
+                              color: AppColors.primaryRed,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Today\'s Commission',
+                            style: TextStyle(
+                              color: AppColors.primaryRed,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '₱ 1,000',
+                            style: TextStyle(
+                              color: AppColors.primaryRed,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildSalesItem('Tickets Sold', '45'),
-                      _buildSalesItem('Claims Processed', '12'),
+                      _buildSalesItem('Bet Numbers', '45'),
+                      _buildSalesItem('Commission Rate', '10%'),
                       _buildSalesItem('Cancellations', '3'),
                     ],
                   ),
@@ -175,12 +207,12 @@ class DashboardScreen extends StatelessWidget {
           SliverList(
             delegate: SliverChildListDelegate([
               // Main Teller Operations
-              const Padding(
-                padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
                 child: Text(
                   'BETTING OPERATIONS',
                   style: TextStyle(
-                    color: Color(0xFF00796B),
+                    color: AppColors.primaryRed,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -190,31 +222,31 @@ class DashboardScreen extends StatelessWidget {
               DashboardCard(
                 title: 'NEW BET',
                 icon: Icons.add_circle,
-                color: const Color(0xFF00897B),
+                color: const Color(0xFFC62828),
                 route: AppRoutes.newBet,
               ),
               
               DashboardCard(
                 title: 'CLAIM',
                 icon: Icons.monetization_on,
-                color: const Color(0xFF009688),
+                color: const Color(0xFFE57373),
                 route: AppRoutes.claim,
               ),
               
               DashboardCard(
                 title: 'CANCEL DOC',
                 icon: Icons.cancel,
-                color: const Color(0xFF26A69A),
+                color: const Color(0xFFFFC107),
                 route: AppRoutes.cancelDoc,
               ),
               
               // Equipment & Reports
-              const Padding(
-                padding: EdgeInsets.only(left: 16, top: 24, bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
                 child: Text(
                   'EQUIPMENT & REPORTS',
                   style: TextStyle(
-                    color: Color(0xFF00796B),
+                    color: AppColors.primaryRed,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -224,31 +256,31 @@ class DashboardScreen extends StatelessWidget {
               DashboardCard(
                 title: 'PRINTER SETUP',
                 icon: Icons.print,
-                color: const Color(0xFF4DB6AC),
+                color: const Color(0xFFB71C1C),
                 route: AppRoutes.printer,
               ),
               
               DashboardCard(
                 title: 'SALES',
                 icon: Icons.bar_chart,
-                color: const Color(0xFF80CBC4),
+                color: const Color(0xFFE91E63),
                 route: AppRoutes.sales,
               ),
               
               DashboardCard(
                 title: 'TALLY SHEET',
                 icon: Icons.list_alt,
-                color: const Color(0xFFB2DFDB),
+                color: const Color(0xFFF44336),
                 route: AppRoutes.tally,
               ),
               
               // Additional Tools
-              const Padding(
-                padding: EdgeInsets.only(left: 16, top: 24, bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
                 child: Text(
                   'ADDITIONAL TOOLS',
                   style: TextStyle(
-                    color: Color(0xFF00796B),
+                    color: AppColors.primaryRed,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -258,14 +290,14 @@ class DashboardScreen extends StatelessWidget {
               DashboardCard(
                 title: 'COMBINATION',
                 icon: Icons.grid_3x3,
-                color: const Color(0xFF004D40),
+                color: const Color(0xFF9C27B0),
                 route: AppRoutes.combination,
               ),
               
               DashboardCard(
                 title: 'SOLD OUT',
                 icon: Icons.block,
-                color: const Color(0xFF00695C),
+                color: const Color(0xFF7B1FA2),
                 route: AppRoutes.soldOut,
               ),
               
@@ -282,8 +314,8 @@ class DashboardScreen extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: Color(0xFF00796B),
+          style: TextStyle(
+            color: AppColors.primaryRed,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
