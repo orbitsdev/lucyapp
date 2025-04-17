@@ -13,7 +13,7 @@ class LoginScreen extends StatelessWidget {
     final controller = Get.put(AuthController());
     
     return Scaffold(
-      backgroundColor: AppColors.primaryBlue,
+      backgroundColor: AppColors.primaryRed,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -26,7 +26,7 @@ class LoginScreen extends StatelessWidget {
                 
                 // App Logo and Title
                 Text(
-                  'GAMBLE',
+                  'Lucky',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -41,7 +41,7 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 
                 Text(
-                  'Betting Management System',
+                  'Betting app',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
@@ -95,7 +95,7 @@ class LoginScreen extends StatelessWidget {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+                            borderSide: BorderSide(color: AppColors.primaryRed, width: 2),
                           ),
                         ),
                       ),
@@ -126,7 +126,7 @@ class LoginScreen extends StatelessWidget {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+                            borderSide: BorderSide(color: AppColors.primaryRed, width: 2),
                           ),
                         ),
                       )),
@@ -141,7 +141,7 @@ class LoginScreen extends StatelessWidget {
                           child: Text(
                             'Forgot Password?',
                             style: TextStyle(
-                              color: AppColors.primaryBlue,
+                              color: AppColors.primaryRed,
                             ),
                           ),
                         ),
@@ -203,13 +203,13 @@ class LoginScreen extends StatelessWidget {
                             ? null
                             : () => controller.login(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
+                          backgroundColor: AppColors.primaryRed,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          disabledBackgroundColor: AppColors.primaryBlue.withOpacity(0.6),
+                          disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.6),
                         ),
                         child: controller.isLoading.value
                             ? const SizedBox(
@@ -252,10 +252,10 @@ class LoginScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryBlue.withOpacity(0.1) : Colors.white,
+          color: isSelected ? AppColors.primaryRed.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? AppColors.primaryBlue : Colors.grey.shade300,
+            color: isSelected ? AppColors.primaryRed : Colors.grey.shade300,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -264,7 +264,7 @@ class LoginScreen extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppColors.primaryBlue : Colors.grey.shade600,
+              color: isSelected ? AppColors.primaryRed : Colors.grey.shade600,
               size: 24,
             ),
             SizedBox(height: 4.h),
@@ -272,7 +272,7 @@ class LoginScreen extends StatelessWidget {
               role,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isSelected ? AppColors.primaryBlue : Colors.grey.shade800,
+                color: isSelected ? AppColors.primaryRed : Colors.grey.shade800,
                 fontSize: 12.sp,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
