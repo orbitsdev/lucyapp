@@ -19,10 +19,10 @@ class DashboardScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
-            backgroundColor: const Color(0xFF1A237E), // Deep Blue for Coordinator
+            backgroundColor: AppColors.primaryRed,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                color: const Color(0xFF1A237E),
+                color: AppColors.primaryRed,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -39,7 +39,7 @@ class DashboardScreen extends StatelessWidget {
                             backgroundColor: Colors.white,
                             child: ClipOval(
                               child: CachedNetworkImage(
-                                imageUrl: 'https://ui-avatars.com/api/?name=Coordinator&background=1A237E&color=fff',
+                                imageUrl: 'https://ui-avatars.com/api/?name=Coordinator&background=d32f2f&color=fff',
                                 placeholder: (context, url) => const CircularProgressIndicator(),
                                 errorWidget: (context, url, error) => const Icon(Icons.person),
                                 fit: BoxFit.cover,
@@ -60,7 +60,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                             child: const Icon(
                               Icons.edit,
-                              color: Color(0xFF1A237E),
+                              color: AppColors.primaryRed,
                               size: 16,
                             ),
                           ),
@@ -119,7 +119,7 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           
-          // System Status
+          // Lucky Bet Analytics
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.all(16),
@@ -139,9 +139,9 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'System Status',
+                    'Lucky Bet Analytics',
                     style: TextStyle(
-                      color: Color(0xFF1A237E),
+                      color: AppColors.primaryRed,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -150,9 +150,9 @@ class DashboardScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildStatusItem(Icons.people, 'Active Users', '24'),
+                      _buildStatusItem(Icons.people, 'Total Teller', '24'),
                       _buildStatusItem(Icons.attach_money, 'Total Sales', '₱145,780'),
-                      _buildStatusItem(Icons.trending_up, 'Win Rate', '32%'),
+                      _buildStatusItem(Icons.trending_up, 'Total Hits', '32%'),
                     ],
                   ),
                 ],
@@ -169,28 +169,28 @@ class DashboardScreen extends StatelessWidget {
               DashboardCard(
                 title: 'USER MANAGEMENT',
                 icon: Icons.people_alt,
-                color: const Color(0xFF3949AB),
+                color: AppColors.primaryRed.withOpacity(0.9),
                 route: AppRoutes.userManagement,
               ),
               
               DashboardCard(
                 title: 'GENERATE HITS',
                 icon: Icons.casino,
-                color: const Color(0xFF5C6BC0),
+                color: AppColors.primaryRed.withOpacity(0.8),
                 route: AppRoutes.generateHits,
               ),
               
               DashboardCard(
                 title: 'SUMMARY REPORTS',
                 icon: Icons.summarize,
-                color: const Color(0xFF7986CB),
+                color: AppColors.primaryRed.withOpacity(0.7),
                 route: AppRoutes.summary,
               ),
               
               DashboardCard(
                 title: 'BET WIN ANALYSIS',
                 icon: Icons.analytics,
-                color: const Color(0xFF9FA8DA),
+                color: AppColors.primaryRed.withOpacity(0.6),
                 route: AppRoutes.betWin,
               ),
               
@@ -201,7 +201,7 @@ class DashboardScreen extends StatelessWidget {
                 child: Text(
                   'SYSTEM ADMINISTRATION',
                   style: TextStyle(
-                    color: Color(0xFF1A237E),
+                    color: AppColors.primaryRed,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -212,14 +212,14 @@ class DashboardScreen extends StatelessWidget {
               DashboardCard(
                 title: 'GAME CONFIGURATION',
                 icon: Icons.settings,
-                color: const Color(0xFF303F9F),
+                color: AppColors.primaryRed.withOpacity(0.5),
                 route: AppRoutes.userManagement, // Replace with proper route when available
               ),
               
               DashboardCard(
                 title: 'FINANCIAL REPORTS',
                 icon: Icons.account_balance,
-                color: const Color(0xFF3F51B5),
+                color: AppColors.primaryRed.withOpacity(0.4),
                 route: AppRoutes.summary, // Replace with proper route when available
               ),
               
@@ -236,14 +236,14 @@ class DashboardScreen extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: const Color(0xFF1A237E),
+          color: AppColors.primaryRed,
           size: 24,
         ),
         const SizedBox(height: 8),
         Text(
           value,
           style: const TextStyle(
-            color: Color(0xFF1A237E),
+            color: AppColors.primaryRed,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
