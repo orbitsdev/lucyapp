@@ -20,7 +20,9 @@ import 'package:bettingapp/ui/screens/teller/claim_screen.dart';
 import 'package:bettingapp/ui/screens/teller/printer_setup_screen.dart';
 import 'package:bettingapp/ui/screens/teller/cancel_bet_screen.dart';
 import 'package:bettingapp/ui/screens/teller/sales_screen.dart';
-import 'package:bettingapp/ui/screens/teller/tally_sheet_screen.dart';
+import 'package:bettingapp/ui/screens/shared/tally_sheet_screen.dart';
+import 'package:bettingapp/ui/screens/teller/tally_sheet_screen.dart' as teller_tally;
+import 'package:bettingapp/ui/screens/teller/commission_screen.dart';
 import 'package:bettingapp/ui/screens/teller/combination_screen.dart';
 import 'package:bettingapp/ui/screens/teller/sold_out_screen.dart';
 
@@ -58,7 +60,9 @@ class AppRoutes {
   static const String printer = '/teller/printer';
   static const String cancelBet = '/teller/cancel-bet';
   static const String sales = '/teller/sales';
-  static const String tally = '/teller/tally';
+  static const String tally = '/teller/tally'; // Original tally sheet
+  static const String tallyDashboard = '/shared/tally'; // New dashboard tally sheet
+  static const String commission = '/teller/commission'; // Teller commission screen
   static const String combination = '/teller/combination';
   static const String soldOut = '/teller/sold-out';
   
@@ -158,7 +162,17 @@ class AppRoutes {
     ),
     GetPage(
       name: tally,
+      page: () => const teller_tally.TallySheetScreen(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: tallyDashboard,
       page: () => const TallySheetScreen(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: commission,
+      page: () => const CommissionScreen(),
       transition: Transition.cupertino,
     ),
     GetPage(

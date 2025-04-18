@@ -13,6 +13,77 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: AppColors.primaryRed,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.admin_panel_settings,
+                      color: AppColors.primaryRed,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'COORDINATOR ADMIN',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'SYSTEM ADMINISTRATOR',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Dashboard'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long),
+              title: const Text('Tallysheet'),
+              onTap: () {
+                Navigator.pop(context);
+                Get.toNamed(AppRoutes.tallyDashboard);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () => Get.offAllNamed(AppRoutes.login),
+            ),
+          ],
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           // App Bar with User Info
@@ -101,18 +172,25 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
             ),
+            leading: Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
+            ),
             actions: [
-              // Logout Button
+              // Tallysheet Button
               TextButton.icon(
-                onPressed: () => Get.offAllNamed(AppRoutes.login),
+                onPressed: () => Get.toNamed(AppRoutes.tallyDashboard),
                 icon: const Icon(
-                  Icons.logout,
+                  Icons.receipt_long,
                   color: Colors.white,
                 ),
                 label: const Text(
-                  'Logout',
+                  'TALLYSHEET',
                   style: TextStyle(
                     color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -188,7 +266,7 @@ class DashboardScreen extends StatelessWidget {
               ),
               
               DashboardCard(
-                title: 'BET WIN ANALYSIS',
+                title: 'COMMISSION',
                 icon: Icons.analytics,
                 color: AppColors.primaryRed.withOpacity(0.6),
                 route: AppRoutes.betWin,
@@ -216,14 +294,14 @@ class DashboardScreen extends StatelessWidget {
                 route: AppRoutes.userManagement, // Replace with proper route when available
               ),
               
-              DashboardCard(
-                title: 'FINANCIAL REPORTS',
-                icon: Icons.account_balance,
-                color: AppColors.primaryRed.withOpacity(0.4),
-                route: AppRoutes.summary, // Replace with proper route when available
-              ),
+              // DashboardCard(
+              //   title: 'FINANCIAL REPORTS',
+              //   icon: Icons.account_balance,
+              //   color: AppColors.primaryRed.withOpacity(0.4),
+              //   route: AppRoutes.summary, // Replace with proper route when available
+              // ),
               
-              const SizedBox(height: 24),
+              // const SizedBox(height: 24),
               
               // Teller Functions Section
               const Padding(

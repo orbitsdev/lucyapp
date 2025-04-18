@@ -22,35 +22,21 @@ class LoginScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 60),
+        
                 
                 // App Logo and Title
-                Text(
-                  'Lucky',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                  ),
+                Image.asset(
+                  'assets/images/luckybet.png',
+                  height: 160,
+                  fit: BoxFit.contain,
                 ).animate()
                   .fadeIn(duration: 600.ms)
                   .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), duration: 600.ms),
                 
-                const SizedBox(height: 8),
+               
                 
-                Text(
-                  'Betting app',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 16,
-                  ),
-                ).animate()
-                  .fadeIn(duration: 600.ms, delay: 200.ms),
-                
-                const SizedBox(height: 60),
+             
+           
                 
                 // Login Form
                 Container(

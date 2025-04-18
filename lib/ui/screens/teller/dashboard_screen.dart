@@ -13,6 +13,77 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: AppColors.primaryRed,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.person,
+                      color: AppColors.primaryRed,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'TELLER ACCOUNT',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'MANILA BRANCH',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Dashboard'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long),
+              title: const Text('Tallysheet'),
+              onTap: () {
+                Navigator.pop(context);
+                Get.toNamed(AppRoutes.tallyDashboard);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () => Get.offAllNamed(AppRoutes.login),
+            ),
+          ],
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           // App Bar with User Info
@@ -101,18 +172,25 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
             ),
+            leading: Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
+            ),
             actions: [
-              // Logout Button
+              // Tallysheet Button
               TextButton.icon(
-                onPressed: () => Get.offAllNamed(AppRoutes.login),
+                onPressed: () => Get.toNamed(AppRoutes.tallyDashboard),
                 icon: const Icon(
-                  Icons.logout,
+                  Icons.receipt_long,
                   color: Colors.white,
                 ),
                 label: const Text(
-                  'Logout',
+                  'TALLYSHEET',
                   style: TextStyle(
                     color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -148,7 +226,7 @@ class DashboardScreen extends StatelessWidget {
                             'Today\'s Sales',
                             style: TextStyle(
                               color: AppColors.primaryRed,
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -157,7 +235,7 @@ class DashboardScreen extends StatelessWidget {
                             '₱ 12,450',
                             style: TextStyle(
                               color: AppColors.primaryRed,
-                              fontSize: 24,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -170,7 +248,7 @@ class DashboardScreen extends StatelessWidget {
                             'Today\'s Commission',
                             style: TextStyle(
                               color: AppColors.primaryRed,
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -179,7 +257,7 @@ class DashboardScreen extends StatelessWidget {
                             '₱ 1,000',
                             style: TextStyle(
                               color: AppColors.primaryRed,
-                              fontSize: 24,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -272,6 +350,13 @@ class DashboardScreen extends StatelessWidget {
                 icon: Icons.list_alt,
                 color: const Color(0xFFF44336),
                 route: AppRoutes.tally,
+              ),
+              
+              DashboardCard(
+                title: 'COMMISSION',
+                icon: Icons.monetization_on,
+                color: const Color(0xFF9C27B0),
+                route: AppRoutes.commission,
               ),
               
               // // Additional Tools
