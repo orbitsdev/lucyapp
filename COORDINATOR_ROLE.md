@@ -1,6 +1,6 @@
 # Coordinator Role Guide
 
-This document outlines the responsibilities, workflows, and features available to users with the **Coordinator** role in the Lucky Betting app.
+This document outlines the responsibilities, workflows, and features available to users with the **Coordinator** role in the LuckyBet app.
 
 ## Role Overview
 
@@ -19,6 +19,7 @@ The Coordinator is the administrative user with the highest level of access in t
 | • Set Win Numbers   |
 | • Generate Reports  |
 | • Monitor Sales     |
+| • Manage Commission |
 | • Act as Teller     |
 +---------------------+
 ```
@@ -32,7 +33,7 @@ The Coordinator is the administrative user with the highest level of access in t
 +----------------+     +----------------+     +----------------+
 ```
 
-1. Open the Lucky Betting app
+1. Open the LuckyBet app
 2. Enter username and password
 3. Select the "Coordinator" role
 4. Click the Login button
@@ -87,30 +88,33 @@ The Coordinator is the administrative user with the highest level of access in t
 5. Enable/disable specific games or game types
 6. Set draw schedules and cut-off times
 
-### 3. Commission
+### 3. Commission Management
 
 ```
 +----------------+     +----------------+     +----------------+
-| Coordinator    | --> | Commission     | --> | View Commission|
-| Dashboard      |     | Screen         |     | Percentages    |
+| Coordinator    | --> | Commission     | --> | View/Set       |
+| Dashboard      |     | Management     |     | Commission     |
 +----------------+     +----------------+     +----------------+
                                                       |
                                                       v
                                               +----------------+
-                                              | Select Date &  |
-                                              | View Details   |
+                                              | Configure      |
+                                              | Rates          |
                                               +----------------+
 ```
 
 **Steps:**
-1. From the Coordinator Dashboard, select "Commission"
-2. View the commission information
-3. Select a date using the date picker
-4. View commission percentages and amounts:
-   - Commission Percentage standard
-   - Commission Earn via Cashier
-   - Total Commission Percentage
-   - Total Commission Amount
+1. From the Coordinator Dashboard, tap "Commission"
+2. View the current commission rates for tellers
+3. Set or adjust commission percentages (standard rates are 5%, 10%, or 15%)
+4. View commission reports by teller, location, or date range
+5. Analyze commission payouts against sales performance
+
+**Key Functions:**
+- Set standard commission percentage for all tellers
+- Configure special commission rates for high-performing tellers
+- View commission history and reports
+- Calculate total commission payouts for accounting purposes
 
 ### 4. Setting Winning Numbers
 
@@ -165,36 +169,7 @@ The Coordinator is the administrative user with the highest level of access in t
 5. Click "View" on a teller to see detailed breakdown by draw time (2PM, 5PM, 9PM)
 6. Analyze sales, hits, and profit for each time slot
 
-### 6. Bet Win Management
-
-```
-+----------------+     +----------------+     +----------------+
-| Coordinator    | --> | Bet Win        | --> | Set Winning    |
-| Dashboard      |     | Screen         |     | Parameters     |
-+----------------+     +----------------+     +----------------+
-                                                      |
-                                                      v
-                                              +----------------+
-                                              | Calculate      |
-                                              | Payouts        |
-                                              +----------------+
-                                                      |
-                                                      v
-                                              +----------------+
-                                              | Approve        |
-                                              | Payouts        |
-                                              +----------------+
-```
-
-**Steps:**
-1. From the Coordinator Dashboard, tap "Bet Win"
-2. Select the game and draw date/time
-3. Review winning numbers and payout calculations
-4. Approve or adjust payout amounts
-5. Authorize large payouts that exceed Teller limits
-6. Generate payout reports
-
-### 7. System Administration
+### 6. System Administration
 
 ```
 +----------------+     +----------------+     +----------------+
@@ -241,7 +216,7 @@ The Coordinator Dashboard provides a comprehensive overview of the betting opera
 |                                                               |
 +---------------------------------------------------------------+
 |                                                               |
-|  [Users]  [Games]  [Generate Hits]  [Summary]  [Bet Win]      |
+|  [Users]  [Games]  [Generate Hits]  [Summary]  [Commission]  |
 |                                                               |
 +---------------------------------------------------------------+
 ```

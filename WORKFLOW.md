@@ -1,6 +1,6 @@
-# Lucky Betting App Workflow
+# LuckyBet App Workflow
 
-This document outlines the complete flow of processes in the Lucky Betting App, from user login to betting operations and administrative functions.
+This document outlines the complete flow of processes in the LuckyBet App, from user login to betting operations and administrative functions.
 
 ## 1. User Authentication Flow
 
@@ -32,7 +32,7 @@ Dashboard (Coordinator)
   ├── Generate Hits
   ├── Summary Reports
   │   └── Summary Detail
-  ├── Commission (formerly Bet Win)
+  ├── Commission
   ├── System Administration
   │   ├── Game Configuration
   │   └── Financial Reports
@@ -45,11 +45,11 @@ Dashboard (Teller)
   ├── New Bet
   ├── Claim
   ├── Printer Setup
-  ├── Cancel Document
+  ├── Cancel Bet
   ├── Sales
   ├── Tally Sheet
-  ├── Combination
-  └── Sold Out
+  ├── Commission
+  └── Combination
 
 Dashboard (Customer)
   ├── Place Bet
@@ -78,75 +78,148 @@ Visual representation:
 +----------------+     +----------------+     +----------------+     +----------------+
 ```
 
-## 4. History and Records Flow
+## 4. Betting Process
 
 ```
-History Screen → Select Date Range → View Transactions → Transaction Details
+New Bet → Select Game → Enter Numbers → Set Amount → Confirm → Print Receipt
 ```
 
 Visual representation:
 ```
-+----------------+     +----------------+     +----------------+     +----------------+
-| History Screen | --> | Select Date    | --> | View           | --> | Transaction    |
-|                |     | Range          |     | Transactions   |     | Details        |
-+----------------+     +----------------+     +----------------+     +----------------+
++----------------+     +----------------+     +----------------+
+| Teller         | --> | New Bet        | --> | Select Game    |
+| Dashboard      |     | Screen         |     | Type           |
++----------------+     +----------------+     +----------------+
+                                                      |
+                                                      v
++----------------+     +----------------+     +----------------+
+| Print Receipt  | <-- | Confirm and    | <-- | Enter Numbers  |
+| for Customer   |     | Process Bet    |     | and Amount     |
++----------------+     +----------------+     +----------------+
 ```
+
+**Steps:**
+1. Teller selects "New Bet" from the dashboard
+2. Selects the game type (e.g., Standard, Combination)
+3. Enters the bet numbers (1-31 or custom range based on game type)
+4. Sets the bet amount (custom values allowed)
+5. Confirms the bet details
+6. System processes the bet and generates a receipt with QR code
+7. Receipt is printed for the customer
 
 ## 5. Claim Process
 
 ```
-Claim Screen → Enter Ticket Number → Verify Ticket → Process Claim → Print Claim Receipt
+Claim → Scan QR Code → Verify Win → Process Payment → Print Receipt
 ```
 
 Visual representation:
 ```
-+----------------+     +----------------+     +----------------+     +----------------+
-| Claim Screen   | --> | Enter Ticket   | --> | Verify Ticket  | --> | Process Claim  |
-|                |     | Number         |     |                |     |                |
-+----------------+     +----------------+     +----------------+     +----------------+
-                                                                            |
-                                                                            v
-                                                                     +----------------+
-                                                                     | Print Claim    |
-                                                                     | Receipt        |
-                                                                     +----------------+
++----------------+     +----------------+     +----------------+
+| Teller         | --> | Claim          | --> | Scan QR Code   |
+| Dashboard      |     | Screen         |     | of Ticket      |
++----------------+     +----------------+     +----------------+
+                                                      |
+                                                      v
++----------------+     +----------------+     +----------------+
+| Print Claim    | <-- | Process        | <-- | Verify Win     |
+| Receipt        |     | Payment        |     | Amount         |
++----------------+     +----------------+     +----------------+
 ```
 
-## 6. Commission Process
+**Steps:**
+1. Teller selects "Claim" from the dashboard
+2. Scans the QR code on the winning ticket
+3. System verifies the ticket and displays win amount
+4. Teller confirms the win and processes payment
+5. System marks the ticket as claimed
+6. Claim receipt is printed for the customer
+
+## 6. Cancellation Process
 
 ```
-Commission Screen → View Commission Information → Select Date → View Commission Details
-```
-
-Visual representation:
-```
-+----------------+     +----------------+     +----------------+     +----------------+
-| Commission     | --> | View Commission| --> | Select Date    | --> | View Commission|
-| Screen         |     | Information    |     | with Picker    |     | Details        |
-+----------------+     +----------------+     +----------------+     +----------------+
-```
-
-## 7. Summary Report Process
-
-```
-Summary Screen → View Total Cards → Search Tellers → Select Teller → View Detailed Breakdown
+Cancel Bet → Enter/Scan Ticket Number → Verify Eligibility → Process Cancellation → Print Receipt
 ```
 
 Visual representation:
 ```
-+----------------+     +----------------+     +----------------+     +----------------+
-| Summary Screen | --> | View Total     | --> | Search and     | --> | Select Teller  |
-|                |     | Sales & Hits   |     | Filter Tellers |     |                |
-+----------------+     +----------------+     +----------------+     +----------------+
-                                                                            |
-                                                                            v
-                                                                     +----------------+
-                                                                     | View Detailed  |
-                                                                     | Breakdown      |
-                                                                     +----------------+
++----------------+     +----------------+     +----------------+
+| Teller         | --> | Cancel Bet     | --> | Enter/Scan     |
+| Dashboard      |     | Screen         |     | Ticket Number  |
++----------------+     +----------------+     +----------------+
+                                                      |
+                                                      v
++----------------+     +----------------+     +----------------+
+| Print          | <-- | Process        | <-- | Verify         |
+| Cancellation   |     | Cancellation   |     | Eligibility    |
+| Receipt        |     | and Refund     |     | (Time Window)  |
++----------------+     +----------------+     +----------------+
 ```
 
-## 8. Data Flow Architecture
+**Steps:**
+1. Teller selects "Cancel Bet" from the dashboard
+2. Enters or scans the ticket number
+3. System verifies if the ticket is eligible for cancellation
+   - Must be within time window (typically 15 minutes after purchase)
+   - Must not be for a draw that has already occurred
+4. If eligible, system processes the cancellation and issues refund
+5. Cancellation receipt is printed for the customer
+
+## 7. Commission Process (Teller)
+
+```
+Commission → View Current Rate → View Earnings → Filter by Date → View Details
+```
+
+Visual representation:
+```
++----------------+     +----------------+     +----------------+
+| Teller         | --> | Commission     | --> | View Current   |
+| Dashboard      |     | Screen         |     | Rate & Earnings|
++----------------+     +----------------+     +----------------+
+                                                      |
+                                                      v
++----------------+     +----------------+
+| View Detailed  | <-- | Filter by      |
+| Breakdown      |     | Date Range     |
++----------------+     +----------------+
+```
+
+**Steps:**
+1. Teller selects "Commission" from the dashboard
+2. Views their current commission rate (5%, 10%, or 15%)
+3. Views total commission earned for the current period
+4. Can filter by date range to view historical commission
+5. Views detailed breakdown of commission calculation
+
+## 8. Commission Management (Coordinator)
+
+```
+Commission → View All Tellers → Set Rates → Approve Payments → Generate Reports
+```
+
+Visual representation:
+```
++----------------+     +----------------+     +----------------+
+| Coordinator    | --> | Commission     | --> | View All       |
+| Dashboard      |     | Management     |     | Tellers        |
++----------------+     +----------------+     +----------------+
+                                                      |
+                                                      v
++----------------+     +----------------+     +----------------+
+| Generate       | <-- | Approve        | <-- | Set/Adjust     |
+| Reports        |     | Payments       |     | Rates          |
++----------------+     +----------------+     +----------------+
+```
+
+**Steps:**
+1. Coordinator selects "Commission" from the dashboard
+2. Views list of all tellers with their current commission rates
+3. Sets or adjusts commission rates for individual tellers
+4. Approves commission payments for processing
+5. Generates commission reports for accounting purposes
+
+## 9. Data Flow Architecture
 
 ```
 UI Layer (Screens) → Controllers (Business Logic) → Models (Data) → Services (API/Storage)
@@ -167,7 +240,7 @@ Visual representation:
 +---------------------------------------------------------------+     +----------------+
 ```
 
-## 9. Printer Setup and Management
+## 10. Printer Setup and Management
 
 ```
 Printer Setup Screen → Scan for Devices → Select Printer → Test Connection → Save Configuration
@@ -184,26 +257,6 @@ Visual representation:
                                                                      +----------------+
                                                                      | Save           |
                                                                      | Configuration  |
-                                                                     +----------------+
-```
-
-## 10. Cancel Document Flow
-
-```
-Cancel Document Screen → Enter Document Number → Verify Document → Confirm Cancellation → Process Cancellation
-```
-
-Visual representation:
-```
-+----------------+     +----------------+     +----------------+     +----------------+
-| Cancel Document| --> | Enter Document | --> | Verify         | --> | Confirm        |
-| Screen         |     | Number         |     | Document       |     | Cancellation   |
-+----------------+     +----------------+     +----------------+     +----------------+
-                                                                            |
-                                                                            v
-                                                                     +----------------+
-                                                                     | Process        |
-                                                                     | Cancellation   |
                                                                      +----------------+
 ```
 
@@ -262,7 +315,7 @@ Visual representation:
                                                                      +----------------+
 ```
 
-## 12. Bet Win Process
+## 14. Bet Win Process
 
 ```
 Bet Win Screen → Select Draw → Enter Winning Numbers → Calculate Winners → Process Payouts
@@ -282,7 +335,7 @@ Visual representation:
                                                                      +----------------+
 ```
 
-## 13. Sold Out Management
+## 15. Sold Out Management
 
 ```
 Sold Out Screen → Select Game Type → View Available Numbers → Mark Numbers as Sold Out → Save Changes
@@ -302,9 +355,9 @@ Visual representation:
                                                                      +----------------+
 ```
 
-## 14. Application Architecture Overview
+## 16. Application Architecture Overview
 
-The GAMBLE Mobile App follows a clean architecture pattern with the following components:
+The LuckyBet Mobile App follows a clean architecture pattern with the following components:
 
 1. **UI Layer**: Flutter widgets and screens
 2. **Controllers**: GetX controllers for business logic and state management

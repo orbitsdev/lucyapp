@@ -19,14 +19,14 @@ class MyApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return GetMaterialApp(
-          title: 'GAMBLE Mobile App',
+          title: 'LuckyBet',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
-            primaryColor: AppColors.primaryBlue,
+            primaryColor: AppColors.primaryRed,
             scaffoldBackgroundColor: Colors.grey.shade100,
             colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primaryBlue,
-              primary: AppColors.primaryBlue,
+              seedColor: AppColors.primaryRed,
+              primary: AppColors.primaryRed,
             ),
             appBarTheme: AppBarTheme(
               elevation: 0,
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
+                backgroundColor: AppColors.primaryRed,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+                borderSide: BorderSide(color: AppColors.primaryRed, width: 2),
               ),
               contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
             ),

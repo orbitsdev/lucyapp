@@ -1,6 +1,6 @@
-# GAMBLE Mobile App Data Model
+# LuckyBet Data Model
 
-This document outlines the complete data model for the GAMBLE Mobile App, including entity relationships, data collections, and authentication requirements. The backend will be implemented using Laravel.
+This document outlines the complete data model for the LuckyBet app, including entity relationships, data collections, and authentication requirements. The backend will be implemented using Laravel.
 
 ## 1. Authentication Data Model
 
@@ -18,11 +18,13 @@ This document outlines the complete data model for the GAMBLE Mobile App, includ
    - Manages tellers and customers
    - Access to all reports and configurations
    - Can set winning numbers and manage games
+   - Manages commission rates
 
 2. **Teller**
    - Processes bets and claims
    - Access to sales reports and tally sheets
-   - Can cancel tickets and manage printer settings
+   - Can cancel bets and manage printer settings
+   - Views personal commission information
 
 3. **Customer**
    - Places bets
@@ -192,18 +194,18 @@ This document outlines the complete data model for the GAMBLE Mobile App, includ
 
 ```
 +----------------+     +----------------+     +----------------+
-| Tickets        | --> | Bet Details    | --> | Bet Numbers    |
-| (Master Record)|     | (Game Info)    |     | (Selections)   |
+| Bets           | --> | Bet Details    | --> | Bet Numbers    |
+| (Ticket Info)  |     | (Game Info)    |     | (Number Sets)  |
 +----------------+     +----------------+     +----------------+
-        |                                             |
-        v                                             v
-+----------------+                           +----------------+
-| Transactions   |                           | Hits           |
-| (Financial)    |                           | (Winning Bets) |
-+----------------+                           +----------------+
+        |                      |                      |
+        v                      v                      v
++----------------+     +----------------+     +----------------+
+| Claims         | --> | Cancellations  | --> | Commissions   |
+| (Winnings)     |     | (Refunds)      |     | (Earnings)    |
++----------------+     +----------------+     +----------------+
 ```
 
-### Tickets Table
+### Bets Table
 ```
 +-------------------+------------------+--------------------------------------+
 | Field             | Type             | Description                          |
@@ -224,7 +226,7 @@ This document outlines the complete data model for the GAMBLE Mobile App, includ
 | Field             | Type             | Description                          |
 +-------------------+------------------+--------------------------------------+
 | id                | bigint(unsigned) | Primary key                          |
-| ticket_id         | bigint(unsigned) | Foreign key to tickets table         |
+| bet_id            | bigint(unsigned) | Foreign key to bets table            |
 | game_id           | bigint(unsigned) | Foreign key to games table           |
 | game_type_id      | bigint(unsigned) | Foreign key to game_types table      |
 | draw_date         | date             | Date of the draw                     |
@@ -250,36 +252,54 @@ This document outlines the complete data model for the GAMBLE Mobile App, includ
 +-------------------+------------------+--------------------------------------+
 ```
 
-### Hits Table
+### Claims Table
 ```
 +-------------------+------------------+--------------------------------------+
 | Field             | Type             | Description                          |
 +-------------------+------------------+--------------------------------------+
 | id                | bigint(unsigned) | Primary key                          |
-| bet_detail_id     | bigint(unsigned) | Foreign key to bet_details table     |
-| winning_number_id | bigint(unsigned) | Foreign key to winning_numbers table |
-| win_amount        | decimal          | Winning amount                       |
-| is_claimed        | boolean          | Whether prize has been claimed       |
-| claimed_at        | timestamp        | When prize was claimed               |
-| claimed_by        | bigint(unsigned) | User who processed the claim         |
+| bet_id            | bigint(unsigned) | Foreign key to bets table            |
+| user_id           | bigint(unsigned) | User who processed the claim         |
+| claim_date        | date             | Date of claim                        |
+| claim_time        | time             | Time of claim                        |
+| claim_amount      | decimal          | Amount claimed                       |
+| qr_code_data      | string           | QR code data from winning ticket     |
+| status            | string           | Claim status (pending/approved/paid) |
 | created_at        | timestamp        | Record creation timestamp            |
 | updated_at        | timestamp        | Record update timestamp              |
 +-------------------+------------------+--------------------------------------+
 ```
 
-### Transactions Table
+### Cancellations Table
 ```
 +-------------------+------------------+--------------------------------------+
 | Field             | Type             | Description                          |
 +-------------------+------------------+--------------------------------------+
 | id                | bigint(unsigned) | Primary key                          |
-| user_id           | bigint(unsigned) | Foreign key to users table           |
-| ticket_id         | bigint(unsigned) | Foreign key to tickets table (opt)   |
-| hit_id            | bigint(unsigned) | Foreign key to hits table (opt)      |
-| type              | enum             | Sale, Claim, Cancellation, Adjustment|
-| amount            | decimal          | Transaction amount                   |
-| reference_number  | string           | Reference number                     |
-| notes             | text             | Transaction notes                    |
+| bet_id            | bigint(unsigned) | Foreign key to bets table            |
+| user_id           | bigint(unsigned) | User who processed the cancellation  |
+| cancel_date       | date             | Date of cancellation                 |
+| cancel_time       | time             | Time of cancellation                 |
+| refund_amount     | decimal          | Amount refunded                      |
+| reason            | string           | Reason for cancellation              |
+| created_at        | timestamp        | Record creation timestamp            |
+| updated_at        | timestamp        | Record update timestamp              |
++-------------------+------------------+--------------------------------------+
+```
+
+### Commissions Table
+```
++-------------------+------------------+--------------------------------------+
+| Field             | Type             | Description                          |
++-------------------+------------------+--------------------------------------+
+| id                | bigint(unsigned) | Primary key                          |
+| user_id           | bigint(unsigned) | Teller who earned the commission     |
+| date              | date             | Date of commission calculation       |
+| sales_amount      | decimal          | Total sales amount                   |
+| commission_rate   | decimal          | Commission percentage rate           |
+| commission_amount | decimal          | Calculated commission amount         |
+| status            | string           | Status (pending/approved/paid)       |
+| approved_by       | bigint(unsigned) | Coordinator who approved commission  |
 | created_at        | timestamp        | Record creation timestamp            |
 | updated_at        | timestamp        | Record update timestamp              |
 +-------------------+------------------+--------------------------------------+
@@ -417,13 +437,13 @@ This document outlines the complete data model for the GAMBLE Mobile App, includ
       |
       v
 +-------------+     +-------------+     +-------------+
-| Tickets     |---->| Bet Details |---->| Bet Numbers |
+| Bets        |---->| Bet Details |---->| Bet Numbers |
 +-------------+     +-------------+     +-------------+
       |                   |                   |
       |                   |                   |
       v                   v                   v
 +-------------+     +-------------+     +-------------+
-| Transactions|     | Games       |     | Hits        |
+| Claims      |     | Games       |     | Commissions |
 +-------------+     +-------------+     +-------------+
                           |
                           |
@@ -472,19 +492,17 @@ GET    /api/games/{id}/types   - Get game types
 
 ### Betting Endpoints
 ```
-POST   /api/tickets            - Create new ticket/bet
-GET    /api/tickets            - List tickets
-GET    /api/tickets/{id}       - Get ticket details
-PUT    /api/tickets/{id}/cancel - Cancel ticket
-GET    /api/tickets/history    - Get betting history
+POST   /api/bets               - Create new bet
+GET    /api/bets               - List bets
+GET    /api/bets/{id}          - Get bet details
+PUT    /api/bets/{id}/cancel   - Cancel bet
+GET    /api/bets/history       - Get betting history
 ```
 
 ### Winning and Claims Endpoints
 ```
 POST   /api/winning-numbers    - Enter winning numbers
 GET    /api/winning-numbers    - List winning numbers
-POST   /api/hits/generate      - Generate hits
-GET    /api/hits               - List hits
 POST   /api/claims             - Process claim
 ```
 
@@ -567,4 +585,4 @@ GET    /api/reports/summary    - Get summary report
 
 5. **Token Abilities**: Tokens can be assigned specific abilities (similar to OAuth scopes) to restrict what actions they can perform.
 
-This data model provides a comprehensive foundation for implementing the GAMBLE Mobile App with a Laravel backend. The model covers all aspects of the application, from authentication to game management, betting operations, and reporting.
+This data model provides a comprehensive foundation for implementing the LuckyBet app with a Laravel backend. The model covers all aspects of the application, from authentication to game management, betting operations, and reporting.

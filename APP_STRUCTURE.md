@@ -1,6 +1,6 @@
-# Lucky Betting App Structure
+# LuckyBet App Structure
 
-This document outlines the structure for the Lucky Betting app, organizing screens by user role and module to avoid confusion and improve maintainability.
+This document outlines the structure for the LuckyBet app, organizing screens by user role and module to avoid confusion and improve maintainability.
 
 ## 1. User Roles
 
@@ -20,11 +20,13 @@ The application will support three distinct user roles:
    - Manages tellers and customers
    - Access to all reports and configurations
    - Can set winning numbers and manage games
+   - Manages commission rates for tellers
 
 2. **Teller**
    - Processes bets and claims
    - Access to sales reports and tally sheets
-   - Can cancel tickets and manage printer settings
+   - Can cancel bets and manage printer settings
+   - Views personal commission information
 
 3. **Customer**
    - Places bets
@@ -38,7 +40,7 @@ The login screen includes three clear options for users to identify their role:
 ```
 +-----------------------------------------------+
 |                                               |
-|              Lucky Betting App                |
+|              LuckyBet                         |
 |                                               |
 +-----------------------------------------------+
 |                                               |
@@ -72,10 +74,12 @@ lib/
 │   ├── coordinator/
 │   │   ├── admin_controller.dart
 │   │   ├── reports_controller.dart
+│   │   ├── commission_controller.dart
 │   │   └── game_management_controller.dart
 │   ├── teller/
 │   │   ├── betting_controller.dart
 │   │   ├── claims_controller.dart
+│   │   ├── commission_controller.dart
 │   │   └── sales_controller.dart
 │   └── customer/
 │       ├── bet_controller.dart
@@ -83,7 +87,8 @@ lib/
 ├── models/
 │   ├── user_model.dart
 │   ├── game_model.dart
-│   ├── ticket_model.dart
+│   ├── bet_model.dart
+│   ├── commission_model.dart
 │   └── ...
 ├── routes/
 │   └── app_routes.dart
@@ -99,17 +104,18 @@ lib/
 │   │   │   ├── dashboard_screen.dart
 │   │   │   ├── generate_hits_screen.dart
 │   │   │   ├── summary_screen.dart
-│   │   │   ├── bet_win_screen.dart
+│   │   │   ├── commission_screen.dart
 │   │   │   └── user_management_screen.dart
 │   │   ├── teller/
 │   │   │   ├── dashboard_screen.dart
 │   │   │   ├── new_bet_screen.dart
 │   │   │   ├── claim_screen.dart
-│   │   │   ├── cancel_doc_screen.dart
+│   │   │   ├── cancel_bet_screen.dart
 │   │   │   ├── printer_setup_screen.dart
 │   │   │   ├── sales_screen.dart
 │   │   │   ├── tally_sheet_screen.dart
-│   │   │   └── sold_out_screen.dart
+│   │   │   ├── commission_screen.dart
+│   │   │   └── combination_screen.dart
 │   │   └── customer/
 │   │       ├── dashboard_screen.dart
 │   │       ├── place_bet_screen.dart
@@ -144,7 +150,7 @@ lib/
 - Generate Hits Screen
 - Summary Screen
 - Summary Detail Screen
-- Commission Screen (formerly Bet Win Screen)
+- Commission Screen
 - Financial Reports Screen
 - Teller Functions:
   - Teller New Bet Screen
@@ -159,11 +165,11 @@ lib/
 - Teller Dashboard
 - New Bet Screen
 - Claim Screen
-- Cancel Document Screen
+- Cancel Bet Screen
 - Printer Setup Screen
 - Sales Screen
 - Tally Sheet Screen
-- Sold Out Screen
+- Commission Screen
 - Combination Screen
 ```
 
@@ -244,7 +250,7 @@ Visual representation:
 Each role will have a distinct UI experience with appropriate color schemes and layouts:
 
 ### Coordinator UI
-- Primary color: Deep Blue (#1a237e)
+- Primary color: Red (#FF0000)
 - Comprehensive dashboard with analytics
 - Access to administrative tools
 

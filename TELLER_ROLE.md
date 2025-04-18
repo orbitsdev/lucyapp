@@ -1,6 +1,6 @@
 # Teller Role Guide
 
-This document outlines the responsibilities, workflows, and features available to users with the **Teller** role in the GAMBLE Mobile App.
+This document outlines the responsibilities, workflows, and features available to users with the **Teller** role in the LuckyBet app.
 
 ## Role Overview
 
@@ -16,9 +16,10 @@ The Teller is the operational user who directly interacts with customers, proces
 +---------------------+
 | • Process Bets      |
 | • Handle Claims     |
-| • Cancel Tickets    |
+| • Cancel Bets       |
 | • Manage Sales      |
 | • Print Receipts    |
+| • View Commission   |
 +---------------------+
 ```
 
@@ -31,7 +32,7 @@ The Teller is the operational user who directly interacts with customers, proces
 +----------------+     +----------------+     +----------------+
 ```
 
-1. Open the GAMBLE Mobile App
+1. Open the LuckyBet app
 2. Enter username and password
 3. Select the "Teller" role
 4. Click the Login button
@@ -73,55 +74,47 @@ The Teller is the operational user who directly interacts with customers, proces
 
 ```
 +----------------+     +----------------+     +----------------+
-| Teller         | --> | Claim          | --> | Enter Ticket   |
-| Dashboard      |     | Screen         |     | Number         |
+| Teller         | --> | Claim          | --> | Scan QR Code   |
+| Dashboard      |     | Screen         |     | of Ticket      |
 +----------------+     +----------------+     +----------------+
                                                       |
                                                       v
                                               +----------------+
-                                              | Verify Winning |
-                                              | Status         |
+                                              | Verify Win     |
+                                              | Amount         |
                                               +----------------+
                                                       |
                                                       v
                                               +----------------+
-                                              | Process Payout |
-                                              | and Print      |
+                                              | Process        |
+                                              | Payment        |
                                               +----------------+
 ```
 
 **Steps:**
 1. From the Teller Dashboard, tap "Claim"
-2. Enter or scan the customer's ticket number
-3. The system verifies if the ticket is a winner
-4. If winning, the system displays the winning amount
-5. Confirm the payout with the customer
-6. Process the payout and provide the winnings
-7. Print a claim receipt for the customer
+2. Scan the QR code on the winning ticket
+3. The system verifies the ticket and displays win amount
+4. Process the payment to the customer
+5. Mark the ticket as claimed in the system
 
-### 3. Cancelling Tickets
+### 3. Cancelling Bets
 
 ```
 +----------------+     +----------------+     +----------------+
-| Teller         | --> | Cancel         | --> | Enter Ticket   |
-| Dashboard      |     | Document       |     | Number         |
+| Teller         | --> | Cancel Bet     | --> | Enter Ticket   |
+| Dashboard      |     | Screen         |     | Number         |
 +----------------+     +----------------+     +----------------+
                                                       |
                                                       v
                                               +----------------+
-                                              | Verify Ticket  |
-                                              | Eligibility    |
-                                              +----------------+
-                                                      |
-                                                      v
-                                              +----------------+
-                                              | Confirm Cancel |
-                                              | and Refund     |
+                                              | Confirm        |
+                                              | Cancellation   |
                                               +----------------+
 ```
 
 **Steps:**
-1. From the Teller Dashboard, tap "Cancel Document"
+1. From the Teller Dashboard, tap "Cancel Bet"
 2. Enter or scan the ticket number to be cancelled
 3. The system verifies if the ticket is eligible for cancellation
    - Must be within the cancellation time window
@@ -236,6 +229,28 @@ The Teller is the operational user who directly interacts with customers, proces
 4. Mark specific numbers as sold out when they reach their limit
 5. Save changes to update the system
 
+### 8. View Commission
+
+```
++----------------+     +----------------+     +----------------+
+| Teller         | --> | Commission     | --> | View Current   |
+| Dashboard      |     | Screen         |     | Commission     |
++----------------+     +----------------+     +----------------+
+                                                      |
+                                                      v
+                                              +----------------+
+                                              | View History   |
+                                              | & Reports      |
+                                              +----------------+
+```
+
+**Steps:**
+1. From the Teller Dashboard, tap "Commission"
+2. View your current commission rate and amount
+3. Check commission history for previous periods
+4. See detailed breakdown of commission calculations
+5. Filter commission data by date
+
 ## Dashboard Overview
 
 The Teller Dashboard provides an operational overview focused on daily activities:
@@ -262,7 +277,7 @@ The Teller Dashboard provides an operational overview focused on daily activitie
 |                                                               |
 +---------------------------------------------------------------+
 |                                                               |
-|  [New Bet]  [Claim]  [Cancel]  [Sales]  [Printer]  [More]     |
+|  [New Bet]  [Claim]  [Cancel Bet]  [Sales]  [Printer]  [More]     |
 |                                                               |
 +---------------------------------------------------------------+
 ```
