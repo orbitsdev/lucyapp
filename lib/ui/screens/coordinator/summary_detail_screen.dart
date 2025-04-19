@@ -153,7 +153,7 @@ class SummaryDetailScreen extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(right: 16),
                     child: Text(
-                      'Profit',
+                      'Gross',
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         color: Colors.white,
@@ -301,7 +301,7 @@ class SummaryDetailScreen extends StatelessWidget {
                             '₱${NumberFormat('#,###').format(data['profit'])}',
                             textAlign: TextAlign.right,
                             style: TextStyle(
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),

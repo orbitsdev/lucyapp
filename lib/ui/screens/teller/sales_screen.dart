@@ -12,22 +12,20 @@ class SalesController extends GetxController {
   // Available schedule options
   final List<String> schedules = ['All', '2 pm', '5 pm', '9 pm'];
   
-  // Sample data for the sales table
-  final List<String> columns = ['Sales', 'Bet', 'Hits'];
+  // Updated columns for the sales table
+  final List<String> columns = ['Gross', 'Sales', 'Bet', 'Hits'];
   
   final List<String> rowLabels = [
-    'Profit',
     '2 PM',
     '5 PM',
     '9 PM'
   ];
   
-  // Sample data with the new structure
+  // Updated data: Only 2 PM, 5 PM, 9 PM rows, each with 4 columns
   final List<List<String>> rows = [
-    ['1500', '1500', '500'],  // Profit row (calculated as Bet - Hits)
-    ['500', '500', '200'],    // 2 PM data
-    ['500', '500', '150'],    // 5 PM data
-    ['500', '500', '150'],    // 9 PM data
+    ['1000', '500', '500', '200'],    // 2 PM data
+    ['1200', '500', '500', '150'],    // 5 PM data
+    ['1100', '500', '500', '150'],    // 9 PM data
   ];
   
   // Get formatted date
@@ -184,7 +182,7 @@ class SalesScreen extends StatelessWidget {
                 rows: controller.rows,
                 rowLabels: controller.rowLabels,
                 headerColor: AppColors.primaryRed, // Changed to red color scheme
-                showTotal: false, // Profit row is already included in the data
+                showTotal: false,
               ).animate()
                 .fadeIn(duration: 300.ms)
                 .slideY(begin: 0.1, end: 0, duration: 300.ms),

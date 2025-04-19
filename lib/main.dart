@@ -21,7 +21,13 @@ class MyApp extends StatelessWidget {
         return GetMaterialApp(
           title: 'LuckyBet',
           debugShowCheckedModeBanner: false,
+  //          darkTheme: ThemeData.dark().copyWith(
+  //   appBarTheme: AppBarTheme(
+  //     iconTheme: IconThemeData(color: Colors.white),
+  //   ),
+  // ),
           theme: ThemeData(
+             iconTheme: IconThemeData(color: Colors.white),
             primaryColor: AppColors.primaryRed,
             scaffoldBackgroundColor: Colors.grey.shade100,
             colorScheme: ColorScheme.fromSeed(
