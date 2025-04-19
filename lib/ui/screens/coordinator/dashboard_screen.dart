@@ -67,14 +67,6 @@ class DashboardScreen extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.receipt_long),
-              title: const Text('Tallysheet'),
-              onTap: () {
-                Navigator.pop(context);
-                Get.toNamed(AppRoutes.tallyDashboard);
-              },
-            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout),
@@ -267,9 +259,9 @@ class DashboardScreen extends StatelessWidget {
               
               DashboardCard(
                 title: 'COMMISSION',
-                icon: Icons.analytics,
+                icon: Icons.monetization_on,
                 color: AppColors.primaryRed.withOpacity(0.6),
-                route: AppRoutes.betWin,
+                route: AppRoutes.coordinatorCommission,
               ),
               
               // Additional Admin Features

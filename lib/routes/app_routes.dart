@@ -12,6 +12,7 @@ import 'package:bettingapp/ui/screens/coordinator/user_management_screen.dart';
 import 'package:bettingapp/ui/screens/coordinator/teller_new_bet_screen.dart';
 import 'package:bettingapp/ui/screens/coordinator/teller_claim_screen.dart';
 import 'package:bettingapp/ui/screens/coordinator/teller_sales_screen.dart';
+import 'package:bettingapp/ui/screens/coordinator/commission_screen.dart' as coordinator_commission;
 
 // Teller screens
 import 'package:bettingapp/ui/screens/teller/dashboard_screen.dart' as teller;
@@ -48,6 +49,7 @@ class AppRoutes {
   static const String summary = '/coordinator/summary';
   static const String summaryDetail = '/coordinator/summary/detail';
   static const String betWin = '/coordinator/bet-win';
+  static const String coordinatorCommission = '/coordinator/commission';
   
   // Coordinator acting as teller routes
   static const String tellerNewBet = '/coordinator/teller/new-bet';
@@ -110,6 +112,11 @@ class AppRoutes {
       name: betWin,
       page: () => const BetWinScreen(),
       transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: coordinatorCommission,
+      page: () => const coordinator_commission.CommissionScreen(),
+      transition: Transition.rightToLeft,
     ),
     
     // Coordinator acting as teller routes

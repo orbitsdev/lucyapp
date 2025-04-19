@@ -70,7 +70,7 @@ class TallySheetScreen extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        'HITS',
+                        'SALES',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -81,7 +81,7 @@ class TallySheetScreen extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        'KABIG',
+                        'HITS',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -127,7 +127,7 @@ class TallySheetScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          summaryData['hits'],
+                          summaryData['sales'],
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.red,
@@ -138,7 +138,7 @@ class TallySheetScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          summaryData['kabig'],
+                          summaryData['hits'],
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.primaryRed,
@@ -188,8 +188,8 @@ class TallySheetScreen extends StatelessWidget {
                         children: [
                           _headerCell('DRAW', width: 100),
                           _headerCell('GROSS', width: 90),
+                          _headerCell('SALES', width: 90),
                           _headerCell('HITS', width: 90),
-                          _headerCell('KABIG', width: 90),
                         ],
                       ),
                     ),
@@ -223,19 +223,19 @@ class TallySheetScreen extends StatelessWidget {
                             ),
                             _dataCell(
                               child: Text(
-                                item['hits'],
+                                item['sales'],
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: item['hits'] == '0' ? Colors.grey : Colors.red,
-                                  fontWeight: item['hits'] == '0' ? FontWeight.normal : FontWeight.bold,
+                                  color: item['sales'] == '0' ? Colors.grey : Colors.red,
+                                  fontWeight: item['sales'] == '0' ? FontWeight.normal : FontWeight.bold,
                                 ),
                               ),
                               width: 90,
                             ),
                             _dataCell(
                               child: Text(
-                                item['kabig'],
+                                item['hits'],
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(fontSize: 14),
                               ),

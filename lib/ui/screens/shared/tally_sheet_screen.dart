@@ -20,8 +20,8 @@ class TallySheetController extends GetxController {
   // Sample data for the summary section
   final Map<String, dynamic> summaryData = {
     'gross': '44,870',
-    'hits': '5,950',
-    'kabig': '38,920',
+    'sales': '5,950',
+    'hits': '38,920',
     'voided': '765',
   };
   
@@ -30,64 +30,64 @@ class TallySheetController extends GetxController {
     {
       'draw': '2S2: 35',
       'gross': '11,040',
-      'hits': '350',
-      'kabig': '10,690',
+      'sales': '350',
+      'hits': '10,690',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '2S3: 835',
       'gross': '5,295',
-      'hits': '0',
-      'kabig': '5,295',
+      'sales': '0',
+      'hits': '5,295',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '5S2: 80',
       'gross': '7,375',
-      'hits': '0',
-      'kabig': '7,375',
+      'sales': '0',
+      'hits': '7,375',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '5S3: 180',
       'gross': '2,910',
-      'hits': '0',
-      'kabig': '2,910',
+      'sales': '0',
+      'hits': '2,910',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '94D: 9839',
       'gross': '2,730',
-      'hits': '0',
-      'kabig': '2,730',
+      'sales': '0',
+      'hits': '2,730',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '9L2: 39',
       'gross': '10,365',
-      'hits': '5,600',
-      'kabig': '4,765',
+      'sales': '5,600',
+      'hits': '4,765',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '9L3: 839',
       'gross': '60',
-      'hits': '0',
-      'kabig': '60',
+      'sales': '0',
+      'hits': '60',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '9S2: 57',
       'gross': '1,950',
-      'hits': '0',
-      'kabig': '1,950',
+      'sales': '0',
+      'hits': '1,950',
       'color': Color(0xFFFFD54F),
     },
     {
       'draw': '9S3: 957',
       'gross': '3,145',
-      'hits': '0',
-      'kabig': '3,145',
+      'sales': '0',
+      'hits': '3,145',
       'color': Color(0xFFFFD54F),
     },
   ];
@@ -106,7 +106,7 @@ class TallySheetScreen extends StatelessWidget {
         title: const Text('TALLYSHEET'),
         backgroundColor: AppColors.primaryRed,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
           onPressed: () => Get.back(),
         ),
         actions: [
@@ -195,7 +195,7 @@ class TallySheetScreen extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        'HITS',
+                        'SALES',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -206,7 +206,7 @@ class TallySheetScreen extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        'KABIG',
+                        'HITS',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -253,7 +253,7 @@ class TallySheetScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          controller.summaryData['hits'],
+                          controller.summaryData['sales'],
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.red,
@@ -264,7 +264,7 @@ class TallySheetScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          controller.summaryData['kabig'],
+                          controller.summaryData['hits'],
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.primaryRed,
@@ -324,7 +324,7 @@ class TallySheetScreen extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    'HITS',
+                    'SALES',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
@@ -336,7 +336,7 @@ class TallySheetScreen extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    'KABIG',
+                    'HITS',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
@@ -401,25 +401,25 @@ class TallySheetScreen extends StatelessWidget {
                         ),
                       ),
                       
+                      // Sales
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          item['sales'],
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: item['sales'] == '0' ? Colors.grey : Colors.red,
+                            fontWeight: item['sales'] == '0' ? FontWeight.normal : FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      
                       // Hits
                       Expanded(
                         flex: 1,
                         child: Text(
                           item['hits'],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: item['hits'] == '0' ? Colors.grey : Colors.red,
-                            fontWeight: item['hits'] == '0' ? FontWeight.normal : FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      
-                      // Kabig
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          item['kabig'],
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 14,
