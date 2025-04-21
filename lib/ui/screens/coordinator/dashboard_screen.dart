@@ -67,6 +67,14 @@ class DashboardScreen extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.list_alt),
+              title: const Text('Tally Sheet'),
+              onTap: () {
+                Navigator.pop(context);
+                Get.toNamed(AppRoutes.tallyDashboard);
+              },
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout),

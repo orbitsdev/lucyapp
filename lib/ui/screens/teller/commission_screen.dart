@@ -110,7 +110,7 @@ class CommissionScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('My Commission'),
+        title: const Text('Commission'),
         backgroundColor: AppColors.primaryRed,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -165,88 +165,6 @@ class CommissionScreen extends StatelessWidget {
                         fontSize: 14,
                         color: Colors.black87,
                       ),
-                    ),
-                  ],
-                ),
-              ).animate()
-                .fadeIn(duration: 300.ms)
-                .slideY(begin: 0.1, end: 0, duration: 300.ms),
-              
-              const SizedBox(height: 24),
-              
-              // Commission Summary Card
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.monetization_on,
-                          color: AppColors.primaryRed,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Today\'s Commission',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryRed,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildSummaryItem(
-                          'Sales',
-                          '₱${NumberFormat('#,##0.00').format(controller.totalSales.value)}',
-                          Icons.point_of_sale,
-                        ),
-                        _buildSummaryItem(
-                          'Commission',
-                          '₱${NumberFormat('#,##0.00').format(controller.totalCommissionAmount.value)}',
-                          Icons.account_balance_wallet,
-                          isHighlighted: true,
-                        ),
-                        _buildSummaryItem(
-                          'Rate',
-                          '${controller.commissionPercentage.value.toStringAsFixed(0)}%',
-                          Icons.percent,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.confirmation_number,
-                          color: Colors.grey.shade600,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Total Bets: ${controller.totalBets.value}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -371,6 +289,57 @@ class CommissionScreen extends StatelessWidget {
                 .fadeIn(duration: 300.ms, delay: 200.ms)
                 .slideY(begin: 0.1, end: 0, duration: 300.ms),
               
+              // Today's Commission Summary - Keep this but commented out for now
+              // const SizedBox(height: 24),
+              
+              // Container(
+              //   padding: const EdgeInsets.all(20),
+              //   decoration: BoxDecoration(
+              //     color: Colors.white,
+              //     borderRadius: BorderRadius.circular(8),
+              //     boxShadow: [
+              //       BoxShadow(
+              //         color: Colors.black.withOpacity(0.05),
+              //         blurRadius: 4,
+              //         offset: const Offset(0, 2),
+              //       ),
+              //     ],
+              //   ),
+              //   child: Column(
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     children: [
+              //       Text(
+              //         'Today\'s Summary',
+              //         style: TextStyle(
+              //           fontSize: 16,
+              //           fontWeight: FontWeight.bold,
+              //           color: AppColors.primaryRed,
+              //         ),
+              //       ),
+              //       const SizedBox(height: 20),
+              //       _buildCommissionRow(
+              //         'Total Sales:',
+              //         '₱${NumberFormat('#,##0.00').format(controller.totalSales.value)}',
+              //       ),
+              //       const SizedBox(height: 12),
+              //       _buildCommissionRow(
+              //         'Total Bets:',
+              //         '${controller.totalBets.value}',
+              //       ),
+              //       const SizedBox(height: 12),
+              //       _buildCommissionRow(
+              //         'Total Commission Amount:',
+              //         '₱${NumberFormat('#,##0.00').format(controller.totalCommissionAmount.value)}',
+              //         isTotal: true,
+              //         isAmount: true,
+              //       ),
+              //     ],
+              //   ),
+              // ).animate()
+              //   .fadeIn(duration: 300.ms, delay: 300.ms)
+              //   .slideY(begin: 0.1, end: 0, duration: 300.ms),
+              
+              /* Commenting out the history section for now
               const SizedBox(height: 24),
               
               // Commission History
@@ -480,46 +449,11 @@ class CommissionScreen extends StatelessWidget {
               ).animate()
                 .fadeIn(duration: 300.ms, delay: 200.ms)
                 .slideY(begin: 0.1, end: 0, duration: 300.ms),
+              */
             ],
           ),
         ),
       ),
-    );
-  }
-  
-  Widget _buildSummaryItem(String label, String value, IconData icon, {bool isHighlighted = false}) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isHighlighted ? AppColors.primaryRed.withOpacity(0.1) : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: isHighlighted ? AppColors.primaryRed : Colors.grey.shade700,
-            size: 24,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isHighlighted ? AppColors.primaryRed : Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
     );
   }
   

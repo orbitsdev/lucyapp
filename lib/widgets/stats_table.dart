@@ -7,6 +7,8 @@ class StatsTable extends StatelessWidget {
   final List<String> rowLabels;
   final bool showTotal;
   final Color headerColor;
+  final List<int> boldColumns;
+  final List<int> highlightColumns;
 
   const StatsTable({
     Key? key,
@@ -15,6 +17,8 @@ class StatsTable extends StatelessWidget {
     required this.rowLabels,
     this.showTotal = true,
     this.headerColor = AppColors.primaryBlue,
+    this.boldColumns = const [],
+    this.highlightColumns = const [],
   }) : super(key: key);
 
   @override
@@ -56,10 +60,12 @@ class StatsTable extends StatelessWidget {
                 ),
                 ...columns.asMap().entries.map((entry) {
                   final isLast = entry.key == columns.length - 1;
+                  final isBold = boldColumns.contains(entry.key);
                   return _buildCell(
                     entry.value,
                     isHeader: true,
                     color: headerColor,
+                    extraBold: isBold,
                     borderRadius: isLast
                         ? const BorderRadius.only(
                             topRight: Radius.circular(8),
@@ -102,9 +108,11 @@ class StatsTable extends StatelessWidget {
                   ),
                   ...rowData.asMap().entries.map((cellEntry) {
                     final isLastColumn = cellEntry.key == rowData.length - 1;
+                    final isHighlighted = highlightColumns.contains(cellEntry.key);
                     return _buildCell(
                       cellEntry.value,
                       isHeader: false,
+                      extraBold: isHighlighted,
                       borderRadius: isLastRow && !showTotal && isLastColumn
                           ? const BorderRadius.only(
                               bottomRight: Radius.circular(8),
@@ -176,6 +184,7 @@ class StatsTable extends StatelessWidget {
     int flex = 1,
     bool isHeader = false,
     bool isLabel = false,
+    bool extraBold = false,
     Color? color,
     Color? textColor,
     BorderRadius? borderRadius,
@@ -194,7 +203,7 @@ class StatsTable extends StatelessWidget {
           style: TextStyle(
             color: textColor ??
                 (isHeader ? Colors.white : AppColors.primaryText),
-            fontWeight: isHeader || isLabel ? FontWeight.bold : FontWeight.normal,
+            fontWeight: extraBold ? FontWeight.w900 : (isHeader || isLabel ? FontWeight.bold : FontWeight.normal),
             fontSize: 14,
           ),
         ),

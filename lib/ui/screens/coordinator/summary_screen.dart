@@ -255,6 +255,7 @@ class SummaryScreen extends StatelessWidget {
                           children: [
                             _buildHeaderCell('Teller Name', width: 150),
                             _buildHeaderCell('Total Sales', width: 120),
+                            _buildHeaderCell('Total Hits', width: 120),
                             _buildHeaderCell('Total Gross', width: 120),
                             _buildHeaderCell('Actions', width: 220),
                           ],
@@ -290,6 +291,12 @@ class SummaryScreen extends StatelessWidget {
                                 '₱${NumberFormat('#,###').format(teller['sales'])}',
                                 width: 120,
                                 style: const TextStyle(fontWeight: FontWeight.bold),
+                                isLastRow: isLastRow,
+                              ),
+                              _buildDataCell(
+                                '₱${NumberFormat('#,###').format(teller['hits'])}',
+                                width: 120,
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
                                 isLastRow: isLastRow,
                               ),
                               _buildDataCell(
@@ -339,6 +346,7 @@ class SummaryScreen extends StatelessWidget {
                                           tellerName: teller['name'],
                                           summaryData: {
                                             'gross': '44,870',
+                                            'sales': '38,920',
                                             'hits': '5,950',
                                             'kabig': '38,920',
                                             'voided': '765',
@@ -347,6 +355,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '2S2: 35',
                                               'gross': '11,040',
+                                              'sales': '10,690',
                                               'hits': '350',
                                               'kabig': '10,690',
                                               'color': Color(0xFFFFD54F),
@@ -354,6 +363,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '2S3: 835',
                                               'gross': '5,295',
+                                              'sales': '5,295',
                                               'hits': '0',
                                               'kabig': '5,295',
                                               'color': Color(0xFFFFD54F),
@@ -361,6 +371,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '5S2: 80',
                                               'gross': '7,375',
+                                              'sales': '7,375',
                                               'hits': '0',
                                               'kabig': '7,375',
                                               'color': Color(0xFFFFD54F),
@@ -368,6 +379,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '5S3: 180',
                                               'gross': '2,910',
+                                              'sales': '2,910',
                                               'hits': '0',
                                               'kabig': '2,910',
                                               'color': Color(0xFFFFD54F),
@@ -375,6 +387,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '94D: 9839',
                                               'gross': '2,730',
+                                              'sales': '2,730',
                                               'hits': '0',
                                               'kabig': '2,730',
                                               'color': Color(0xFFFFD54F),
@@ -382,6 +395,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '9L2: 39',
                                               'gross': '10,365',
+                                              'sales': '4,765',
                                               'hits': '5,600',
                                               'kabig': '4,765',
                                               'color': Color(0xFFFFD54F),
@@ -389,6 +403,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '9L3: 839',
                                               'gross': '60',
+                                              'sales': '60',
                                               'hits': '0',
                                               'kabig': '60',
                                               'color': Color(0xFFFFD54F),
@@ -396,6 +411,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '9S2: 57',
                                               'gross': '1,950',
+                                              'sales': '1,950',
                                               'hits': '0',
                                               'kabig': '1,950',
                                               'color': Color(0xFFFFD54F),
@@ -403,6 +419,7 @@ class SummaryScreen extends StatelessWidget {
                                             {
                                               'draw': '9S3: 957',
                                               'gross': '3,145',
+                                              'sales': '3,145',
                                               'hits': '0',
                                               'kabig': '3,145',
                                               'color': Color(0xFFFFD54F),

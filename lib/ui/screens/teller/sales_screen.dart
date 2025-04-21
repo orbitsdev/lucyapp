@@ -174,7 +174,7 @@ class SalesScreen extends StatelessWidget {
             .fadeIn(duration: 300.ms)
             .slideY(begin: 0.1, end: 0, duration: 300.ms),
           
-          // Sales Stats Table
+          // Sales Stats Tablep
           Expanded(
             child: SingleChildScrollView(
               child: StatsTable(
@@ -183,6 +183,8 @@ class SalesScreen extends StatelessWidget {
                 rowLabels: controller.rowLabels,
                 headerColor: AppColors.primaryRed, // Changed to red color scheme
                 showTotal: false,
+                boldColumns: [0], // Make the "Sales" column header (index 1) bold
+                highlightColumns: [0], // Highlight the "Sales" column values (index 1)
               ).animate()
                 .fadeIn(duration: 300.ms)
                 .slideY(begin: 0.1, end: 0, duration: 300.ms),

@@ -69,6 +69,14 @@ class DashboardScreen extends StatelessWidget {
             ),
             const Divider(),
             ListTile(
+              leading: const Icon(Icons.list_alt),
+              title: const Text('Tally Sheet'),
+              onTap: () {
+                Navigator.pop(context);
+                Get.toNamed(AppRoutes.tallyDashboard);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () => Get.offAllNamed(AppRoutes.login),
@@ -209,10 +217,10 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             'Today\'s Sales',
@@ -233,33 +241,11 @@ class DashboardScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Today\'s Commission',
-                            style: TextStyle(
-                              color: AppColors.primaryRed,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '₱ 1,000',
-                            style: TextStyle(
-                              color: AppColors.primaryRed,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildSalesItem('Bet Numbers', '45'),
                       _buildSalesItem('Commission Rate', '10%'),
