@@ -11,7 +11,7 @@ class StatsTable extends StatelessWidget {
   final List<int> highlightColumns;
 
   const StatsTable({
-    Key? key,
+    super.key,
     required this.columns,
     required this.rows,
     required this.rowLabels,
@@ -19,7 +19,7 @@ class StatsTable extends StatelessWidget {
     this.headerColor = AppColors.primaryBlue,
     this.boldColumns = const [],
     this.highlightColumns = const [],
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

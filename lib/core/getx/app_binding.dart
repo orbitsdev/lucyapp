@@ -1,0 +1,16 @@
+import 'package:bettingapp/controllers/auth/auth_controller.dart';
+import 'package:bettingapp/core/services/connectivity_service.dart';
+import 'package:bettingapp/core/services/loading_service.dart';
+import 'package:get/get.dart';
+
+class AppBinding extends Bindings {
+  @override
+  void dependencies() {
+    // Register services
+    Get.put(ConnectivityService(), permanent: true);
+    Get.put(LoadingService(), permanent: true);
+    
+    // Register controllers
+    Get.put(AuthController(), permanent: true);
+  }
+}

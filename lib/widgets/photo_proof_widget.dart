@@ -9,11 +9,11 @@ class PhotoProofWidget extends StatelessWidget {
   final VoidCallback onSave;
 
   const PhotoProofWidget({
-    Key? key,
+    super.key,
     required this.image,
     required this.onRetake,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

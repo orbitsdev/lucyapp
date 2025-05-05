@@ -1,38 +1,44 @@
 import 'package:get/get.dart';
 // Auth screens
-import 'package:bettingapp/ui/screens/auth/login_screen.dart';
+import 'package:bettingapp/screens/auth/login_screen.dart';
+// Middleware
+import 'package:bettingapp/middleware/auth_middleware.dart';
+import 'package:bettingapp/middleware/guest_middleware.dart';
 
 // Coordinator screens
-import 'package:bettingapp/ui/screens/coordinator/dashboard_screen.dart' as coordinator;
-import 'package:bettingapp/ui/screens/coordinator/generate_hits_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/summary_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/summary_detail_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/bet_win_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/user_management_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/teller_new_bet_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/teller_claim_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/teller_sales_screen.dart';
-import 'package:bettingapp/ui/screens/coordinator/commission_screen.dart' as coordinator_commission;
+import 'package:bettingapp/screens/coordinator/dashboard_screen.dart' as coordinator;
+import 'package:bettingapp/screens/coordinator/generate_hits_screen.dart';
+import 'package:bettingapp/screens/coordinator/summary_screen.dart';
+import 'package:bettingapp/screens/coordinator/summary_detail_screen.dart';
+import 'package:bettingapp/screens/coordinator/bet_win_screen.dart';
+import 'package:bettingapp/screens/coordinator/user_management_screen.dart';
+import 'package:bettingapp/screens/coordinator/teller_new_bet_screen.dart';
+import 'package:bettingapp/screens/coordinator/teller_claim_screen.dart';
+import 'package:bettingapp/screens/coordinator/teller_sales_screen.dart';
+import 'package:bettingapp/screens/coordinator/commission_screen.dart' as coordinator_commission;
 
 // Teller screens
-import 'package:bettingapp/ui/screens/teller/dashboard_screen.dart' as teller;
-import 'package:bettingapp/ui/screens/teller/new_bet_screen.dart';
-import 'package:bettingapp/ui/screens/teller/claim_screen.dart';
-import 'package:bettingapp/ui/screens/teller/printer_setup_screen.dart';
-import 'package:bettingapp/ui/screens/teller/cancel_bet_screen.dart';
-import 'package:bettingapp/ui/screens/teller/sales_screen.dart';
-import 'package:bettingapp/ui/screens/shared/tally_sheet_screen.dart';
-import 'package:bettingapp/ui/screens/teller/tally_sheet_screen.dart' as teller_tally;
-import 'package:bettingapp/ui/screens/teller/commission_screen.dart';
-import 'package:bettingapp/ui/screens/teller/combination_screen.dart';
-import 'package:bettingapp/ui/screens/teller/sold_out_screen.dart';
+import 'package:bettingapp/screens/teller/dashboard_screen.dart' as teller;
+import 'package:bettingapp/screens/teller/new_bet_screen.dart';
+import 'package:bettingapp/screens/teller/claim_screen.dart';
+import 'package:bettingapp/screens/teller/printer_setup_screen.dart';
+import 'package:bettingapp/screens/teller/cancel_bet_screen.dart';
+import 'package:bettingapp/screens/teller/sales_screen.dart';
+import 'package:bettingapp/screens/shared/tally_sheet_screen.dart';
+import 'package:bettingapp/screens/teller/tally_sheet_screen.dart' as teller_tally;
+import 'package:bettingapp/screens/teller/commission_screen.dart';
+import 'package:bettingapp/screens/teller/combination_screen.dart';
+import 'package:bettingapp/screens/teller/sold_out_screen.dart';
 
 // Customer screens
-import 'package:bettingapp/ui/screens/customer/dashboard_screen.dart' as customer;
-import 'package:bettingapp/ui/screens/customer/history_screen.dart';
-import 'package:bettingapp/ui/screens/customer/hits_screen.dart';
-import 'package:bettingapp/ui/screens/customer/place_bet_screen.dart';
-import 'package:bettingapp/ui/screens/customer/results_screen.dart';
+import 'package:bettingapp/screens/customer/dashboard_screen.dart' as customer;
+import 'package:bettingapp/screens/customer/history_screen.dart';
+import 'package:bettingapp/screens/customer/hits_screen.dart';
+import 'package:bettingapp/screens/customer/place_bet_screen.dart';
+import 'package:bettingapp/screens/customer/results_screen.dart';
+
+// Test screens
+import 'package:bettingapp/ui/screens/test/test_modal_screen.dart' as test_modal;
 
 class AppRoutes {
   // Auth routes
@@ -73,6 +79,9 @@ class AppRoutes {
   static const String history = '/customer/history';
   static const String hits = '/customer/hits';
   static const String results = '/customer/results';
+  
+  // Test routes
+  static const String testModal = '/test/modal';
 
   static final routes = [
     // Auth routes
@@ -80,6 +89,7 @@ class AppRoutes {
       name: login,
       page: () => const LoginScreen(),
       transition: Transition.fadeIn,
+      middlewares: [GuestMiddleware()],
     ),
     
     // Coordinator routes
@@ -87,6 +97,7 @@ class AppRoutes {
       name: coordinatorDashboard,
       page: () => const coordinator.DashboardScreen(),
       transition: Transition.fadeIn,
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: userManagement,
@@ -141,6 +152,7 @@ class AppRoutes {
       name: tellerDashboard,
       page: () => const teller.DashboardScreen(),
       transition: Transition.fadeIn,
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: newBet,
@@ -217,6 +229,13 @@ class AppRoutes {
     GetPage(
       name: results,
       page: () => const ResultsScreen(),
+      transition: Transition.cupertino,
+    ),
+    
+    // Test routes
+    GetPage(
+      name: testModal,
+      page: () => const test_modal.TestModalScreen(),
       transition: Transition.cupertino,
     ),
   ];

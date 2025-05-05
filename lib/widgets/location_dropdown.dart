@@ -9,12 +9,12 @@ class LocationDropdown extends StatelessWidget {
   final String label;
 
   const LocationDropdown({
-    Key? key,
+    super.key,
     required this.value,
     required this.onChanged,
     this.locations = const ['Davao', 'Isulan', 'Tacurong', 'S2', 'S3', 'L2', 'L3', '4D', 'P3'],
     this.label = 'SELECT LOCATION',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

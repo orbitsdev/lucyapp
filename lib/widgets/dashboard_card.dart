@@ -10,12 +10,12 @@ class DashboardCard extends StatelessWidget {
   final String route;
 
   const DashboardCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.color,
     required this.route,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

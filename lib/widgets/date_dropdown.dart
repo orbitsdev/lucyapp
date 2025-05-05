@@ -9,12 +9,12 @@ class DateDropdown extends StatelessWidget {
   final String label;
 
   const DateDropdown({
-    Key? key,
+    super.key,
     required this.value,
     required this.onChanged,
     this.options = const ['Today', 'Yesterday', 'This Week', 'This Month', 'Custom'],
     this.label = 'Select Date',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

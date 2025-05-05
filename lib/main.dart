@@ -1,18 +1,81 @@
+import 'package:bettingapp/core/getx/app_binding.dart';
+import 'package:bettingapp/controllers/auth/auth_controller.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:bettingapp/routes/app_routes.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize connectivity monitoring
+  Connectivity().onConnectivityChanged.listen((results) {
+    bool isConnected = results.any((result) => result != ConnectivityResult.none);
+    if (!isConnected) {
+      print('Device is offline from main.dart');
+      // Note: We don't show modals here because the GetX context isn't ready yet
+      // Modal handling is done in ConnectivityService
+    } else {
+      print('Device is online from main.dart');
+    }
+  });
+  
+  AppBinding().dependencies();   
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    
+    // Check authentication status and refresh user data when app starts
+    Future.delayed(Duration.zero, () async {
+      final authController = Get.find<AuthController>();
+      // Refresh user data if already logged in
+      await authController.checkLoginStatus();
+    });
+  }
+
+
+  @override
+  void dispose() {
+     WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch(state){
+      case AppLifecycleState.resumed:
+      print('resume');
+      case AppLifecycleState.inactive:
+      print('ianctive');
+      case AppLifecycleState.detached:
+      print('detach');
+      print('detach');
+      case AppLifecycleState.paused:
+      print('pause');
+      default:
+    }
+  }
+  @override
   Widget build(BuildContext context) {
+      
+      
+
     return ScreenUtilInit(
       designSize: const Size(375, 812), // Base design size for responsive UI
       minTextAdapt: true,
@@ -21,11 +84,7 @@ class MyApp extends StatelessWidget {
         return GetMaterialApp(
           title: 'LuckyBet',
           debugShowCheckedModeBanner: false,
-  //          darkTheme: ThemeData.dark().copyWith(
-  //   appBarTheme: AppBarTheme(
-  //     iconTheme: IconThemeData(color: Colors.white),
-  //   ),
-  // ),
+  //       
           theme: ThemeData(
              iconTheme: IconThemeData(color: Colors.white),
             primaryColor: AppColors.primaryRed,
