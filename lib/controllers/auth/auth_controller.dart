@@ -12,9 +12,12 @@ class AuthController extends GetxController {
   
   final DioService _dioService = DioService();
   final Rx<User?> user = Rx<User?>(null);
-  final RxString selectedRole = 'Teller'.obs;
+  final RxString selectedRole = 'Coordinator'.obs;
   final RxBool isLoading = false.obs;
   final RxBool rememberMe = true.obs;
+  
+  // Reactive username for UI display
+  final RxString currentUsername = ''.obs;
   
   bool get isLoggedIn => user.value != null;
   String? get userRole => user.value?.role;
@@ -23,19 +26,38 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     // Pre-fill credentials for demo purposes
-    usernameController.text = 'demo';
+    usernameController.text = 'tellerjane';
     passwordController.text = 'password';
+    // Initialize reactive username
+    currentUsername.value = 'tellerjane';
     // Show password by default for the demo
     rememberMe.value = true;
+    // Set role to Teller by default
+    selectedRole.value = 'Teller';
     
-    // Check if user is already logged in
-    checkLoginStatus();
+    // Note: checkLoginStatus is now called from AppBinding
+    // to ensure it completes before routes are processed
   }
   
   Future<void> checkLoginStatus() async {
-    final hasToken = await _dioService.hasToken();
-    if (hasToken) {
-      await fetchAndUpdateUserDetails(showModal: false);
+    await loadTokenAndUser(showModal: false);
+  }
+  
+  Future<void> loadTokenAndUser({bool showModal = false}) async {
+    try {
+      print('Loading token and user data...');
+      final hasToken = await _dioService.hasToken();
+      
+      if (hasToken) {
+        print('Token found, fetching user details');
+        // Token exists, fetch user details
+        await fetchAndUpdateUserDetails(showModal: showModal);
+        print('User data loaded, isLoggedIn: $isLoggedIn');
+      } else {
+        print('No token found');
+      }
+    } catch (e) {
+      print('Error loading token and user: $e');
     }
   }
   
@@ -55,6 +77,7 @@ class AuthController extends GetxController {
   
   Future<bool> getUserProfile() async {
     isLoading.value = true;
+    print('Getting user profile...');
     
     final result = await _dioService.authGet(
       ApiConfig.user,
@@ -65,13 +88,18 @@ class AuthController extends GetxController {
     
     return result.fold(
       (error) {
+        print('Error getting user profile: ${error.message}');
         // Token might be invalid, clear it
         _dioService.clearToken();
         user.value = null;
+        print('User value after error: ${user.value}');
         return false;
       },
       (userData) {
+        print('User profile fetched successfully');
+        print('User data: ${userData.toMap()}');
         user.value = userData;
+        print('isLoggedIn after setting user: $isLoggedIn');
         return true;
       },
     );
@@ -79,6 +107,28 @@ class AuthController extends GetxController {
   
   void setRole(String role) {
     selectedRole.value = role;
+    
+    // Update username based on selected role for faster testing
+    switch (role) {
+      case 'Coordinator':
+        usernameController.text = 'coordinatorjohn';
+        currentUsername.value = 'coordinatorjohn';
+        break;
+      case 'Teller':
+        usernameController.text = 'tellerjane';
+        currentUsername.value = 'tellerjane';
+        break;
+      case 'Customer':
+        // No customer account in the sample data yet
+        usernameController.text = 'admin';
+        currentUsername.value = 'admin';
+        break;
+      default:
+        break;
+    }
+    
+    // Password is the same for all test accounts
+    passwordController.text = 'password';
   }
   
   void toggleRememberMe() {
@@ -93,13 +143,17 @@ class AuthController extends GetxController {
     
     isLoading.value = true;
     Modal.showProgressModal(message: 'Logging in...');
+    print('Attempting login with username: ${usernameController.text}');
+    
+    // Use username only for login
+    final Map<String, dynamic> loginData = {
+      'username': usernameController.text,
+      'password': passwordController.text,
+    };
     
     final result = await _dioService.post(
       ApiConfig.login,
-      data: {
-        'email': usernameController.text,
-        'password': passwordController.text,
-      },
+      data: loginData,
       fromJson: (data) => data,
     );
     
@@ -110,15 +164,26 @@ class AuthController extends GetxController {
     
     return result.fold(
       (error) {
+        print('Login error: ${error.message}');
         Modal.showErrorModal(message: error.message);
         return false;
       },
       (data) async {
+        print('Login successful');
         // Save token
         await _dioService.setToken(data['access_token']);
+        print('Token saved');
         
         // Set user data
+        print('Setting user data from login response');
         user.value = User.fromJson(data['user']);
+        print('User set from login: ${user.value?.toMap()}');
+        print('isLoggedIn after login: $isLoggedIn');
+        
+        // Fetch additional user details if needed
+        print('Fetching additional user details...');
+        await fetchAndUpdateUserDetails(showModal: false);
+        print('User details fetched, isLoggedIn: $isLoggedIn');
         
         // Navigate based on role
         _navigateBasedOnRole();

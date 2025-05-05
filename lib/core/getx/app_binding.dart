@@ -9,8 +9,8 @@ class AppBinding extends Bindings {
     // Register services
     Get.put(ConnectivityService(), permanent: true);
     Get.put(LoadingService(), permanent: true);
-    
-    // Register controllers
     Get.put(AuthController(), permanent: true);
+    
+   
   }
 }

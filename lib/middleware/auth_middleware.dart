@@ -8,7 +8,7 @@ class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     final authController = Get.find<AuthController>();
-
+    
     // If not logged in, redirect to login
     if (!authController.isLoggedIn) {
       return const RouteSettings(name: AppRoutes.login);

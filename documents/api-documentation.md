@@ -18,7 +18,7 @@ This document provides comprehensive documentation for the LuckyBet Admin API, i
 All API requests should be prefixed with your base URL:
 
 ```
-https://your-api-domain.com/api
+https://luckybet-admin.orbitsdev.com/api
 ```
 
 ## Response Format
@@ -123,24 +123,40 @@ Register a new user account.
 
 ### Login
 
-Authenticate a user and get an access token.
+Authenticate a user and get an access token. Supports login with either email or username.
 
 - **URL**: `/login`
 - **Method**: `POST`
 - **Authentication**: None
 
-**Request Parameters:**
+**Request Parameters (Email Login):**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | email | string | Yes | User's email address |
 | password | string | Yes | User's password |
 
-**Example Request:**
+**Example Request (Email Login):**
 
 ```json
 {
   "email": "john@example.com",
+  "password": "secret123"
+}
+```
+
+**Request Parameters (Username Login):**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| username | string | Yes | User's username |
+| password | string | Yes | User's password |
+
+**Example Request (Username Login):**
+
+```json
+{
+  "username": "johndoe",
   "password": "secret123"
 }
 ```

@@ -9,6 +9,12 @@ class GuestMiddleware extends GetMiddleware {
   RouteSettings? redirect(String? route) {
     final AuthController authController = Get.find<AuthController>();
 
+    
+  print('--------------------- GUEST MIDDLLEWARE ');
+  print(authController.isLoggedIn);
+  print('--------------------');
+
+
     // If logged in, redirect to appropriate dashboard
     if (authController.isLoggedIn) {
       switch (authController.userRole?.toLowerCase()) {

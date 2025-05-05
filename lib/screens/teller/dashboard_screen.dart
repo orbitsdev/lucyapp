@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:bettingapp/routes/app_routes.dart';
 import 'package:bettingapp/widgets/dashboard_card.dart';
+import 'package:bettingapp/controllers/auth/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -79,7 +80,12 @@ class DashboardScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
-              onTap: () => Get.offAllNamed(AppRoutes.login),
+              onTap: () {
+                // Close drawer first
+                Navigator.pop(context);
+                // Use AuthController to properly logout
+                Get.find<AuthController>().logout();
+              },
             ),
           ],
         ),

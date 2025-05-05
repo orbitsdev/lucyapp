@@ -22,7 +22,12 @@ Future<void> main() async {
     }
   });
   
-  AppBinding().dependencies();   
+  AppBinding().dependencies();
+  
+  // Check authentication status before app starts
+  final authController = Get.find<AuthController>();
+  await authController.loadTokenAndUser(showModal: false);
+  
   runApp(const MyApp());
 }
 
@@ -39,12 +44,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     
-    // Check authentication status and refresh user data when app starts
-    Future.delayed(Duration.zero, () async {
-      final authController = Get.find<AuthController>();
-      // Refresh user data if already logged in
-      await authController.checkLoginStatus();
-    });
+    // Authentication is already checked in main() before app starts
   }
 
 

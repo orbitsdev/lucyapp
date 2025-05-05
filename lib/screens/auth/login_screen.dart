@@ -10,7 +10,10 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(AuthController());
+    // Use find instead of put to avoid creating a new instance if it already exists
+    final controller = Get.isRegistered<AuthController>() 
+        ? Get.find<AuthController>() 
+        : Get.put(AuthController());
     
     return Scaffold(
       backgroundColor: Colors.white,
@@ -147,6 +150,16 @@ class LoginScreen extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+                          SizedBox(height: 4.h),
+                          // Test account info
+                          Obx(() => Text(
+                            'Using test account: ${controller.currentUsername.value}',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12.sp,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          )),
                           SizedBox(height: 12.h),
                           Row(
                             children: [

@@ -263,12 +263,34 @@ class DioService {
     requestOptions.headers = requestOptions.headers ?? {};
     requestOptions.headers!['Authorization'] = 'Bearer $token';
     
-    return get<T>(
-      path,
-      queryParameters: queryParameters,
-      options: requestOptions,
-      fromJson: fromJson,
-    );
+    try {
+      final response = await _dio.get(
+        _ensureApiPrefix(path),
+        queryParameters: queryParameters,
+        options: requestOptions,
+      );
+      
+      print('AuthGet response: ${response.data}');
+      
+      if (response.data is Map && response.data.containsKey('status')) {
+        if (response.data['status'] == true) {
+          // Pass the entire response to fromJson to handle nested data
+          return right(fromJson(response.data));
+        } else {
+          return left(ApiError(
+            message: response.data['message'] ?? 'Unknown error',
+            data: response.data,
+            statusCode: response.statusCode,
+          ));
+        }
+      }
+      
+      return right(fromJson(response.data));
+    } on DioException catch (e) {
+      return left(_handleDioError(e));
+    } catch (e) {
+      return left(ApiError(message: 'Unexpected error: ${e.toString()}'));
+    }
   }
   
   Future<ApiResult<T>> authPost<T>(

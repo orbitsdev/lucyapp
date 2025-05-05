@@ -20,14 +20,17 @@ class User {
   });
   
   factory User.fromJson(Map<String, dynamic> json) {
+    // Handle case where data is nested inside 'data' field
+    final userData = json.containsKey('data') ? json['data'] : json;
+    
     return User(
-      id: json['id'],
-      name: json['name'],
-      username: json['username'],
-      email: json['email'],
-      role: json['role'],
-      profilePhotoUrl: json['profile_photo_url'],
-      location: json['location'] != null ? Location.fromJson(json['location']) : null,
+      id: userData['id'],
+      name: userData['name'],
+      username: userData['username'],
+      email: userData['email'],
+      role: userData['role'],
+      profilePhotoUrl: userData['profile_photo_url'],
+      location: userData['location'] != null ? Location.fromJson(userData['location']) : null,
     );
   }
   
