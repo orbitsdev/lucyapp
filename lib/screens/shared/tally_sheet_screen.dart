@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:bettingapp/controllers/report_controller.dart';
-import 'package:bettingapp/models/available_date.dart';
+import 'package:bettingapp/models/draw.dart';
 
 class TallySheetScreen extends StatefulWidget {
   const TallySheetScreen({super.key});
@@ -38,7 +38,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
     
     // Find a matching date in the list and return its ID
     for (var item in items) {
-      String itemDate = item.date ?? '';
+      String itemDate = item.drawDate ?? '';
       if (itemDate.contains('T')) {
         itemDate = itemDate.split('T')[0];
       }
@@ -171,10 +171,12 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
               color: AppColors.primaryRed,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Date display row
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.calendar_today, color: Colors.white, size: 20),
                       const SizedBox(width: 8),
@@ -189,101 +191,130 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                     ],
                   ),
                   
-                  // Date navigation buttons row
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Previous day button
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 16),
-                          onPressed: () {
-                            // Get the current date from the report or use today
-                            DateTime currentDate;
-                            try {
-                              // Handle both ISO and simple date formats
-                              String dateStr = report.date ?? '';
-                              if (dateStr.contains('T')) {
-                                dateStr = dateStr.split('T')[0];
-                              }
-                              currentDate = DateFormat('yyyy-MM-dd').parse(dateStr);
-                            } catch (e) {
-                              currentDate = DateTime.now();
-                            }
+                  // // Date navigation buttons row
+                  // Container(
+                  //   margin: const EdgeInsets.only(top: 8),
+                  //   child: Row(
+                  //     mainAxisAlignment: MainAxisAlignment.center,
+                  //     mainAxisSize: MainAxisSize.min,
+                  //     children: [
+                  //       // Previous day button
+                  //       IconButton(
+                  //         padding: EdgeInsets.zero,
+                  //         constraints: const BoxConstraints(),
+                  //         icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 16),
+                  //         onPressed: () {
+                  //           // Get the current date from the report or use today
+                  //           DateTime currentDate;
+                  //           try {
+                  //             // Handle both ISO and simple date formats
+                  //             String dateStr = report.date ?? '';
+                  //             if (dateStr.contains('T')) {
+                  //               dateStr = dateStr.split('T')[0];
+                  //             }
+                  //             currentDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+                  //           } catch (e) {
+                  //             currentDate = DateTime.now();
+                  //           }
                             
-                            // Go to previous day
-                            final previousDay = currentDate.subtract(const Duration(days: 1));
-                            final date = DateFormat('yyyy-MM-dd').format(previousDay);
-                            reportController.fetchTallysheetReport(date: date);
-                          },
-                        ),
-                        const SizedBox(width: 16),
-                        // Next day button (disabled if current date is today)
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
-                          onPressed: () {
-                            // Get the current date from the report or use today
-                            DateTime currentDate;
-                            try {
-                              // Handle both ISO and simple date formats
-                              String dateStr = report.date ?? '';
-                              if (dateStr.contains('T')) {
-                                dateStr = dateStr.split('T')[0];
-                              }
-                              currentDate = DateFormat('yyyy-MM-dd').parse(dateStr);
-                            } catch (e) {
-                              currentDate = DateTime.now();
-                            }
+                  //           // Go to previous day
+                  //           final previousDay = currentDate.subtract(const Duration(days: 1));
+                  //           final date = DateFormat('yyyy-MM-dd').format(previousDay);
+                  //           reportController.fetchTallysheetReport(date: date);
+                  //         },
+                  //       ),
+                  //       const SizedBox(width: 16),
+                  //       // Next day button (disabled if current date is today)
+                  //       IconButton(
+                  //         padding: EdgeInsets.zero,
+                  //         constraints: const BoxConstraints(),
+                  //         icon: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                  //         onPressed: () {
+                  //           // Get the current date from the report or use today
+                  //           DateTime currentDate;
+                  //           try {
+                  //             // Handle both ISO and simple date formats
+                  //             String dateStr = report.date ?? '';
+                  //             if (dateStr.contains('T')) {
+                  //               dateStr = dateStr.split('T')[0];
+                  //             }
+                  //             currentDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+                  //           } catch (e) {
+                  //             currentDate = DateTime.now();
+                  //           }
                             
-                            // Check if current date is today
-                            final today = DateTime.now();
-                            final isToday = currentDate.year == today.year && 
-                                            currentDate.month == today.month && 
-                                            currentDate.day == today.day;
+                  //           // Check if current date is today
+                  //           final today = DateTime.now();
+                  //           final isToday = currentDate.year == today.year && 
+                  //                           currentDate.month == today.month && 
+                  //                           currentDate.day == today.day;
                             
-                            // Only go to next day if not today
-                            if (!isToday) {
-                              final nextDay = currentDate.add(const Duration(days: 1));
-                              // Don't go beyond today
-                              if (nextDay.isBefore(today) || 
-                                  (nextDay.year == today.year && nextDay.month == today.month && nextDay.day == today.day)) {
-                                final date = DateFormat('yyyy-MM-dd').format(nextDay);
-                                reportController.fetchTallysheetReport(date: date);
-                              }
-                            }
-                          },
-                        ),
-                        const SizedBox(width: 16),
-                        // Today button
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            backgroundColor: Colors.white.withOpacity(0.2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            minimumSize: Size.zero,
-                          ),
-                          onPressed: () {
-                            reportController.fetchTodayTallysheetReport();
-                          },
-                          child: const Text(
-                            'Today',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  //           // Only go to next day if not today
+                  //           if (!isToday) {
+                  //             final nextDay = currentDate.add(const Duration(days: 1));
+                  //             // Don't go beyond today
+                  //             if (nextDay.isBefore(today) || 
+                  //                 (nextDay.year == today.year && nextDay.month == today.month && nextDay.day == today.day)) {
+                  //               final date = DateFormat('yyyy-MM-dd').format(nextDay);
+                  //               reportController.fetchTallysheetReport(date: date);
+                  //             }
+                  //           }
+                  //         },
+                  //       ),
+                  //       const SizedBox(width: 16),
+                  //       // Today button - only show if not already on today's date
+                  //       Builder(builder: (context) {
+                  //         // Get the current date from the report
+                  //         DateTime currentDate;
+                  //         try {
+                  //           // Handle both ISO and simple date formats
+                  //           String dateStr = report.date ?? '';
+                  //           if (dateStr.contains('T')) {
+                  //             dateStr = dateStr.split('T')[0];
+                  //           }
+                  //           currentDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+                  //         } catch (e) {
+                  //           currentDate = DateTime.now();
+                  //         }
+                          
+                  //         // Check if current date is today
+                  //         final today = DateTime.now();
+                  //         final bool isToday = currentDate.year == today.year && 
+                  //                         currentDate.month == today.month && 
+                  //                         currentDate.day == today.day;
+                          
+                  //         print('Current date: $currentDate, Today: $today, Is Today: $isToday');
+                          
+                  //         // Only show the Today button if not already on today's date
+                  //         if (isToday) {
+                  //           return const SizedBox.shrink();
+                  //         }
+                          
+                  //         return TextButton(
+                  //           style: TextButton.styleFrom(
+                  //             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  //             backgroundColor: Colors.white.withOpacity(0.2),
+                  //             shape: RoundedRectangleBorder(
+                  //               borderRadius: BorderRadius.circular(12),
+                  //             ),
+                  //             minimumSize: Size.zero,
+                  //           ),
+                  //           onPressed: () {
+                  //             reportController.fetchTodayTallysheetReport();
+                  //           },
+                  //           child: const Text(
+                  //             'Today',
+                  //             style: TextStyle(
+                  //               color: Colors.white,
+                  //               fontSize: 12,
+                  //               fontWeight: FontWeight.bold,
+                  //             ),
+                  //           ),
+                  //         );
+                  //       }),
+                  //     ],
+                  //   ),
+                  // ),
                   
                   // Available dates dropdown
                   Obx(() {
@@ -313,10 +344,21 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                         items: availableDates.map((date) {
                           // Use the ID as the value to ensure uniqueness
                           final value = date.id?.toString() ?? '';
+                          // Create a better combined display string with date and time
+                          String displayText;
+                          if (date.drawDateFormatted != null && date.drawTimeFormatted != null) {
+                            displayText = '${date.drawDateFormatted} (${date.drawTimeFormatted})';
+                          } else if (date.drawDateFormatted != null) {
+                            displayText = date.drawDateFormatted!;
+                          } else if (date.drawTimeFormatted != null) {
+                            displayText = date.drawTimeFormatted!;
+                          } else {
+                            displayText = value;
+                          }
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Text(
-                              date.dateFormatted ?? value,
+                              displayText,
                               style: const TextStyle(color: Colors.white),
                             ),
                           );
@@ -326,16 +368,16 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                             // Find the selected date object to get the full date string
                             final selectedDate = availableDates.firstWhere(
                               (date) => date.id?.toString() == value,
-                              orElse: () => AvailableDate(),
+                              orElse: () => Draw(),
                             );
                             
                             // Debug print to see the selected date
                             print('Selected date ID: $value');
-                            print('Found date object: ${selectedDate.date}');
+                            print('Found date object: ${selectedDate.drawDate}');
                             
-                            if (selectedDate.date != null) {
+                            if (selectedDate.drawDate != null) {
                               // Make sure we're passing the correct date format
-                              String dateToFetch = selectedDate.date!;
+                              String dateToFetch = selectedDate.drawDate!;
                               // If it has a time component, strip it off
                               if (dateToFetch.contains('T')) {
                                 dateToFetch = dateToFetch.split('T')[0];

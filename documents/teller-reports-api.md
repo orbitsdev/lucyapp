@@ -285,3 +285,89 @@ Common error codes:
 5. **Error Handling**: Implement proper error handling to provide a good user experience when API calls fail.
 
 6. **Caching**: Consider implementing client-side caching for reports to reduce server load and improve performance.
+
+7. **Default Date**: The Sales Report endpoint uses today's date by default if no date parameter is provided. The Tallysheet Report requires a date parameter.
+
+8. **Available Dates**: You can use the `/api/dropdown/available-dates` endpoint to get a list of all available draws ordered by date and time. This is useful for implementing date and time selection in your application.
+
+   **Example Response:**
+   ```json
+   {
+     "success": true,
+     "message": "Available draw list fetched successfully",
+     "data": {
+       "available_draws": [
+         {
+           "id": 1,
+           "draw_date": "2025-05-08",
+           "draw_date_formatted": "May 8, 2025",
+           "draw_time": "10:30:00",
+           "draw_time_formatted": "10:30 AM",
+           "is_open": true,
+           "is_active": true
+         },
+         {
+           "id": 2,
+           "draw_date": "2025-05-08",
+           "draw_date_formatted": "May 8, 2025",
+           "draw_time": "14:00:00",
+           "draw_time_formatted": "2:00 PM",
+           "is_open": true,
+           "is_active": true
+         },
+         {
+           "id": 3,
+           "draw_date": "2025-05-07",
+           "draw_date_formatted": "May 7, 2025",
+           "draw_time": "10:30:00",
+           "draw_time_formatted": "10:30 AM",
+           "is_open": true,
+           "is_active": true
+         }
+       ]
+     }
+   }
+   ```
+
+9. **Formatting Consistency**: All monetary values follow the same formatting pattern without peso symbols (e.g., "5,000.00"). This makes it easier to display values consistently across your application.
+
+10. **Game Type Information**: The Sales Report includes game type information for each draw, which can be useful for displaying different game types with appropriate visual indicators.
+
+11. **Draw Times**: You can use the `/api/dropdown/draws` endpoint to get a list of available draws with their times. This is useful for implementing draw time selection dropdowns in your application.
+
+   **Example Response:**
+   ```json
+   {
+     "success": true,
+     "message": "Success",
+     "data": [
+       {
+         "id": 1,
+         "draw_date": "2025-05-08",
+         "draw_date_formatted": "May 8, 2025",
+         "draw_time": "10:30:00",
+         "draw_time_formatted": "10:30 AM",
+         "is_open": true,
+         "is_active": true
+       },
+       {
+         "id": 2,
+         "draw_date": "2025-05-08",
+         "draw_date_formatted": "May 8, 2025",
+         "draw_time": "14:00:00",
+         "draw_time_formatted": "2:00 PM",
+         "is_open": true,
+         "is_active": true
+       },
+       {
+         "id": 3,
+         "draw_date": "2025-05-08",
+         "draw_date_formatted": "May 8, 2025",
+         "draw_time": "17:00:00",
+         "draw_time_formatted": "5:00 PM",
+         "is_open": true,
+         "is_active": true
+       }
+     ]
+   }
+   ```

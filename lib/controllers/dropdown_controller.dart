@@ -4,7 +4,6 @@ import 'package:bettingapp/core/dio/dio_base.dart';
 import 'package:bettingapp/models/game_type.dart';
 import 'package:bettingapp/models/schedule.dart';
 import 'package:bettingapp/models/draw.dart';
-import 'package:bettingapp/models/available_date.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
 
 class DropdownController extends GetxController {
@@ -16,7 +15,7 @@ class DropdownController extends GetxController {
   final RxList<GameType> gameTypes = <GameType>[].obs;
   final RxList<Schedule> schedules = <Schedule>[].obs;
   final RxList<Draw> draws = <Draw>[].obs;
-  final RxList<AvailableDate> availableDates = <AvailableDate>[].obs;
+  final RxList<Draw> availableDates = <Draw>[].obs;
   
   // Loading states
   final RxBool isLoadingGameTypes = false.obs;
@@ -156,13 +155,13 @@ class DropdownController extends GetxController {
     isLoadingAvailableDates.value = true;
     
     try {
-      final result = await _dioService.authGet<List<AvailableDate>>(
+      final result = await _dioService.authGet<List<Draw>>(
         ApiConfig.availableDates,
         fromJson: (data) {
           if (data is Map && data.containsKey('data') && 
               data['data'] is Map && data['data'].containsKey('available_dates')) {
             return (data['data']['available_dates'] as List)
-                .map((item) => AvailableDate.fromJson(item))
+                .map((item) => Draw.fromJson(item))
                 .toList();
           }
           return [];
@@ -206,7 +205,7 @@ class DropdownController extends GetxController {
   }
   
   // Get available date by ID
-  AvailableDate? getAvailableDateById(int id) {
+  Draw? getAvailableDateById(int id) {
     return availableDates.firstWhereOrNull((date) => date.id == id);
   }
   

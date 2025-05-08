@@ -1,94 +1,57 @@
 import 'package:get/get.dart';
 import 'package:bettingapp/config/api_config.dart';
 import 'package:bettingapp/core/dio/dio_base.dart';
-import 'package:bettingapp/models/tallysheet_report.dart';
 import 'package:bettingapp/models/sales_report.dart';
 import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
+import 'package:intl/intl.dart';
 
-class ReportController extends GetxController {
-  static ReportController get to => Get.find<ReportController>();
+class SalesController extends GetxController {
+  static SalesController get to => Get.find<SalesController>();
   
   final DioService _dioService = DioService();
   
   // Observable report data
-  final Rx<TallysheetReport?> tallysheetReport = Rx<TallysheetReport?>(null);
   final Rx<SalesReport?> salesReport = Rx<SalesReport?>(null);
-  final Rx<List<Draw>> availableDates = Rx<List<Draw>>([]);
+  final RxList<Draw> availableDates = <Draw>[].obs;
   
   // Loading states
-  final RxBool isLoadingTallysheet = false.obs;
   final RxBool isLoadingSalesReport = false.obs;
   final RxBool isLoadingAvailableDates = false.obs;
   
   // Filter parameters
-  final Rx<String?> selectedDate = Rx<String?>(null);
-  final Rx<int?> selectedTellerId = Rx<int?>(null);
-  final Rx<int?> selectedLocationId = Rx<int?>(null);
-  final Rx<int?> selectedDrawId = Rx<int?>(null);
+  final Rx<DateTime> selectedDate = DateTime.now().obs;
   
-  // Get tallysheet report
-  Future<void> fetchTallysheetReport({
-    required String date,
-    int? tellerId,
-    int? locationId,
-    int? drawId,
-  }) async {
-    isLoadingTallysheet.value = true;
-    
-    try {
-      final queryParams = <String, dynamic>{
-        'date': date,
-      };
-      
-      if (tellerId != null) queryParams['teller_id'] = tellerId;
-      if (locationId != null) queryParams['location_id'] = locationId;
-      if (drawId != null) queryParams['draw_id'] = drawId;
-      
-      final result = await _dioService.authGet<TallysheetReport>(
-        ApiConfig.tallySheet,
-        queryParameters: queryParams,
-        fromJson: (data) {
-          if (data is Map && data.containsKey('data')) {
-            return TallysheetReport.fromJson(data['data']);
-          }
-          return TallysheetReport();
-        },
-      );
-      
-      result.fold(
-        (error) {
-          Modal.showErrorModal(
-            title: 'Error Loading Tallysheet',
-            message: error.message,
-          );
-        },
-        (report) {
-          tallysheetReport.value = report;
-        },
-      );
-    } catch (e) {
-      Modal.showErrorModal(
-        title: 'Error',
-        message: 'Failed to load tallysheet report: ${e.toString()}',
-      );
-    } finally {
-      isLoadingTallysheet.value = false;
-    }
+  // Table data
+  final RxList<String> columns = <String>['Gross', 'Sales', 'Bet', 'Hits'].obs;
+  final RxList<String> rowLabels = <String>[].obs;
+  final RxList<List<String>> rows = <List<String>>[].obs;
+  
+  // Getters
+  String get formattedDate => DateFormat('MMMM dd, yyyy').format(selectedDate.value);
+  
+  // Change date and fetch report
+  void changeDate(DateTime date) {
+    selectedDate.value = date;
+    final formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    fetchSalesReport(date: formattedDate);
   }
   
-  // Get sales report
+  // Schedule filter removed as it's redundant with date filter
+  
+  // Fetch sales report
   Future<void> fetchSalesReport({
-    String? date,
+    required String date,
     int? drawId,
   }) async {
     isLoadingSalesReport.value = true;
     
     try {
-      final queryParams = <String, dynamic>{};
+      final queryParams = {
+        'date': date,
+      };
       
-      if (date != null) queryParams['date'] = date;
-      if (drawId != null) queryParams['draw_id'] = drawId;
+      if (drawId != null) queryParams['draw_id'] = drawId.toString();
       
       final result = await _dioService.authGet<SalesReport>(
         ApiConfig.salesReport,
@@ -110,6 +73,7 @@ class ReportController extends GetxController {
         },
         (report) {
           salesReport.value = report;
+          updateTableData(report);
         },
       );
     } catch (e) {
@@ -122,23 +86,15 @@ class ReportController extends GetxController {
     }
   }
   
-  // Get today's sales report
+  // Fetch today's sales report
   Future<void> fetchTodaySalesReport({
     int? drawId,
   }) async {
-    // Get today's date in YYYY-MM-DD format
     final today = DateTime.now().toIso8601String().split('T')[0];
     await fetchSalesReport(date: today, drawId: drawId);
   }
   
-  // Fetch today's tallysheet report
-  Future<void> fetchTodayTallysheetReport() async {
-    final today = DateTime.now();
-    final formattedDate = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-    await fetchTallysheetReport(date: formattedDate);
-  }
-  
-  // Fetch available dates for tallysheet
+  // Fetch available dates
   Future<void> fetchAvailableDates() async {
     isLoadingAvailableDates.value = true;
     
@@ -183,16 +139,33 @@ class ReportController extends GetxController {
     }
   }
   
-  // Reset filters
-  void resetFilters() {
-    selectedDate.value = null;
-    selectedTellerId.value = null;
-    selectedLocationId.value = null;
-    selectedDrawId.value = null;
-  }
-  
-  // Get commission amount based on sales amount and percentage
-  double calculateCommission(double amount, int percentage) {
-    return amount * percentage / 100;
+  // Update table data from sales report
+  void updateTableData(SalesReport report) {
+    if (report.draws == null || report.draws!.isEmpty) {
+      rows.value = [];
+      rowLabels.value = [];
+      return;
+    }
+    
+    final newRows = <List<String>>[];
+    final newRowLabels = <String>[];
+    for (final draw in report.draws!) {
+      // Use the time formatted field if available, otherwise use the time field
+      final timeLabel = draw.timeFormatted ?? draw.time ?? 'Unknown';
+      newRowLabels.add(timeLabel);
+      
+      newRows.add([
+        // Use formatted values if available, otherwise convert raw values to strings
+        draw.grossFormatted ?? (draw.gross?.toString() ?? '0'),
+        draw.salesFormatted ?? (draw.sales?.toString() ?? '0'),
+        (draw.sales?.toString() ?? '0'),
+        draw.hitsFormatted ?? (draw.hits?.toString() ?? '0'),
+      ]);
+    }
+    
+    // Schedule filter removed
+    
+    rowLabels.value = newRowLabels;
+    rows.value = newRows;
   }
 }
