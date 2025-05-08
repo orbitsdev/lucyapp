@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:bettingapp/widgets/stats_table.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart'; // Preserved for future reference
 import 'package:bettingapp/controllers/sales_controller.dart';
-import 'package:bettingapp/models/draw.dart';
+import 'package:bettingapp/widgets/common/local_lottie_image.dart';
+// import 'package:bettingapp/models/draw.dart'; // Preserved for future reference if we switch back to dropdown
+// Removed cupertino import as we're using Material date picker
 
 
 class SalesScreen extends StatefulWidget {
@@ -22,18 +24,20 @@ class _SalesScreenState extends State<SalesScreen> {
   void initState() {
     super.initState();
     _loadSalesData();
-    _loadAvailableDates();
+    // _loadAvailableDates(); // Not needed with direct date picker
   }
   
   Future<void> _loadSalesData() async {
     await controller.fetchTodaySalesReport();
   }
   
-  Future<void> _loadAvailableDates() async {
-    await controller.fetchAvailableDates();
-  }
+  // Not needed with direct date picker approach
+  // Future<void> _loadAvailableDates() async {
+  //   await controller.fetchAvailableDates();
+  // }
   
-  // Helper method to find the ID of a date in the available dates list
+  // Helper method preserved for future reference if we switch back to dropdown
+  /*
   String? _findValueInList(DateTime? dateValue, List<dynamic> items) {
     if (dateValue == null || items.isEmpty) return null;
     
@@ -54,6 +58,44 @@ class _SalesScreenState extends State<SalesScreen> {
     
     // If no match found, return the first item's ID as fallback
     return items.isNotEmpty ? items.first.id?.toString() : null;
+  }
+  */
+
+  // Build empty state widget with animation
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          LocalLottieImage(
+            path: 'assets/animations/empty_state.json',
+            width: 200,
+            height: 200,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No sales data available',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try selecting a different date',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    ).animate()
+      .fadeIn(duration: 300.ms)
+      .slideY(begin: 0.1, end: 0, duration: 300.ms);
   }
 
   @override
@@ -112,7 +154,61 @@ class _SalesScreenState extends State<SalesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Date Dropdown
+                  // Date Picker - Using Material DatePicker with cool calendar icon
+                  Obx(() => InkWell(
+                    onTap: () async {
+                      // Make sure the lastDate is after the current date
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: controller.selectedDate.value,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.light(
+                                primary: AppColors.primaryRed,
+                                onPrimary: Colors.white,
+                                onSurface: Colors.black,
+                              ),
+                              dialogBackgroundColor: Colors.white,
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        controller.changeDate(picked);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            controller.formattedDate,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryRed.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Icon(Icons.calendar_month, color: AppColors.primaryRed, size: 20),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+                  
+                  /* Dropdown approach preserved for future reference
                   Obx(() {
                     final availableDates = controller.availableDates;
                     if (availableDates.isEmpty) {
@@ -178,7 +274,6 @@ class _SalesScreenState extends State<SalesScreen> {
                           String displayText;
                           if (date.drawDateFormatted != null && date.drawTimeFormatted != null) {
                             displayText = '${date.drawDateFormatted} ';
-                            // displayText = '${date.drawDateFormatted} (${date.drawTimeFormatted})';
                           } else if (date.drawDateFormatted != null) {
                             displayText = date.drawDateFormatted!;
                           } else if (date.drawTimeFormatted != null) {
@@ -213,6 +308,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       ),
                     );
                   }),
+                  */
 
                   // Schedule Filter removed as it's redundant with the date filter
                 ],
@@ -237,17 +333,19 @@ class _SalesScreenState extends State<SalesScreen> {
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  child: StatsTable(
-                    columns: controller.columns,
-                    rows: controller.rows,
-                    rowLabels: controller.rowLabels,
-                    headerColor: AppColors.primaryRed, // Changed to red color scheme
-                    showTotal: false,
-                    boldColumns: [0], // Make the "Sales" column header bold
-                    highlightColumns: [0], // Highlight the "Sales" column values
-                  ).animate()
-                    .fadeIn(duration: 300.ms)
-                    .slideY(begin: 0.1, end: 0, duration: 300.ms),
+                  child: controller.rows.isEmpty
+                    ? _buildEmptyState()
+                    : StatsTable(
+                        columns: controller.columns,
+                        rows: controller.rows,
+                        rowLabels: controller.rowLabels,
+                        headerColor: AppColors.primaryRed, // Changed to red color scheme
+                        showTotal: false,
+                        boldColumns: [0], // Make the "Sales" column header bold
+                        highlightColumns: [0], // Highlight the "Sales" column values
+                      ).animate()
+                        .fadeIn(duration: 300.ms)
+                        .slideY(begin: 0.1, end: 0, duration: 300.ms),
                 ),
               ),
             ),

@@ -197,15 +197,17 @@ class StatsTable extends StatelessWidget {
           color: color,
           borderRadius: borderRadius,
         ),
-        child: Text(
-          text,
-          textAlign: isLabel ? TextAlign.left : TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: textColor ??
-                (isHeader ? Colors.white : AppColors.primaryText),
-            fontWeight: extraBold ? FontWeight.w900 : (isHeader || isLabel ? FontWeight.bold : FontWeight.normal),
-            fontSize: 13,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            text,
+            textAlign: isLabel ? TextAlign.left : TextAlign.center,
+            style: TextStyle(
+              color: textColor ??
+                  (isHeader ? Colors.white : AppColors.primaryText),
+              fontWeight: extraBold ? FontWeight.w900 : (isHeader || isLabel ? FontWeight.bold : FontWeight.normal),
+              fontSize: 13,
+            ),
           ),
         ),
       ),

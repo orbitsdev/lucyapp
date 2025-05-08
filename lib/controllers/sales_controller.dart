@@ -154,12 +154,51 @@ class SalesController extends GetxController {
       final timeLabel = draw.timeFormatted ?? draw.time ?? 'Unknown';
       newRowLabels.add(timeLabel);
       
-      // Use the formatted values directly from the backend
+      // Format values for display with thousand separators
+      String formatTotal(dynamic value) {
+        if (value == null) return '0';
+        
+        // If it's a string with commas, convert to number
+        if (value is String) {
+          if (value.contains(',')) {
+            try {
+              value = double.parse(value.replaceAll(',', ''));
+            } catch (e) {
+              return value; // Return original if parsing fails
+            }
+          } else {
+            try {
+              value = double.parse(value);
+            } catch (e) {
+              return value; // Return original if parsing fails
+            }
+          }
+        }
+        
+        // Now value should be a number (double or int)
+        if (value is num) {
+          // Convert to integer if it's a whole number
+          final intValue = (value == value.toInt()) ? value.toInt() : value;
+          
+          // Format with thousand separators
+          final formatter = NumberFormat('#,###');
+          if (intValue >= 1000) {
+            return formatter.format(intValue);
+          } else {
+            // For smaller numbers, just convert to string without commas
+            return intValue.toString();
+          }
+        }
+        
+        return value.toString();
+      }
+      
+      // Use the numeric values directly when available, otherwise use formatted values
       newRows.add([
-        draw.grossFormatted ?? '0',
-        draw.salesFormatted ?? '0',
-        draw.salesFormatted ?? '0', // Same as sales for the "Bet" column
-        draw.hitsFormatted ?? '0',
+        formatTotal(draw.gross ?? draw.grossFormatted),
+        formatTotal(draw.sales ?? draw.salesFormatted),
+        formatTotal(draw.sales ?? draw.salesFormatted), // Same as sales for the "Bet" column
+        formatTotal(draw.hits ?? draw.hitsFormatted),
       ]);
     }
     
