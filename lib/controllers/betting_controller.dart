@@ -141,14 +141,14 @@ class BettingController extends GetxController {
         'customer_id': null, // Optional, can be null
       };
       
-      final result = await _dioService.authPost<Bet>(
+      // Use dynamic type to get the raw response first
+      final result = await _dioService.authPost<dynamic>(
         ApiConfig.createBet,
         data: payload,
         fromJson: (data) {
-          if (data is Map && data.containsKey('data')) {
-            return Bet.fromJson(data['data']);
-          }
-          return Bet();
+          // Just return the raw data
+          print('Raw API response: $data');
+          return data;
         },
       );
       
@@ -160,20 +160,56 @@ class BettingController extends GetxController {
           );
           return false;
         },
-        (bet) {
-          // Add the new bet to the list
-          bets.insert(0, bet);
+        (response) {
+          print('------------------');
+          print('Response: $response');
+          print('---------------------YOWW');
           
-          // Show success message
-          Modal.showSuccessModal(
-            title: 'Bet Placed Successfully',
-            message: 'Ticket ID: ${bet.ticketId}\nBet Number: ${bet.betNumber}\nAmount: ${bet.amount}',
-            showButton: true,
-          );
-          
-          // Reset form
-          resetBetForm();
-          return true;
+          // The response is already the bet data object
+          if (response is Map) {
+            final betData = response;
+            print('Bet data: $betData');
+            
+            // Extract values directly from the response data
+            final ticketId = betData['ticket_id']?.toString() ?? 'Unknown';
+            final betNumber = betData['bet_number']?.toString() ?? 'Unknown';
+            final amount = betData['amount'];
+            
+            // Format amount with proper currency
+            final formattedAmount = amount != null 
+                ? 'PHP ${(amount is int ? amount.toDouble() : amount).toStringAsFixed(2)}' 
+                : 'PHP 0.00';
+            
+            print('Extracted values - Ticket ID: $ticketId, Bet Number: $betNumber, Amount: $amount');
+            
+            // Create a Bet object and add it to the list
+            try {
+              final bet = Bet.fromJson(betData);
+              if (bet.id != null) {
+                bets.insert(0, bet);
+              }
+            } catch (e) {
+              print('Error creating Bet object: $e');
+              // Still continue to show success message even if bet object creation fails
+            }
+            
+            // Show success message with the extracted values
+            Modal.showSuccessModal(
+              title: 'Bet Placed Successfully',
+              message: 'Ticket ID: $ticketId\nBet Number: $betNumber\nAmount: $formattedAmount',
+              showButton: true,
+            );
+            
+            // Reset form
+            resetBetForm();
+            return true;
+          } else {
+            Modal.showErrorModal(
+              title: 'Error Processing Response',
+              message: 'Could not process the server response',
+            );
+            return false;
+          }
         },
       );
     } catch (e) {

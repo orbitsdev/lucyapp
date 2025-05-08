@@ -9,19 +9,19 @@ class Location {
     this.address,
   });
   
-  factory Location.fromJson(Map<String, dynamic> json) {
+  factory Location.fromJson(Map json) {
     return Location(
       id: json['id'],
-      name: json['name'],
-      address: json['address'],
+      name: json['name']?.toString(),
+      address: json['address']?.toString(),
     );
   }
   
-  factory Location.fromMap(Map<String, dynamic> map) {
+  factory Location.fromMap(Map map) {
     return Location(
       id: map['id'],
-      name: map['name'],
-      address: map['address'],
+      name: map['name']?.toString(),
+      address: map['address']?.toString(),
     );
   }
   

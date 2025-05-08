@@ -130,9 +130,16 @@ class _NewBetScreenState extends State<NewBetScreen> {
       onConfirm: () async {
         final success = await bettingController.placeBet();
         if (success) {
-          // Clear form
+          // Clear form fields
           betNumberController.clear();
           amountController.text = '10';
+          
+          // Reset dropdown values after a short delay to ensure UI updates properly
+          Future.delayed(const Duration(milliseconds: 300), () {
+            bettingController.selectedGameTypeId.value = null;
+            bettingController.selectedDrawId.value = null;
+            setState(() {}); // Ensure UI refreshes
+          });
         }
       },
     );

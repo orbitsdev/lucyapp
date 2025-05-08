@@ -11,11 +11,11 @@ class GameType {
     this.digitCount,
   });
   
-  factory GameType.fromJson(Map<String, dynamic> json) {
+  factory GameType.fromJson(Map json) {
     // Extract digit count from code if not provided
     int? extractedDigitCount;
     if (json['digit_count'] == null && json['code'] != null) {
-      final code = json['code'] as String;
+      final code = json['code'].toString();
       if (code.length >= 2 && (code.startsWith('S') || code.startsWith('D'))) {
         extractedDigitCount = int.tryParse(code.substring(1));
       }
@@ -29,11 +29,11 @@ class GameType {
     );
   }
   
-  factory GameType.fromMap(Map<String, dynamic> map) {
+  factory GameType.fromMap(Map map) {
     // Extract digit count from code if not provided
     int? extractedDigitCount;
     if (map['digit_count'] == null && map['code'] != null) {
-      final code = map['code'] as String;
+      final code = map['code'].toString();
       if (code.length >= 2 && (code.startsWith('S') || code.startsWith('D'))) {
         extractedDigitCount = int.tryParse(code.substring(1));
       }

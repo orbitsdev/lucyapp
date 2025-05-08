@@ -38,14 +38,25 @@ class Bet {
     this.customer,
   });
   
-  factory Bet.fromJson(Map<String, dynamic> json) {
+  factory Bet.fromJson(Map json) {
+    // Print the json for debugging
+    print('Parsing Bet.fromJson: $json');
+    
+    // Handle amount conversion safely
+    double? parseAmount() {
+      final amount = json['amount'];
+      if (amount == null) return null;
+      if (amount is int) return amount.toDouble();
+      if (amount is double) return amount;
+      if (amount is String) return double.tryParse(amount);
+      return null;
+    }
+    
     return Bet(
       id: json['id'],
-      ticketId: json['ticket_id'],
-      betNumber: json['bet_number'],
-      amount: json['amount'] is int 
-          ? (json['amount'] as int).toDouble() 
-          : json['amount'],
+      ticketId: json['ticket_id']?.toString(),
+      betNumber: json['bet_number']?.toString(),
+      amount: parseAmount(),
       isClaimed: json['is_claimed'],
       isRejected: json['is_rejected'],
       isCombination: json['is_combination'],
@@ -70,14 +81,22 @@ class Bet {
     );
   }
   
-  factory Bet.fromMap(Map<String, dynamic> map) {
+  factory Bet.fromMap(Map map) {
+    // Handle amount conversion safely
+    double? parseAmount() {
+      final amount = map['amount'];
+      if (amount == null) return null;
+      if (amount is int) return amount.toDouble();
+      if (amount is double) return amount;
+      if (amount is String) return double.tryParse(amount);
+      return null;
+    }
+    
     return Bet(
       id: map['id'],
-      ticketId: map['ticket_id'],
-      betNumber: map['bet_number'],
-      amount: map['amount'] is int 
-          ? (map['amount'] as int).toDouble() 
-          : map['amount'],
+      ticketId: map['ticket_id']?.toString(),
+      betNumber: map['bet_number']?.toString(),
+      amount: parseAmount(),
       isClaimed: map['is_claimed'],
       isRejected: map['is_rejected'],
       isCombination: map['is_combination'],
@@ -85,19 +104,19 @@ class Bet {
       betDateFormatted: map['bet_date_formatted'],
       createdAt: map['created_at'],
       gameType: map['game_type'] != null 
-          ? GameType.fromMap(map['game_type']) 
+          ? GameType.fromMap(map['game_type'] as Map) 
           : null,
       draw: map['draw'] != null 
-          ? Draw.fromMap(map['draw']) 
+          ? Draw.fromMap(map['draw'] as Map) 
           : null,
       teller: map['teller'] != null 
-          ? User.fromMap(map['teller']) 
+          ? User.fromMap(map['teller'] as Map) 
           : null,
       location: map['location'] != null 
-          ? Location.fromMap(map['location']) 
+          ? Location.fromMap(map['location'] as Map) 
           : null,
       customer: map['customer'] != null 
-          ? User.fromMap(map['customer']) 
+          ? User.fromMap(map['customer'] as Map) 
           : null,
     );
   }

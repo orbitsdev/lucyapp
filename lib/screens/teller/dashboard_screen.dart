@@ -265,7 +265,7 @@ class DashboardScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSalesItem('Bet Numbers', '45 (S3: 25, S2: 20)'),
+                    
                       Obx(() {
                         final user = Get.find<AuthController>().user.value;
                         // Determine commission rate based on user role or other factors

@@ -17,25 +17,25 @@ class Draw {
     this.isActive,
   });
   
-  factory Draw.fromJson(Map<String, dynamic> json) {
+  factory Draw.fromJson(Map json) {
     return Draw(
       id: json['id'],
-      drawDate: json['draw_date'],
-      drawDateFormatted: json['draw_date_formatted'],
-      drawTime: json['draw_time'],
-      drawTimeFormatted: json['draw_time_formatted'],
+      drawDate: json['draw_date']?.toString(),
+      drawDateFormatted: json['draw_date_formatted']?.toString(),
+      drawTime: json['draw_time']?.toString(),
+      drawTimeFormatted: json['draw_time_formatted']?.toString(),
       isOpen: json['is_open'],
       isActive: json['is_active'],
     );
   }
   
-  factory Draw.fromMap(Map<String, dynamic> map) {
+  factory Draw.fromMap(Map map) {
     return Draw(
       id: map['id'],
-      drawDate: map['draw_date'],
-      drawDateFormatted: map['draw_date_formatted'],
-      drawTime: map['draw_time'],
-      drawTimeFormatted: map['draw_time_formatted'],
+      drawDate: map['draw_date']?.toString(),
+      drawDateFormatted: map['draw_date_formatted']?.toString(),
+      drawTime: map['draw_time']?.toString(),
+      drawTimeFormatted: map['draw_time_formatted']?.toString(),
       isOpen: map['is_open'],
       isActive: map['is_active'],
     );

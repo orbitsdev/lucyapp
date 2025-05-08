@@ -19,30 +19,30 @@ class User {
     this.location,
   });
   
-  factory User.fromJson(Map<String, dynamic> json) {
+  factory User.fromJson(Map json) {
     // Handle case where data is nested inside 'data' field
     final userData = json.containsKey('data') ? json['data'] : json;
     
     return User(
       id: userData['id'],
-      name: userData['name'],
-      username: userData['username'],
-      email: userData['email'],
-      role: userData['role'],
-      profilePhotoUrl: userData['profile_photo_url'],
-      location: userData['location'] != null ? Location.fromJson(userData['location']) : null,
+      name: userData['name']?.toString(),
+      username: userData['username']?.toString(),
+      email: userData['email']?.toString(),
+      role: userData['role']?.toString(),
+      profilePhotoUrl: userData['profile_photo_url']?.toString(),
+      location: userData['location'] != null ? Location.fromJson(userData['location'] as Map) : null,
     );
   }
   
-  factory User.fromMap(Map<String, dynamic> map) {
+  factory User.fromMap(Map map) {
     return User(
       id: map['id'],
-      name: map['name'],
-      username: map['username'],
-      email: map['email'],
-      role: map['role'],
-      profilePhotoUrl: map['profile_photo_url'],
-      location: map['location'] != null ? Location.fromMap(map['location']) : null,
+      name: map['name']?.toString(),
+      username: map['username']?.toString(),
+      email: map['email']?.toString(),
+      role: map['role']?.toString(),
+      profilePhotoUrl: map['profile_photo_url']?.toString(),
+      location: map['location'] != null ? Location.fromMap(map['location'] as Map) : null,
     );
   }
   
