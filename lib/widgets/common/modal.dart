@@ -17,6 +17,8 @@ class Modal {
     borderRadius: BorderRadius.circular(16.r),
   );
   
+  static const _dialogBackgroundColor = Colors.white;
+  
   static final _defaultButtonStyle = ElevatedButton.styleFrom(
     backgroundColor: AppColors.primaryRed,
     foregroundColor: Colors.white,
@@ -62,6 +64,7 @@ class Modal {
   }) {
     Get.dialog(
       Dialog(
+        backgroundColor: _dialogBackgroundColor,
         shape: _defaultDialogShape,
         child: Padding(
           padding: EdgeInsets.all(20.r),
@@ -123,6 +126,7 @@ class Modal {
   }) {
     Get.dialog(
       Dialog(
+        backgroundColor: _dialogBackgroundColor,
         shape: _defaultDialogShape,
         child: Padding(
           padding: EdgeInsets.all(20.r),
@@ -176,6 +180,7 @@ class Modal {
   }) {
     Get.dialog(
       Dialog(
+        backgroundColor: _dialogBackgroundColor,
         shape: _defaultDialogShape,
         child: Padding(
           padding: EdgeInsets.all(20.r),
@@ -249,6 +254,7 @@ class Modal {
   }) {
     Get.dialog(
       Dialog(
+        backgroundColor: _dialogBackgroundColor,
         shape: _defaultDialogShape,
         child: Padding(
           padding: EdgeInsets.all(20.r),
@@ -297,6 +303,7 @@ class Modal {
       WillPopScope(
         onWillPop: () async => false,
         child: Dialog(
+          backgroundColor: _dialogBackgroundColor,
           shape: _defaultDialogShape,
           child: Padding(
             padding: EdgeInsets.all(20.r),
@@ -345,7 +352,7 @@ class Modal {
         shape: RoundedRectangleBorder(
           borderRadius: borderRadius ?? BorderRadius.circular(16.r),
         ),
-        backgroundColor: backgroundColor,
+        backgroundColor: backgroundColor != Colors.white ? backgroundColor : _dialogBackgroundColor,
         child: Padding(
           padding: contentPadding.r,
           child: content,

@@ -1,4 +1,4 @@
-import 'package:bettingapp/controllers/auth/auth_controller.dart';
+import 'package:bettingapp/controllers/auth_controller.dart';
 import 'package:bettingapp/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

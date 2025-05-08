@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:bettingapp/routes/app_routes.dart';
-import '../controllers/auth/auth_controller.dart';
+import '../controllers/auth_controller.dart';
 
 
 class GuestMiddleware extends GetMiddleware {

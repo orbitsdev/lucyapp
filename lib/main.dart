@@ -1,5 +1,5 @@
 import 'package:bettingapp/core/getx/app_binding.dart';
-import 'package:bettingapp/controllers/auth/auth_controller.dart';
+import 'package:bettingapp/controllers/auth_controller.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

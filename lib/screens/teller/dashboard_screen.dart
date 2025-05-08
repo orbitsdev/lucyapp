@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:bettingapp/routes/app_routes.dart';
 import 'package:bettingapp/widgets/dashboard_card.dart';
-import 'package:bettingapp/controllers/auth/auth_controller.dart';
+import 'package:bettingapp/controllers/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -44,20 +44,24 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'MANILA BRANCH',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
+                  Obx(() {
+                    final user = Get.find<AuthController>().user.value;
+                    final locationName = user?.location?.name ?? 'MANILA BRANCH';
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                  ),
+                      child: Text(
+                        locationName.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -148,32 +152,40 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     
                     // User Name
-                    const Text(
-                      'TELLER ACCOUNT',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Obx(() {
+                      final user = Get.find<AuthController>().user.value;
+                      final username = user?.username ?? 'TELLER ACCOUNT';
+                      return Text(
+                        username.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }),
                     
                     // Role Badge
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'MANILA BRANCH',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                    Obx(() {
+                      final user = Get.find<AuthController>().user.value;
+                      final locationName = user?.location?.name ?? 'MANILA BRANCH';
+                      return Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-                    ),
+                        child: Text(
+                          locationName.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -253,8 +265,30 @@ class DashboardScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSalesItem('Bet Numbers', '45'),
-                      _buildSalesItem('Commission Rate', '10%'),
+                      _buildSalesItem('Bet Numbers', '45 (S3: 25, S2: 20)'),
+                      Obx(() {
+                        final user = Get.find<AuthController>().user.value;
+                        // Determine commission rate based on user role or other factors
+                        // Default to 10% if not specified
+                        String commissionRate = '10%';
+                        
+                        // Example logic to determine commission rate
+                        // This should be replaced with actual business logic
+                        if (user != null) {
+                          // Use the user's role or ID to determine commission rate
+                          // For now, we'll use a simple rule based on user ID
+                          final userId = user.id ?? 0;
+                          if (userId % 3 == 0) {
+                            commissionRate = '15%';
+                          } else if (userId % 3 == 1) {
+                            commissionRate = '10%';
+                          } else {
+                            commissionRate = '5%';
+                          }
+                        }
+                        
+                        return _buildSalesItem('Commission Rate', commissionRate);
+                      }),
                       _buildSalesItem('Cancellations', '3'),
                     ],
                   ),

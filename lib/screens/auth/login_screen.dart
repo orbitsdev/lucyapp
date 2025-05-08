@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:bettingapp/utils/app_colors.dart';
-import 'package:bettingapp/controllers/auth/auth_controller.dart';
+import 'package:bettingapp/controllers/auth_controller.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});

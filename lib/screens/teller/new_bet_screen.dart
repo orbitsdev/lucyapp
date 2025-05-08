@@ -1,61 +1,145 @@
+import 'package:bettingapp/controllers/dropdown_controller.dart';
+import 'package:bettingapp/controllers/betting_controller.dart';
+import 'package:bettingapp/models/game_type.dart';
+import 'package:bettingapp/models/draw.dart';
+import 'package:bettingapp/widgets/common/modal.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 
-class NewBetController extends GetxController {
-  final RxString betNumber = ''.obs;
-  final RxString selectedAmount = 'PHP 10'.obs;
-  final RxString selectedSchedule = '2 pm'.obs;
-  final RxBool isLoading = false.obs;
+class NewBetScreen extends StatefulWidget {
+  const NewBetScreen({super.key});
+
+  @override
+  State<NewBetScreen> createState() => _NewBetScreenState();
+}
+
+class _NewBetScreenState extends State<NewBetScreen> {
+  final DropdownController dropdownController = Get.find<DropdownController>();
+  final BettingController bettingController = Get.find<BettingController>();
+  final TextEditingController betNumberController = TextEditingController();
   final TextEditingController amountController = TextEditingController(text: '10');
   
-  final List<String> schedules = [
-    '2 pm',
-    '5 pm',
-    '9 pm',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Fetch dropdown data when screen is loaded
+    _loadData();
+  }
   
-  void saveBet() async {
-    if (betNumber.value.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter a bet number',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+  Future<void> _loadData() async {
+    // Fetch game types and available draws
+    await Future.wait([
+      dropdownController.fetchGameTypes(),
+      bettingController.fetchAvailableDraws(),
+    ]);
+  }
+  
+  // Get the max length for bet number based on game type
+  int _getMaxBetNumberLength() {
+    if (bettingController.selectedGameTypeId.value == null) return 3; // Default
+    
+    final gameType = dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!);
+    if (gameType == null) return 3;
+    
+    // First check if digitCount is available
+    if (gameType.digitCount != null) {
+      return gameType.digitCount!;
+    }
+    
+    // Fallback logic based on game type code
+    final code = gameType.code;
+    if (code == null) return 3;
+    
+    // Check if code follows pattern like S2, S3, D4, etc.
+    if (code.length >= 2 && (code.startsWith('S') || code.startsWith('D'))) {
+      final digitPart = code.substring(1);
+      final parsedDigits = int.tryParse(digitPart);
+      if (parsedDigits != null) {
+        return parsedDigits;
+      }
+    }
+    
+    // Default fallback
+    switch (code) {
+      case 'S2': return 2;
+      case 'S3': return 3;
+      case 'S4': return 4;
+      case 'D4': return 4;
+      default: return 3;
+    }
+  }
+  
+  // Validate bet number based on game type
+  bool _isValidBetNumber(String number) {
+    if (number.isEmpty) return false;
+    
+    final maxLength = _getMaxBetNumberLength();
+    return number.length == maxLength && int.tryParse(number) != null;
+  }
+  
+  // Place bet with confirmation
+  void _placeBet() {
+    if (!_isValidBetNumber(betNumberController.text)) {
+      Modal.showErrorModal(
+        title: 'Invalid Bet Number',
+        message: 'Please enter a valid ${_getMaxBetNumberLength()}-digit bet number',
       );
       return;
     }
     
-    isLoading.value = true;
+    if (bettingController.selectedGameTypeId.value == null) {
+      Modal.showErrorModal(
+        title: 'Game Type Required',
+        message: 'Please select a game type',
+      );
+      return;
+    }
     
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    if (bettingController.selectedDrawId.value == null) {
+      Modal.showErrorModal(
+        title: 'Draw Required',
+        message: 'Please select a draw schedule',
+      );
+      return;
+    }
     
-    isLoading.value = false;
+    final amount = double.tryParse(amountController.text);
+    if (amount == null || amount <= 0) {
+      Modal.showErrorModal(
+        title: 'Invalid Amount',
+        message: 'Please enter a valid bet amount',
+      );
+      return;
+    }
     
-    // Show success message
-    Get.snackbar(
-      'Success',
-      'Bet saved successfully',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
+    // Set values in betting controller
+    bettingController.betNumber.value = betNumberController.text;
+    bettingController.betAmount.value = amount;
+    
+    // Show confirmation modal
+    Modal.showConfirmationModal(
+      title: 'Confirm Bet',
+      message: 'Are you sure you want to place a bet with the following details?\n\n'  
+          'Bet Number: ${betNumberController.text}\n'
+          'Amount: PHP ${amountController.text}\n'
+          'Game Type: ${dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)?.name ?? ''}\n'
+          'Draw: ${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawTimeFormatted ?? ''} (${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDateFormatted ?? bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDate ?? ''})',
+      confirmText: 'Place Bet',
+      onConfirm: () async {
+        final success = await bettingController.placeBet();
+        if (success) {
+          // Clear form
+          betNumberController.clear();
+          amountController.text = '10';
+        }
+      },
     );
-    
-    // Clear form
-    betNumber.value = '';
   }
-}
-
-class NewBetScreen extends StatelessWidget {
-  const NewBetScreen({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(NewBetController());
-    
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -66,138 +150,197 @@ class NewBetScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Bet Number Input
-              const Text(
-                'Bet Number',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                onChanged: (value) => controller.betNumber.value = value,
-                controller: TextEditingController(text: controller.betNumber.value),
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 18),
-                decoration: InputDecoration(
-                  hintText: 'Enter bet number',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Bet Amount Input
-              const Text(
-                'Bet Amount',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: controller.amountController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 16),
-                decoration: InputDecoration(
-                  hintText: 'Enter bet amount',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  prefixText: 'PHP ',
-                ),
-                onChanged: (value) {
-                  controller.selectedAmount.value = 'PHP $value';
-                },
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Schedule Display (Read-only, set by coordinator)
-              const Text(
-                'Schedule',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                width: double.infinity,
-                child: Obx(() => Text(
-                  controller.selectedSchedule.value,
+      body: Obx(() {
+        final isLoading = dropdownController.isLoadingGameTypes.value || 
+                         bettingController.isLoadingAvailableDraws.value;
+        
+        if (isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Game Type Selection
+                const Text(
+                  'Game Type',
                   style: TextStyle(
-                    color: AppColors.primaryText,
                     fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                )),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                child: Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value
-                      ? null
-                      : () => controller.saveBet(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      isExpanded: true,
+                      hint: const Text('Select Game Type'),
+                      value: bettingController.selectedGameTypeId.value,
+                      items: dropdownController.gameTypes.map((gameType) {
+                        return DropdownMenuItem<int>(
+                          value: gameType.id,
+                          child: Text('${gameType.name} (${gameType.code})'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        bettingController.selectedGameTypeId.value = value;
+                        // Clear bet number when game type changes
+                        betNumberController.clear();
+                      },
                     ),
-                    disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.6),
                   ),
-                  child: controller.isLoading.value
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Draw Selection
+                const Text(
+                  'Draw Schedule',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      isExpanded: true,
+                      hint: const Text('Select Draw Schedule'),
+                      value: bettingController.selectedDrawId.value,
+                      items: bettingController.availableDraws.map((draw) {
+                        return DropdownMenuItem<int>(
+                          value: draw.id,
+                          child: Text('${draw.drawTimeFormatted} (${draw.drawDateFormatted ?? draw.drawDate})'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        bettingController.selectedDrawId.value = value;
+                      },
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Bet Number Input
+                const Text(
+                  'Bet Number',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: betNumberController,
+                  keyboardType: TextInputType.number,
+                  maxLength: _getMaxBetNumberLength(),
+                  style: const TextStyle(fontSize: 18),
+                  decoration: InputDecoration(
+                    hintText: 'Enter ${_getMaxBetNumberLength()}-digit number',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    counterText: '',
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Bet Amount Input
+                const Text(
+                  'Bet Amount',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Enter bet amount',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    prefixText: 'PHP ',
+                  ),
+                ),
+                
+                const SizedBox(height: 40),
+                
+                // Place Bet Button
+                SizedBox(
+                  width: double.infinity,
+                  child: Obx(() => ElevatedButton(
+                    onPressed: bettingController.isPlacingBet.value
+                        ? null
+                        : _placeBet,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryRed,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.6),
+                    ),
+                    child: bettingController.isPlacingBet.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'PLACE BET',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'SAVE BET',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                )),
-              ),
-            ],
-          ),
-        ).animate()
-          .fadeIn(duration: 300.ms)
-          .slideY(begin: 0.1, end: 0, duration: 300.ms),
-      ),
+                  )),
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms)
+            .slideY(begin: 0.1, end: 0, duration: 300.ms),
+        );
+      }),
     );
+  }
+  
+  @override
+  void dispose() {
+    betNumberController.dispose();
+    amountController.dispose();
+    super.dispose();
   }
 }
