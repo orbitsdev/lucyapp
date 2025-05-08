@@ -94,10 +94,10 @@ class _SalesScreenState extends State<SalesScreen> {
 
         return Column(
           children: [
-            // Date Picker and Schedule Filter
+            // Date Picker - Smaller container
             Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
@@ -139,7 +139,7 @@ class _SalesScreenState extends State<SalesScreen> {
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(8),
@@ -159,7 +159,7 @@ class _SalesScreenState extends State<SalesScreen> {
                     }
 
                     return Container(
-                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey.shade300),
                         borderRadius: BorderRadius.circular(8),
@@ -177,7 +177,7 @@ class _SalesScreenState extends State<SalesScreen> {
                           // Create a better combined display string with date and time
                           String displayText;
                           if (date.drawDateFormatted != null && date.drawTimeFormatted != null) {
-                            displayText = '${date.drawDateFormatted} (${date.drawTimeFormatted})';
+                            displayText = '${date.drawDateFormatted}';
                           } else if (date.drawDateFormatted != null) {
                             displayText = date.drawDateFormatted!;
                           } else if (date.drawTimeFormatted != null) {

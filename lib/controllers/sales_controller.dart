@@ -154,12 +154,16 @@ class SalesController extends GetxController {
       final timeLabel = draw.timeFormatted ?? draw.time ?? 'Unknown';
       newRowLabels.add(timeLabel);
       
+      // Format numbers without decimal places
+      final gross = draw.gross != null ? draw.gross!.toInt().toString() : '0';
+      final sales = draw.sales != null ? draw.sales!.toInt().toString() : '0';
+      final hits = draw.hits != null ? draw.hits!.toInt().toString() : '0';
+      
       newRows.add([
-        // Use formatted values if available, otherwise convert raw values to strings
-        draw.grossFormatted ?? (draw.gross?.toString() ?? '0'),
-        draw.salesFormatted ?? (draw.sales?.toString() ?? '0'),
-        (draw.sales?.toString() ?? '0'),
-        draw.hitsFormatted ?? (draw.hits?.toString() ?? '0'),
+        gross,
+        sales,
+        sales, // Same as sales for the "Bet" column
+        hits,
       ]);
     }
     
