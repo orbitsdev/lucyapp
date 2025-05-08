@@ -348,105 +348,115 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
             
             // Draw Data List
             Expanded(
-              child: report.perDraw == null || report.perDraw!.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No draw data available',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 16,
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: report.perDraw!.length,
-                      itemBuilder: (context, index) {
-                        final draw = report.perDraw![index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey.shade200,
-                                width: 1,
+              child: RefreshIndicator(
+                color: AppColors.primaryRed,
+                onRefresh: _loadTallysheetData,
+                child: report.perDraw == null || report.perDraw!.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                          Center(
+                            child: Text(
+                              'No draw data available',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
                               ),
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              // Draw Label and Winning Number
-                              Expanded(
-                                flex: 1,
-                                child: Container(
-                                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                                  alignment: Alignment.center,
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFFD54F),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        '${draw.drawTimeFormatted}',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
+                        ],
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: report.perDraw!.length,
+                        itemBuilder: (context, index) {
+                          final draw = report.perDraw![index];
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                // Draw Label and Winning Number
+                                Expanded(
+                                  flex: 1,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                    alignment: Alignment.center,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFD54F),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          '${draw.drawTimeFormatted}',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                    
                                   ),
                                 ),
-                              ),
-                              
-                              // Gross
-                              Expanded(
-                                flex: 1,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 4),
+                                
+                                // Gross
+                                Expanded(
+                                  flex: 1,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Text(
+                                      formatCurrencyString(draw.grossFormatted, draw.gross),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                
+                                // Sales
+                                Expanded(
+                                  flex: 1,
                                   child: Text(
-                                    formatCurrencyString(draw.grossFormatted, draw.gross),
+                                    formatCurrencyString(draw.salesFormatted, draw.sales),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: (draw.sales ?? 0) > 0 ? Colors.red : Colors.grey,
+                                      fontWeight: (draw.sales ?? 0) > 0 ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                
+                                // Hits
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    formatCurrencyString(draw.hitsFormatted, draw.hits),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 13,
                                     ),
                                   ),
                                 ),
-                              ),
-                              
-                              // Sales
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  formatCurrencyString(draw.salesFormatted, draw.sales),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: (draw.sales ?? 0) > 0 ? Colors.red : Colors.grey,
-                                    fontWeight: (draw.sales ?? 0) > 0 ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                              
-                              // Hits
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  formatCurrencyString(draw.hitsFormatted, draw.hits),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ),
           ],
         );
