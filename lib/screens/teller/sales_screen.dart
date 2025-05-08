@@ -177,7 +177,8 @@ class _SalesScreenState extends State<SalesScreen> {
                           // Create a better combined display string with date and time
                           String displayText;
                           if (date.drawDateFormatted != null && date.drawTimeFormatted != null) {
-                            displayText = '${date.drawDateFormatted}';
+                            displayText = '${date.drawDateFormatted} ';
+                            // displayText = '${date.drawDateFormatted} (${date.drawTimeFormatted})';
                           } else if (date.drawDateFormatted != null) {
                             displayText = date.drawDateFormatted!;
                           } else if (date.drawTimeFormatted != null) {
