@@ -13,7 +13,6 @@ class TallySheetScreen extends StatefulWidget {
 
 class _TallySheetScreenState extends State<TallySheetScreen> {
   final ReportController reportController = Get.find<ReportController>();
-  final currencyFormat = NumberFormat.currency(locale: 'en_PH', symbol: '', decimalDigits: 2);
   
   @override
   void initState() {
@@ -25,30 +24,14 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
     await reportController.fetchTodayTallysheetReport();
   }
   
-  String formatCurrency(double? value) {
-    if (value == null) return '0';
-    
-    // Format with commas for thousands but no decimal places for integers
-    final formatter = NumberFormat('#,###', 'en_US');
-    if (value == value.toInt()) {
-      return formatter.format(value.toInt());
+  String getDisplayValue(String? formattedValue, double? rawValue) {
+    // If we have a formatted value, use it directly
+    if (formattedValue != null && formattedValue.isNotEmpty) {
+      return formattedValue;
     }
     
-    // For values with decimals, format with one decimal place
-    return NumberFormat('#,##0.0', 'en_US').format(value);
-  }
-  
-  // Format API-provided currency strings
-  String formatCurrencyString(String? formattedValue, double? rawValue) {
-    if (formattedValue == null || formattedValue.isEmpty) {
-      return formatCurrency(rawValue);
-    }
-    
-    // Remove the peso symbol if present and trim whitespace
-    String cleanValue = formattedValue.replaceAll('₱', '').trim();
-    
-    // If the API already provided a formatted value with commas, use it
-    return cleanValue;
+    // If no formatted value, just use the raw value
+    return rawValue?.toString() ?? '0';
   }
   
   @override
@@ -239,45 +222,45 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            formatCurrencyString(report.grossFormatted, report.gross),
+                            getDisplayValue(report.grossFormatted, report.gross),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: AppColors.primaryRed,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 12,
                             ),
                           ),
                         ),
                         Expanded(
                           child: Text(
-                            formatCurrencyString(report.salesFormatted, report.sales),
+                            getDisplayValue(report.salesFormatted, report.sales),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.red,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 12,
                             ),
                           ),
                         ),
                         Expanded(
                           child: Text(
-                            formatCurrencyString(report.hitsFormatted, report.hits),
+                            getDisplayValue(report.hitsFormatted, report.hits),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: AppColors.primaryRed,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 12,
                             ),
                           ),
                         ),
                         Expanded(
                           child: Text(
-                            formatCurrencyString(report.voidedFormatted, report.voided),
+                            getDisplayValue(report.voidedFormatted, report.voided),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.grey,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -296,7 +279,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
                   Expanded(
-                    flex: 2,
+                    flex: 1,
                     child: Text(
                       'DRAW',
                       style: TextStyle(
@@ -402,8 +385,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                                           '${draw.drawTimeFormatted}',
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
+                                            fontSize: 12,
                                           ),
                                         ),
                                       ),
@@ -417,10 +399,10 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.only(left: 4),
                                     child: Text(
-                                      formatCurrencyString(draw.grossFormatted, draw.gross),
+                                      getDisplayValue(draw.grossFormatted, draw.gross),
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ),
@@ -430,10 +412,10 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                                 Expanded(
                                   flex: 1,
                                   child: Text(
-                                    formatCurrencyString(draw.salesFormatted, draw.sales),
+                                    getDisplayValue(draw.salesFormatted, draw.sales),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       color: (draw.sales ?? 0) > 0 ? Colors.red : Colors.grey,
                                       fontWeight: (draw.sales ?? 0) > 0 ? FontWeight.bold : FontWeight.normal,
                                     ),
@@ -444,10 +426,10 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                                 Expanded(
                                   flex: 1,
                                   child: Text(
-                                    formatCurrencyString(draw.hitsFormatted, draw.hits),
+                                    getDisplayValue(draw.hitsFormatted, draw.hits),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ),
