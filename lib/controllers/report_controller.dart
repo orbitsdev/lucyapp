@@ -3,6 +3,7 @@ import 'package:bettingapp/config/api_config.dart';
 import 'package:bettingapp/core/dio/dio_base.dart';
 import 'package:bettingapp/models/tallysheet_report.dart';
 import 'package:bettingapp/models/sales_report.dart';
+import 'package:bettingapp/models/available_date.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
 
 class ReportController extends GetxController {
@@ -13,10 +14,12 @@ class ReportController extends GetxController {
   // Observable report data
   final Rx<TallysheetReport?> tallysheetReport = Rx<TallysheetReport?>(null);
   final Rx<SalesReport?> salesReport = Rx<SalesReport?>(null);
+  final Rx<List<AvailableDate>> availableDates = Rx<List<AvailableDate>>([]);
   
   // Loading states
   final RxBool isLoadingTallysheet = false.obs;
   final RxBool isLoadingSalesReport = false.obs;
+  final RxBool isLoadingAvailableDates = false.obs;
   
   // Filter parameters
   final Rx<String?> selectedDate = Rx<String?>(null);
@@ -128,20 +131,49 @@ class ReportController extends GetxController {
     await fetchSalesReport(date: today, drawId: drawId);
   }
   
-  // Get today's tallysheet report
-  Future<void> fetchTodayTallysheetReport({
-    int? tellerId,
-    int? locationId,
-    int? drawId,
-  }) async {
-    // Get today's date in YYYY-MM-DD format
-    final today = DateTime.now().toIso8601String().split('T')[0];
-    await fetchTallysheetReport(
-      date: today,
-      tellerId: tellerId,
-      locationId: locationId,
-      drawId: drawId,
-    );
+  // Fetch today's tallysheet report
+  Future<void> fetchTodayTallysheetReport() async {
+    final today = DateTime.now();
+    final formattedDate = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    await fetchTallysheetReport(date: formattedDate);
+  }
+  
+  // Fetch available dates for tallysheet
+  Future<void> fetchAvailableDates() async {
+    isLoadingAvailableDates.value = true;
+    
+    try {
+      final result = await _dioService.authGet<List<AvailableDate>>(
+        ApiConfig.availableDates,
+        fromJson: (data) {
+          if (data is Map && data.containsKey('data') && data['data'] is Map && data['data'].containsKey('available_dates')) {
+            final List<dynamic> datesList = data['data']['available_dates'];
+            return datesList.map((item) => AvailableDate.fromJson(item)).toList();
+          }
+          return <AvailableDate>[];
+        },
+      );
+      
+      result.fold(
+        (error) {
+          Modal.showErrorModal(
+            title: 'Error Loading Available Dates',
+            message: error.message,
+          );
+        },
+        (dates) {
+          availableDates.value = dates;
+        },
+      );
+    } catch (e) {
+      Modal.showErrorModal(
+        title: 'Error',
+        message: 'Failed to load available dates: ${e.toString()}',
+      );
+      availableDates.value = [];
+    } finally {
+      isLoadingAvailableDates.value = false;
+    }
   }
   
   // Reset filters

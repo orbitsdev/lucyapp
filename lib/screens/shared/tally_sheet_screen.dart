@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:bettingapp/controllers/report_controller.dart';
+import 'package:bettingapp/models/available_date.dart';
 
 class TallySheetScreen extends StatefulWidget {
   const TallySheetScreen({super.key});
@@ -18,6 +19,37 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
   void initState() {
     super.initState();
     _loadTallysheetData();
+    _loadAvailableDates();
+  }
+  
+  Future<void> _loadAvailableDates() async {
+    await reportController.fetchAvailableDates();
+  }
+  
+  // Helper method to find the ID of a date in the available dates list
+  String? _findValueInList(String? dateValue, List<dynamic> items) {
+    if (dateValue == null || items.isEmpty) return null;
+    
+    // Normalize the date format by removing time part if present
+    String normalizedValue = dateValue;
+    if (dateValue.contains('T')) {
+      normalizedValue = dateValue.split('T')[0];
+    }
+    
+    // Find a matching date in the list and return its ID
+    for (var item in items) {
+      String itemDate = item.date ?? '';
+      if (itemDate.contains('T')) {
+        itemDate = itemDate.split('T')[0];
+      }
+      
+      if (itemDate == normalizedValue) {
+        return item.id?.toString();
+      }
+    }
+    
+    // If no match found, return the first item's ID as fallback
+    return items.isNotEmpty ? items.first.id?.toString() : null;
   }
   
   Future<void> _loadTallysheetData() async {
@@ -128,25 +160,196 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         // Use the formatted date from the API response
         final dateStr = report.dateFormatted ?? 'Today';
             
-        return Column(
-          children: [
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Date Display
             Container(
               width: double.infinity,
               color: AppColors.primaryRed,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
+              child: Column(
                 children: [
-                  const Icon(Icons.calendar_today, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Date: $dateStr',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  // Date display row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.calendar_today, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Date: $dateStr',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Date navigation buttons row
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Previous day button
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 16),
+                          onPressed: () {
+                            // Get the current date from the report or use today
+                            DateTime currentDate;
+                            try {
+                              // Handle both ISO and simple date formats
+                              String dateStr = report.date ?? '';
+                              if (dateStr.contains('T')) {
+                                dateStr = dateStr.split('T')[0];
+                              }
+                              currentDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+                            } catch (e) {
+                              currentDate = DateTime.now();
+                            }
+                            
+                            // Go to previous day
+                            final previousDay = currentDate.subtract(const Duration(days: 1));
+                            final date = DateFormat('yyyy-MM-dd').format(previousDay);
+                            reportController.fetchTallysheetReport(date: date);
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        // Next day button (disabled if current date is today)
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                          onPressed: () {
+                            // Get the current date from the report or use today
+                            DateTime currentDate;
+                            try {
+                              // Handle both ISO and simple date formats
+                              String dateStr = report.date ?? '';
+                              if (dateStr.contains('T')) {
+                                dateStr = dateStr.split('T')[0];
+                              }
+                              currentDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+                            } catch (e) {
+                              currentDate = DateTime.now();
+                            }
+                            
+                            // Check if current date is today
+                            final today = DateTime.now();
+                            final isToday = currentDate.year == today.year && 
+                                            currentDate.month == today.month && 
+                                            currentDate.day == today.day;
+                            
+                            // Only go to next day if not today
+                            if (!isToday) {
+                              final nextDay = currentDate.add(const Duration(days: 1));
+                              // Don't go beyond today
+                              if (nextDay.isBefore(today) || 
+                                  (nextDay.year == today.year && nextDay.month == today.month && nextDay.day == today.day)) {
+                                final date = DateFormat('yyyy-MM-dd').format(nextDay);
+                                reportController.fetchTallysheetReport(date: date);
+                              }
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        // Today button
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            minimumSize: Size.zero,
+                          ),
+                          onPressed: () {
+                            reportController.fetchTodayTallysheetReport();
+                          },
+                          child: const Text(
+                            'Today',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  
+                  // Available dates dropdown
+                  Obx(() {
+                    final availableDates = reportController.availableDates.value;
+                    if (availableDates.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButton<String>(
+                        underline: const SizedBox.shrink(),
+                        dropdownColor: AppColors.primaryRed,
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                        isExpanded: true,
+                        hint: const Text(
+                          'Select date',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        // Use the date ID as the value
+                        value: _findValueInList(report.date, availableDates),
+                        items: availableDates.map((date) {
+                          // Use the ID as the value to ensure uniqueness
+                          final value = date.id?.toString() ?? '';
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              date.dateFormatted ?? value,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            // Find the selected date object to get the full date string
+                            final selectedDate = availableDates.firstWhere(
+                              (date) => date.id?.toString() == value,
+                              orElse: () => AvailableDate(),
+                            );
+                            
+                            // Debug print to see the selected date
+                            print('Selected date ID: $value');
+                            print('Found date object: ${selectedDate.date}');
+                            
+                            if (selectedDate.date != null) {
+                              // Make sure we're passing the correct date format
+                              String dateToFetch = selectedDate.date!;
+                              // If it has a time component, strip it off
+                              if (dateToFetch.contains('T')) {
+                                dateToFetch = dateToFetch.split('T')[0];
+                              }
+                              print('Fetching tallysheet for date: $dateToFetch');
+                              reportController.fetchTallysheetReport(date: dateToFetch);
+                            } else {
+                              print('Error: Selected date is null');
+                            }
+                          }
+                        },
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -330,7 +533,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
             ),
             
             // Draw Data List
-            Expanded(
+            SizedBox(
+              height: 300, // Fixed height for the list container
               child: RefreshIndicator(
                 color: AppColors.primaryRed,
                 onRefresh: _loadTallysheetData,
@@ -351,6 +555,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                         ],
                       )
                     : ListView.builder(
+                        shrinkWrap: true,
                         physics: const AlwaysScrollableScrollPhysics(),
                         itemCount: report.perDraw!.length,
                         itemBuilder: (context, index) {
@@ -441,7 +646,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
               ),
             ),
           ],
-        );
+        ),
+      );
       }),
     );
   }

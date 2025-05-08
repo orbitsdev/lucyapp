@@ -17,32 +17,12 @@ class AvailableDate {
     );
   }
   
-  factory AvailableDate.fromMap(Map<String, dynamic> map) {
-    return AvailableDate(
-      id: map['id'],
-      date: map['date'],
-      dateFormatted: map['date_formatted'],
-    );
-  }
-  
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'date': date,
       'date_formatted': dateFormatted,
     };
-  }
-  
-  AvailableDate copyWith({
-    int? id,
-    String? date,
-    String? dateFormatted,
-  }) {
-    return AvailableDate(
-      id: id ?? this.id,
-      date: date ?? this.date,
-      dateFormatted: dateFormatted ?? this.dateFormatted,
-    );
   }
   
   @override
