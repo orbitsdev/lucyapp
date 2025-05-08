@@ -2,118 +2,71 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:intl/intl.dart';
+import 'package:bettingapp/controllers/report_controller.dart';
 
-class TallySheetController extends GetxController {
-  final Rx<DateTime> selectedDate = DateTime.now().obs;
-  
-  // Get formatted date
-  String get formattedDate {
-    return DateFormat('yyyy-MM-dd').format(selectedDate.value);
-  }
-  
-  // Change date
-  void changeDate(DateTime date) {
-    selectedDate.value = date;
-    // In a real app, you would fetch data for the selected date here
-  }
-  
-  // Sample data for the summary section
-  final Map<String, dynamic> summaryData = {
-    'gross': '44,870',
-    'sales': '5,950',
-    'hits': '38,920',
-    'voided': '765',
-  };
-  
-  // Sample data for the detailed tally sheet
-  final List<Map<String, dynamic>> drawData = [
-    {
-      'draw': '2S2: 35',
-      'gross': '11,040',
-      'sales': '350',
-      'hits': '10,690',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '2S3: 835',
-      'gross': '5,295',
-      'sales': '0',
-      'hits': '5,295',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '5S2: 80',
-      'gross': '7,375',
-      'sales': '0',
-      'hits': '7,375',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '5S3: 180',
-      'gross': '2,910',
-      'sales': '0',
-      'hits': '2,910',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '94D: 9839',
-      'gross': '2,730',
-      'sales': '0',
-      'hits': '2,730',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '9L2: 39',
-      'gross': '10,365',
-      'sales': '5,600',
-      'hits': '4,765',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '9L3: 839',
-      'gross': '60',
-      'sales': '0',
-      'hits': '60',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '9S2: 57',
-      'gross': '1,950',
-      'sales': '0',
-      'hits': '1,950',
-      'color': Color(0xFFFFD54F),
-    },
-    {
-      'draw': '9S3: 957',
-      'gross': '3,145',
-      'sales': '0',
-      'hits': '3,145',
-      'color': Color(0xFFFFD54F),
-    },
-  ];
-}
-
-class TallySheetScreen extends StatelessWidget {
+class TallySheetScreen extends StatefulWidget {
   const TallySheetScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(TallySheetController());
+  State<TallySheetScreen> createState() => _TallySheetScreenState();
+}
+
+class _TallySheetScreenState extends State<TallySheetScreen> {
+  final ReportController reportController = Get.find<ReportController>();
+  final currencyFormat = NumberFormat.currency(locale: 'en_PH', symbol: '', decimalDigits: 2);
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadTallysheetData();
+  }
+  
+  Future<void> _loadTallysheetData() async {
+    await reportController.fetchTodayTallysheetReport();
+  }
+  
+  String formatCurrency(double? value) {
+    if (value == null) return '0';
     
+    // Format with commas for thousands but no decimal places for integers
+    final formatter = NumberFormat('#,###', 'en_US');
+    if (value == value.toInt()) {
+      return formatter.format(value.toInt());
+    }
+    
+    // For values with decimals, format with one decimal place
+    return NumberFormat('#,##0.0', 'en_US').format(value);
+  }
+  
+  // Format API-provided currency strings
+  String formatCurrencyString(String? formattedValue, double? rawValue) {
+    if (formattedValue == null || formattedValue.isEmpty) {
+      return formatCurrency(rawValue);
+    }
+    
+    // Remove the peso symbol if present and trim whitespace
+    String cleanValue = formattedValue.replaceAll('₱', '').trim();
+    
+    // If the API already provided a formatted value with commas, use it
+    return cleanValue;
+  }
+  
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text('TALLYSHEET'),
         backgroundColor: AppColors.primaryRed,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back,color: Colors.white,),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () {
-              // Refresh data
+              _loadTallysheetData();
               Get.snackbar(
                 'Refreshing',
                 'Updating tallysheet data...',
@@ -123,317 +76,381 @@ class TallySheetScreen extends StatelessWidget {
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.calendar_today, color: Colors.white),
+            onPressed: () async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: ColorScheme.light(
+                        primary: AppColors.primaryRed,
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              if (picked != null) {
+                final date = DateFormat('yyyy-MM-dd').format(picked);
+                reportController.fetchTallysheetReport(date: date);
+              }
+            },
+          ),
         ],
       ),
-      body: Column(
-        children: [
-          // Date Selector
-          Container(
-            width: double.infinity,
-            color: AppColors.primaryRed,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
+      body: Obx(() {
+        if (reportController.isLoadingTallysheet.value) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
+            ),
+          );
+        }
+        
+        final report = reportController.tallysheetReport.value;
+        if (report == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.calendar_today, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: controller.selectedDate.value,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2025),
-                      builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: ColorScheme.light(
-                              primary: AppColors.primaryRed,
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (picked != null) {
-                      controller.changeDate(picked);
-                    }
-                  },
-                  child: Obx(() => Text(
-                    'Date: ${controller.formattedDate}',
+                Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'No tallysheet data available',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: _loadTallysheetData,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        // Use the formatted date from the API response
+        final dateStr = report.dateFormatted ?? 'Today';
+            
+        return Column(
+          children: [
+            // Date Display
+            Container(
+              width: double.infinity,
+              color: AppColors.primaryRed,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Date: $dateStr',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
-                  )),
-                ),
-              ],
-            ),
-          ),
-          
-          // Summary Section
-          Container(
-            width: double.infinity,
-            color: AppColors.primaryRed,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              children: [
-                // Summary Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Expanded(
-                      child: Text(
-                        'GROSS',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'SALES',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'HITS',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'VOIDED',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                // Summary Values
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Row(
+                ],
+              ),
+            ),
+            
+            // Summary Section
+            Container(
+              width: double.infinity,
+              color: AppColors.primaryRed,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  // Summary Header
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    children: const [
                       Expanded(
                         child: Text(
-                          controller.summaryData['gross'],
+                          'GROSS',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppColors.primaryRed,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 14,
                           ),
                         ),
                       ),
                       Expanded(
                         child: Text(
-                          controller.summaryData['sales'],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          controller.summaryData['hits'],
+                          'SALES',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppColors.primaryRed,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 14,
                           ),
                         ),
                       ),
                       Expanded(
                         child: Text(
-                          controller.summaryData['voided'],
+                          'HITS',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.grey,
+                          style: TextStyle(
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'VOIDED',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  
+                  // Summary Values
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            formatCurrencyString(report.grossFormatted, report.gross),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.primaryRed,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            formatCurrencyString(report.salesFormatted, report.sales),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            formatCurrencyString(report.hitsFormatted, report.hits),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.primaryRed,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            formatCurrencyString(report.voidedFormatted, report.voided),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          
-          // Draw Section Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            color: AppColors.primaryRed,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'DRAW',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'GROSS',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'SALES',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'HITS',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Draw Data List
-          Expanded(
-            child: ListView.builder(
-              itemCount: controller.drawData.length,
-              itemBuilder: (context, index) {
-                final item = controller.drawData[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey.shade200,
-                        width: 1,
+            
+            // Draw Section Header
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: AppColors.primaryRed,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'DRAW',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      // Draw Number
-                      Expanded(
-                        flex: 2,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: item['color'],
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              item['draw'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      'GROSS',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      'SALES',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      'HITS',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Draw Data List
+            Expanded(
+              child: report.perDraw == null || report.perDraw!.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No draw data available',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: report.perDraw!.length,
+                      itemBuilder: (context, index) {
+                        final draw = report.perDraw![index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.grey.shade200,
+                                width: 1,
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      
-                      // Gross
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          item['gross'],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
+                          child: Row(
+                            children: [
+                              // Draw Label and Winning Number
+                              Expanded(
+                                flex: 1,
+                                child: Container(
+                                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                  alignment: Alignment.center,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFD54F),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${draw.drawTimeFormatted}',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                    
+                                  ),
+                                ),
+                              ),
+                              
+                              // Gross
+                              Expanded(
+                                flex: 1,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Text(
+                                    formatCurrencyString(draw.grossFormatted, draw.gross),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              
+                              // Sales
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  formatCurrencyString(draw.salesFormatted, draw.sales),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: (draw.sales ?? 0) > 0 ? Colors.red : Colors.grey,
+                                    fontWeight: (draw.sales ?? 0) > 0 ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Hits
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  formatCurrencyString(draw.hitsFormatted, draw.hits),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      
-                      // Sales
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          item['sales'],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: item['sales'] == '0' ? Colors.grey : Colors.red,
-                            fontWeight: item['sales'] == '0' ? FontWeight.normal : FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      
-                      // Hits
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          item['hits'],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                        );
+                      },
+                    ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 }

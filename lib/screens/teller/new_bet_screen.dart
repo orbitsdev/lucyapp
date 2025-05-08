@@ -1,9 +1,8 @@
 import 'package:bettingapp/controllers/dropdown_controller.dart';
 import 'package:bettingapp/controllers/betting_controller.dart';
-import 'package:bettingapp/models/game_type.dart';
-import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
@@ -165,8 +164,24 @@ class _NewBetScreenState extends State<NewBetScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         
-        return SingleChildScrollView(
-          child: Padding(
+        return RefreshIndicator(
+          color: AppColors.primaryRed,
+          onRefresh: () async {
+            await _loadData();
+            // Show a snackbar to indicate refresh completed
+            Get.snackbar(
+              'Refreshed',
+              'Game types and draw schedules updated',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.white,
+              colorText: AppColors.primaryRed,
+              duration: const Duration(seconds: 2),
+            );
+          },
+          child: SingleChildScrollView(
+            // This ensures the refresh indicator can be triggered even when content doesn't fill the screen
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,7 +351,8 @@ class _NewBetScreenState extends State<NewBetScreen> {
                 ),
               ],
             ),
-          ).animate()
+          ),
+        ).animate()
             .fadeIn(duration: 300.ms)
             .slideY(begin: 0.1, end: 0, duration: 300.ms),
         );
