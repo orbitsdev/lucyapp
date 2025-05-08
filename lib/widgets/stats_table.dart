@@ -192,7 +192,7 @@ class StatsTable extends StatelessWidget {
     return Expanded(
       flex: flex,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: color,
           borderRadius: borderRadius,
@@ -200,11 +200,12 @@ class StatsTable extends StatelessWidget {
         child: Text(
           text,
           textAlign: isLabel ? TextAlign.left : TextAlign.center,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: textColor ??
                 (isHeader ? Colors.white : AppColors.primaryText),
             fontWeight: extraBold ? FontWeight.w900 : (isHeader || isLabel ? FontWeight.bold : FontWeight.normal),
-            fontSize: 14,
+            fontSize: 13,
           ),
         ),
       ),
