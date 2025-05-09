@@ -1,5 +1,6 @@
 import 'package:bettingapp/controllers/dropdown_controller.dart';
 import 'package:bettingapp/controllers/betting_controller.dart';
+import 'package:bettingapp/controllers/report_controller.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
 import 'package:flutter/material.dart';
 
@@ -139,6 +140,15 @@ class _NewBetScreenState extends State<NewBetScreen> {
             bettingController.selectedDrawId.value = null;
             setState(() {}); // Ensure UI refreshes
           });
+          
+          // Refresh dashboard data to update today's sales
+          try {
+            final reportController = Get.find<ReportController>();
+            await reportController.fetchTodaySales();
+          } catch (e) {
+            // Silently handle any errors - this is just a background refresh
+            debugPrint('Error refreshing dashboard: $e');
+          }
         }
       },
     );
@@ -152,7 +162,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
         title: const Text('NEW BET'),
         backgroundColor: AppColors.primaryRed,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
           onPressed: () => Get.back(),
         ),
       ),

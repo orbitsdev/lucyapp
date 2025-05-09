@@ -285,12 +285,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(
-                                    reportController.salesFormatted.value,
-                                    style: TextStyle(
-                                      color: AppColors.primaryRed,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                  RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: '₱',
+                                          style: TextStyle(
+                                            color: AppColors.primaryRed,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: reportController.salesFormatted.value.replaceAll('₱', '').trim(),
+                                          style: TextStyle(
+                                            color: AppColors.primaryRed,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],

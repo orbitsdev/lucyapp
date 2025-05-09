@@ -500,33 +500,39 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                 
                 if (bettingController.cancelledBets.isEmpty) {
                   return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const LocalLottieImage(
-                          path: 'assets/animations/empty_state.json',
-                          width: 150,
-                          height: 150,
-                          repeat: true,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const LocalLottieImage(
+                              path: 'assets/animations/empty_state.json',
+                              width: 150,
+                              height: 150,
+                              repeat: true,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No cancelled bets found',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Cancelled bets will appear here',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No cancelled bets found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Cancelled bets will appear here',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   );
                 }
