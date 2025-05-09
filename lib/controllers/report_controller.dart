@@ -16,6 +16,12 @@ class ReportController extends GetxController {
   final Rx<SalesReport?> salesReport = Rx<SalesReport?>(null);
   final Rx<List<Draw>> availableDates = Rx<List<Draw>>([]);
   
+  // Today's sales data
+  final RxString salesFormatted = '₱ 0'.obs;
+  final RxString commissionRateFormatted = '0%'.obs;
+  final RxString cancellationsFormatted = '0'.obs;
+  final RxBool isLoadingTodaySales = false.obs;
+  
   // Loading states
   final RxBool isLoadingTallysheet = false.obs;
   final RxBool isLoadingSalesReport = false.obs;
@@ -194,5 +200,43 @@ class ReportController extends GetxController {
   // Get commission amount based on sales amount and percentage
   double calculateCommission(double amount, int percentage) {
     return amount * percentage / 100;
+  }
+  
+  // Fetch today's sales data for teller dashboard
+  Future<void> fetchTodaySales() async {
+    isLoadingTodaySales.value = true;
+    
+    try {
+      final result = await _dioService.authGet(
+        ApiConfig.tellerTodaySales,
+        fromJson: (data) {
+          return data;
+        },
+      );
+      
+      result.fold(
+        (error) {
+          Modal.showErrorModal(
+            title: 'Error Loading Today\'s Sales',
+            message: error.message,
+          );
+        },
+        (response) {
+          if (response is Map && response.containsKey('data')) {
+            final data = response['data'];
+            salesFormatted.value = data['sales_formatted'] ?? '₱ 0';
+            commissionRateFormatted.value = data['commission_rate_formatted'] ?? '0%';
+            cancellationsFormatted.value = data['cancellations_formatted'] ?? '0';
+          }
+        },
+      );
+    } catch (e) {
+      Modal.showErrorModal(
+        title: 'Error',
+        message: 'Failed to load today\'s sales: ${e.toString()}',
+      );
+    } finally {
+      isLoadingTodaySales.value = false;
+    }
   }
 }

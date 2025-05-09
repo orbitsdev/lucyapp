@@ -1,3 +1,4 @@
+import 'package:bettingapp/controllers/report_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -7,9 +8,27 @@ import 'package:bettingapp/widgets/dashboard_card.dart';
 import 'package:bettingapp/controllers/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+    final ReportController reportController = Get.find<ReportController>();
+
+    @override
+  void initState() {
+    super.initState();
+    // Fetch today's sales data when the screen loads
+    _fetchTodaySales();
+  }
+  
+  // Method to fetch today's sales data
+  Future<void> _fetchTodaySales() async {
+    await reportController.fetchTodaySales();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,7 +113,10 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: CustomScrollView(
+      body: RefreshIndicator(
+        color: AppColors.primaryRed,
+        onRefresh: _fetchTodaySales,
+        child: CustomScrollView(
         slivers: [
           // App Bar with User Info
           SliverAppBar(
@@ -234,64 +256,65 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Today\'s Sales',
-                            style: TextStyle(
-                              color: AppColors.primaryRed,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  Obx(() {
+                    if (reportController.isLoadingTodaySales.value) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryRed,
+                            strokeWidth: 3,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '₱ 12,450',
-                            style: TextStyle(
-                              color: AppColors.primaryRed,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                      );
+                    } else {
+                      return Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Today\'s Sales',
+                                    style: TextStyle(
+                                      color: AppColors.primaryRed,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    reportController.salesFormatted.value,
+                                    style: TextStyle(
+                                      color: AppColors.primaryRed,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildSalesItem(
+                                'Commission Rate', 
+                                reportController.commissionRateFormatted.value
+                              ),
+                              _buildSalesItem(
+                                'Cancellations', 
+                                reportController.cancellationsFormatted.value
+                              ),
+                            ],
                           ),
                         ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                    
-                      Obx(() {
-                        final user = Get.find<AuthController>().user.value;
-                        // Determine commission rate based on user role or other factors
-                        // Default to 10% if not specified
-                        String commissionRate = '10%';
-                        
-                        // Example logic to determine commission rate
-                        // This should be replaced with actual business logic
-                        if (user != null) {
-                          // Use the user's role or ID to determine commission rate
-                          // For now, we'll use a simple rule based on user ID
-                          final userId = user.id ?? 0;
-                          if (userId % 3 == 0) {
-                            commissionRate = '15%';
-                          } else if (userId % 3 == 1) {
-                            commissionRate = '10%';
-                          } else {
-                            commissionRate = '5%';
-                          }
-                        }
-                        
-                        return _buildSalesItem('Commission Rate', commissionRate);
-                      }),
-                      _buildSalesItem('Cancellations', '3'),
-                    ],
-                  ),
+                      );
+                    }
+                  }),
                 ],
               ),
             ).animate()
@@ -409,9 +432,10 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
-  
+
   Widget _buildSalesItem(String title, String value) {
     return Column(
       children: [
