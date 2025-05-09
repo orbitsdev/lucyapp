@@ -32,7 +32,7 @@ class _BetListScreenState extends State<BetListScreen> {
   final BettingController bettingController = Get.find<BettingController>();
   final TextEditingController searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
-  final ScrollController headerScrollController = ScrollController();
+  final ScrollController horizontalScrollController = ScrollController();
   
   // Track the currently selected row for highlighting
   final RxInt selectedRowIndex = RxInt(-1);
@@ -52,7 +52,7 @@ class _BetListScreenState extends State<BetListScreen> {
     searchController.dispose();
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
-    headerScrollController.dispose();
+    horizontalScrollController.dispose();
     super.dispose();
   }
   
@@ -434,270 +434,252 @@ class _BetListScreenState extends State<BetListScreen> {
                   );
                 }
                 
-                // Table layout with synchronized horizontal scrolling
-                return Stack(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: [
-                          // Table header with horizontal scrolling
-                          SingleChildScrollView(
-                            controller: headerScrollController,
-                            scrollDirection: Axis.horizontal,
-                            physics: const ClampingScrollPhysics(),
-                            child: Container(
-                              width: TableColumnWidths.totalWidth,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryRed,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(8),
-                                  topRight: Radius.circular(8),
-                                ),
-                              ),
-                              child: Row(
-                                children: const [
-                                  SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                  )),
-                                  SizedBox(width: TableColumnWidths.betNumberWidth, child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                  )),
-                                  SizedBox(width: TableColumnWidths.amountWidth, child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                  )),
-                                  SizedBox(width: TableColumnWidths.drawTimeWidth, child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                  )),
-                                  SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                  )),
-                                  SizedBox(width: TableColumnWidths.statusWidth, child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                  )),
-                                  SizedBox(width: TableColumnWidths.actionWidth, child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                  )),
-                                ],
-                              ),
-                            ),
-                          ),
-                          
-                          // Table body with horizontal scrolling
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(8),
-                                  bottomRight: Radius.circular(8),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                // Table with single scrollable area for both header and body
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      // Use a single horizontal scroll view for the entire table
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const ClampingScrollPhysics(),
+                          controller: horizontalScrollController,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Table header
+                              Container(
+                                width: TableColumnWidths.totalWidth,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryRed,
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(8),
+                                    topRight: Radius.circular(8),
                                   ),
-                                ],
+                                ),
+                                child: Row(
+                                  children: const [
+                                    SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                    SizedBox(width: TableColumnWidths.betNumberWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                    SizedBox(width: TableColumnWidths.amountWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                    SizedBox(width: TableColumnWidths.drawTimeWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                    SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                    SizedBox(width: TableColumnWidths.statusWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                    SizedBox(width: TableColumnWidths.actionWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                  ],
+                                ),
                               ),
-                              child: NotificationListener<ScrollNotification>(
-                                onNotification: (ScrollNotification notification) {
-                                  // Synchronize horizontal scrolling between body and header
-                                  if (notification is ScrollUpdateNotification && 
-                                      notification.metrics.axis == Axis.horizontal) {
-                                    headerScrollController.jumpTo(notification.metrics.pixels);
-                                  }
-                                  return false;
-                                },
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const ClampingScrollPhysics(),
-                                  child: SizedBox(
-                                    width: TableColumnWidths.totalWidth,
-                                    child: ListView.builder(
-                                      controller: scrollController,
-                                      padding: EdgeInsets.zero,
-                                      itemCount: bettingController.bets.length + 
-                                        (bettingController.currentPage.value < bettingController.totalPages.value ? 1 : 0),
-                                      itemBuilder: (context, index) {
-                                        if (index == bettingController.bets.length) {
-                                          return const Center(
-                                            child: Padding(
-                                              padding: EdgeInsets.all(16.0),
-                                              child: CircularProgressIndicator(),
-                                            )
-                                        );
-                                      }
-                                      
-                                      final bet = bettingController.bets[index];
-                                      final isLastRow = index == bettingController.bets.length - 1;
-                                      
-                                      return Obx(() => Column(
-                                        children: [
-                                          // Add a separator line except for the first row
-                                          if (index > 0)
-                                            Divider(height: 1, color: Colors.grey.shade300),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              // Use a reactive color based on selection state
-                                              color: selectedRowIndex.value == index 
-                                                  ? AppColors.primaryRed.withOpacity(0.1) // Highlight selected row
-                                                  : (index.isEven ? Colors.grey.shade50 : Colors.white),
-                                              borderRadius: isLastRow
-                                                  ? const BorderRadius.only(
-                                                      bottomLeft: Radius.circular(8),
-                                                      bottomRight: Radius.circular(8),
-                                                    )
-                                                  : null,
-                                            ),
-                                            child: InkWell(
-                                              onTap: () {
-                                                // Toggle row selection
-                                                if (selectedRowIndex.value == index) {
-                                                  selectedRowIndex.value = -1; // Deselect
-                                                } else {
-                                                  selectedRowIndex.value = index; // Select
-                                                }
-                                              },
-                                              child: Row(
-                                                children: [
-                                                  // Ticket ID
-                                                  SizedBox(
-                                                    width: TableColumnWidths.ticketIdWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        bet.ticketId ?? 'Unknown',
-                                                        style: const TextStyle(fontWeight: FontWeight.w500),
-                                                        softWrap: false,
+                              
+                              // Table body
+                              Container(
+                                width: TableColumnWidths.totalWidth,
+                                height: MediaQuery.of(context).size.height - 300, // Adjust height as needed
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(8),
+                                    bottomRight: Radius.circular(8),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ListView.builder(
+                                  controller: scrollController,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: bettingController.bets.length + 
+                                    (bettingController.currentPage.value < bettingController.totalPages.value ? 1 : 0),
+                                  itemBuilder: (context, index) {
+                                    if (index == bettingController.bets.length) {
+                                      return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(16.0),
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
+                                    }
+                                    
+                                    final bet = bettingController.bets[index];
+                                    final isLastRow = index == bettingController.bets.length - 1;
+                                    
+                                    return Obx(() => Column(
+                                      children: [
+                                        // Add a separator line except for the first row
+                                        if (index > 0)
+                                          Divider(height: 1, color: Colors.grey.shade300),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            // Use a reactive color based on selection state
+                                            color: selectedRowIndex.value == index 
+                                                ? AppColors.primaryRed.withOpacity(0.1) // Highlight selected row
+                                                : (index.isEven ? Colors.grey.shade50 : Colors.white),
+                                            borderRadius: isLastRow
+                                                ? const BorderRadius.only(
+                                                    bottomLeft: Radius.circular(8),
+                                                    bottomRight: Radius.circular(8),
+                                                  )
+                                                : null,
+                                          ),
+                                          child: InkWell(
+                                            onTap: () {
+                                              // Toggle row selection
+                                              if (selectedRowIndex.value == index) {
+                                                selectedRowIndex.value = -1; // Deselect
+                                              } else {
+                                                selectedRowIndex.value = index; // Select
+                                              }
+                                            },
+                                            child: Row(
+                                              children: [
+                                                // Ticket ID
+                                                SizedBox(
+                                                  width: TableColumnWidths.ticketIdWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                    child: Text(
+                                                      bet.ticketId ?? 'Unknown',
+                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                      softWrap: false,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Bet Number
+                                                SizedBox(
+                                                  width: TableColumnWidths.betNumberWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                    child: Text(
+                                                      bet.betNumber ?? 'Unknown',
+                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Amount
+                                                SizedBox(
+                                                  width: TableColumnWidths.amountWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                    child: Text(
+                                                      '₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
+                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Draw Time
+                                                SizedBox(
+                                                  width: TableColumnWidths.drawTimeWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                    child: Text(
+                                                      bet.draw?.drawTimeFormatted ?? 'Unknown',
+                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Date
+                                                SizedBox(
+                                                  width: TableColumnWidths.dateWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                    child: Text(
+                                                      bet.betDateFormatted ?? 'Unknown',
+                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Status
+                                                SizedBox(
+                                                  width: TableColumnWidths.statusWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                    child: Text(
+                                                      bet.isRejected == true ? 'Cancelled' : 
+                                                        (bet.isClaimed == true ? 'Claimed' : 'Active'),
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.w500,
+                                                        color: bet.isRejected == true ? Colors.red : 
+                                                          (bet.isClaimed == true ? Colors.green : Colors.blue),
                                                       ),
                                                     ),
                                                   ),
-                                                  // Bet Number
-                                                  SizedBox(
-                                                    width: TableColumnWidths.betNumberWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        bet.betNumber ?? 'Unknown',
-                                                        style: const TextStyle(fontWeight: FontWeight.w500),
-                                                      ),
-                                                    ),
+                                                ),
+                                                // Cancel Button
+                                                SizedBox(
+                                                  width: TableColumnWidths.actionWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                                    child: bet.isRejected != true && bet.isClaimed != true
+                                                      ? IconButton(
+                                                          icon: const Icon(Icons.cancel_outlined, size: 20),
+                                                          color: AppColors.primaryRed,
+                                                          onPressed: () => _cancelBet(bet.id!),
+                                                          tooltip: 'Cancel Bet',
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(),
+                                                        )
+                                                      : const SizedBox(),
                                                   ),
-                                                  // Amount
-                                                  SizedBox(
-                                                    width: TableColumnWidths.amountWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        '₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
-                                                        style: const TextStyle(fontWeight: FontWeight.w500),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Draw Time
-                                                  SizedBox(
-                                                    width: TableColumnWidths.drawTimeWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        bet.draw?.drawTimeFormatted ?? 'Unknown',
-                                                        style: const TextStyle(fontWeight: FontWeight.w500),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Date
-                                                  SizedBox(
-                                                    width: TableColumnWidths.dateWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        bet.betDateFormatted ?? 'Unknown',
-                                                        style: const TextStyle(fontWeight: FontWeight.w500),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Status
-                                                  SizedBox(
-                                                    width: TableColumnWidths.statusWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        bet.isRejected == true ? 'Cancelled' : 
-                                                          (bet.isClaimed == true ? 'Claimed' : 'Active'),
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.w500,
-                                                          color: bet.isRejected == true ? Colors.red : 
-                                                            (bet.isClaimed == true ? Colors.green : Colors.blue),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Cancel Button
-                                                  SizedBox(
-                                                    width: TableColumnWidths.actionWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                                      child: bet.isRejected != true && bet.isClaimed != true
-                                                        ? IconButton(
-                                                            icon: const Icon(Icons.cancel_outlined, size: 20),
-                                                            color: AppColors.primaryRed,
-                                                            onPressed: () => _cancelBet(bet.id!),
-                                                            tooltip: 'Cancel Bet',
-                                                            padding: EdgeInsets.zero,
-                                                            constraints: const BoxConstraints(),
-                                                          )
-                                                        : const SizedBox(),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ));
-                                    },
-                                  ),
+                                        ),
+                                      ],
+                                    ));
+                                  },
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                          )
-                        ],
+                        ),
                       ),
-                    ),
-                    
-                    // Loading overlay for additional data
-                    if (bettingController.isLoadingBets.value && bettingController.bets.isNotEmpty)
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
+                      
+                      // Loading overlay for additional data
+                      if (bettingController.isLoadingBets.value && bettingController.bets.isNotEmpty)
+                        Container(
                           padding: const EdgeInsets.all(8),
                           color: Colors.black54,
                           child: const Center(
                             child: CircularProgressIndicator(),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 );
-              },
+              }),
             ),
           ),
-        ),
-      ],
-    ));
-
+        ],
+      ),
+    );
   }
-  
-
 }
+          
+          // Bet list
+          

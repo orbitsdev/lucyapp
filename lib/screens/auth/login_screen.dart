@@ -139,62 +139,62 @@ class LoginScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       
                       // Role Selection
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Select your role:',
-                            style: TextStyle(
-                              color: AppColors.primaryText,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          // Test account info
-                          Obx(() => Text(
-                            'Using test account: ${controller.currentUsername.value}',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 12.sp,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          )),
-                          SizedBox(height: 12.h),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Obx(() => _buildRoleButton(
-                                  role: 'Coordinator',
-                                  icon: Icons.admin_panel_settings,
-                                  isSelected: controller.selectedRole.value == 'Coordinator',
-                                  onTap: () => controller.setRole('Coordinator'),
-                                )),
-                              ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Obx(() => _buildRoleButton(
-                                  role: 'Teller',
-                                  icon: Icons.point_of_sale,
-                                  isSelected: controller.selectedRole.value == 'Teller',
-                                  onTap: () => controller.setRole('Teller'),
-                                )),
-                              ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Obx(() => _buildRoleButton(
-                                  role: 'Customer',
-                                  icon: Icons.person,
-                                  isSelected: controller.selectedRole.value == 'Customer',
-                                  onTap: () => controller.setRole('Customer'),
-                                )),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                      // Column(
+                      //   crossAxisAlignment: CrossAxisAlignment.stretch,
+                      //   children: [
+                      //     Text(
+                      //       'Select your role:',
+                      //       style: TextStyle(
+                      //         color: AppColors.primaryText,
+                      //         fontSize: 16,
+                      //         fontWeight: FontWeight.w500,
+                      //       ),
+                      //     ),
+                      //     SizedBox(height: 4.h),
+                      //     // Test account info
+                      //     Obx(() => Text(
+                      //       'Using test account: ${controller.currentUsername.value}',
+                      //       style: TextStyle(
+                      //         color: Colors.grey.shade600,
+                      //         fontSize: 12.sp,
+                      //         fontStyle: FontStyle.italic,
+                      //       ),
+                      //     )),
+                      //     SizedBox(height: 12.h),
+                      //     Row(
+                      //       children: [
+                      //         Expanded(
+                      //           child: Obx(() => _buildRoleButton(
+                      //             role: 'Coordinator',
+                      //             icon: Icons.admin_panel_settings,
+                      //             isSelected: controller.selectedRole.value == 'Coordinator',
+                      //             onTap: () => controller.setRole('Coordinator'),
+                      //           )),
+                      //         ),
+                      //         SizedBox(width: 8.w),
+                      //         Expanded(
+                      //           child: Obx(() => _buildRoleButton(
+                      //             role: 'Teller',
+                      //             icon: Icons.point_of_sale,
+                      //             isSelected: controller.selectedRole.value == 'Teller',
+                      //             onTap: () => controller.setRole('Teller'),
+                      //           )),
+                      //         ),
+                      //         SizedBox(width: 8.w),
+                      //         Expanded(
+                      //           child: Obx(() => _buildRoleButton(
+                      //             role: 'Customer',
+                      //             icon: Icons.person,
+                      //             isSelected: controller.selectedRole.value == 'Customer',
+                      //             onTap: () => controller.setRole('Customer'),
+                      //           )),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ],
+                      // ),
                       
-                      const SizedBox(height: 24),
+                      // const SizedBox(height: 24),
                       
                       // Login Button
                       Obx(() => ElevatedButton(
