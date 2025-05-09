@@ -7,6 +7,8 @@ import '../../controllers/betting_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../models/bet.dart';
 import '../../widgets/common/modal.dart';
+import '../../widgets/common/local_lottie_image.dart';
+import '../../widgets/common/bet_card.dart';
 
 class CancelBetScreen extends StatefulWidget {
   const CancelBetScreen({Key? key}) : super(key: key);
@@ -19,10 +21,14 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
   final BettingController bettingController = Get.find<BettingController>();
   final RxBool isLoading = false.obs;
   final RxString searchQuery = ''.obs;
+  final TextEditingController searchController = TextEditingController();
   final TextEditingController betNumberController = TextEditingController();
   final RxString selectedSchedule = 'All'.obs;
   final Rx<String?> selectedDate = Rx<String?>(null);
   final ScrollController scrollController = ScrollController();
+  
+  // Debounce worker for search
+  Worker? _searchDebounce;
 
   @override
   void initState() {
@@ -30,13 +36,33 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
     // Fetch available draws for filtering
     bettingController.fetchAvailableDraws();
     _fetchCancelledBets();
+    
+    // Setup debounce for search
+    _searchDebounce = debounce(
+      searchQuery, 
+      (_) => _fetchCancelledBets(),
+      time: const Duration(milliseconds: 500),
+    );
+    
+    // Add scroll listener for pagination
+    scrollController.addListener(_scrollListener);
   }
   
   @override
   void dispose() {
     betNumberController.dispose();
+    searchController.dispose();
+    scrollController.removeListener(_scrollListener);
     scrollController.dispose();
+    _searchDebounce?.dispose();
     super.dispose();
+  }
+  
+  // Scroll listener for pagination
+  void _scrollListener() {
+    if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+      bettingController.loadMoreCancelledBets();
+    }
   }
 
   Future<void> _fetchCancelledBets() async {
@@ -194,20 +220,11 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
-                  child: Obx(() => ElevatedButton(
+                  child: Obx(() => ElevatedButton.icon(
                     onPressed: isLoading.value
                         ? null
                         : _cancelBetByNumber,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryRed,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.6),
-                    ),
-                    child: isLoading.value
+                    icon: isLoading.value
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -216,13 +233,24 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'CANCEL BET',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        : const Icon(Icons.cancel_outlined, size: 20),
+                    label: Text(
+                      isLoading.value ? 'PROCESSING...' : 'CANCEL BET',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF616161), // Dark gray
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      disabledBackgroundColor: const Color(0xFF9E9E9E), // Medium gray when disabled
+                      elevation: 1,
+                    ),
                   )),
                 ),
               ],
@@ -357,24 +385,27 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                 const SizedBox(height: 12),
                 // Search Bar
                 TextField(
-                  onChanged: (value) {
-                    searchQuery.value = value;
-                    // Debounce search to avoid too many API calls
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      if (value == searchQuery.value) {
-                        _fetchCancelledBets();
-                      }
-                    });
-                  },
+                  controller: searchController,
+                  onChanged: (value) => searchQuery.value = value,
                   decoration: InputDecoration(
                     hintText: 'Search bet number or ticket ID',
                     prefixIcon: const Icon(Icons.search),
+                    suffixIcon: Obx(() => searchQuery.value.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            searchController.clear();
+                            searchQuery.value = '';
+                          },
+                        )
+                      : const SizedBox.shrink()),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
+                  onSubmitted: (_) => _fetchCancelledBets(),
                 ),
               ],
             ),
@@ -472,17 +503,27 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.cancel_outlined,
-                          size: 64,
-                          color: Colors.grey.shade400,
+                        const LocalLottieImage(
+                          path: 'assets/animations/empty_state.json',
+                          width: 150,
+                          height: 150,
+                          repeat: true,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No cancelled bets found',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
                             color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Cancelled bets will appear here',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
                           ),
                         ),
                       ],
@@ -490,85 +531,52 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                   );
                 }
                 
-                return ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: bettingController.cancelledBets.length,
-                  itemBuilder: (context, index) {
-                    final bet = bettingController.cancelledBets[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: InkWell(
-                        onTap: () => _showBetDetails(bet),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              // Bet Number
-                              Expanded(
-                                flex: 2,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryRed.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          bet.betNumber ?? '?',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.primaryRed,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      bet.ticketId ?? 'Unknown',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              
-                              // Amount
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  '₱ ${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              
-                              // Schedule
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  bet.draw?.drawTimeFormatted ?? 'Unknown',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                return Stack(
+                  children: [
+                    ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: bettingController.cancelledBets.length + 
+                        (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        // Show loading indicator at the end when more items are being loaded
+                        if (index == bettingController.cancelledBets.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        
+                        final bet = bettingController.cancelledBets[index];
+                        return BetCard(
+                          bet: bet,
+                          onTap: () => _showBetDetails(bet),
+                          showCancelButton: false,
+                          isCompactMode: true,
+                        );
+                      },
+                    ),
+                    
+                    // Loading overlay when refreshing with existing data
+                    if (bettingController.isLoadingCancelledBets.value && bettingController.cancelledBets.isNotEmpty)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          color: Colors.black54,
+                          child: const Center(
+                            child: Text(
+                              'Loading more cancelled bets...',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ),
                       ),
-                    );
-                  },
+                  ],
                 );
               }),
             ),
@@ -580,31 +588,51 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
   
   // Show bet details dialog
   void _showBetDetails(Bet bet) {
-    Get.dialog(
-      AlertDialog(
-        title: Text(
-          'Cancellation Details',
-          style: TextStyle(
-            color: AppColors.primaryRed,
-            fontWeight: FontWeight.bold,
+    Modal.showCustomModal(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: AppColors.primaryRed,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Cancellation Details',
+                style: TextStyle(
+                  color: AppColors.primaryRed,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('Ticket ID', bet.ticketId ?? 'Unknown'),
-            _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
-            _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
-            _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
-            _buildDetailRow('Amount', '₱ ${bet.amount?.toStringAsFixed(2) ?? '0.00'}'),
-            _buildDetailRow('Status', 'Cancelled'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('CLOSE'),
+          const SizedBox(height: 16),
+          _buildDetailRow('Ticket ID', bet.ticketId ?? 'Unknown'),
+          _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
+          _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
+          _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
+          _buildDetailRow('Amount', '₱ ${bet.amount?.toStringAsFixed(2) ?? '0.00'}'),
+          _buildDetailRow('Status', 'Cancelled'),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Get.back(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryRed,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('CLOSE'),
+            ),
           ),
         ],
       ),

@@ -41,6 +41,14 @@ class BettingController extends GetxController {
   final Rx<int?> selectedDrawIdFilter = Rx<int?>(null);
   final Rx<String?> selectedStatus = Rx<String?>(null);
   
+  // Variables for cancelled bets pagination
+  final RxInt cancelledBetsCurrentPage = 1.obs;
+  final RxInt cancelledBetsTotalPages = 1.obs;
+  final RxInt cancelledBetsPerPage = 50.obs;
+  final RxString cancelledBetsLastSearchQuery = ''.obs;
+  final RxString cancelledBetsLastDateFilter = ''.obs;
+  final Rx<int?> cancelledBetsLastDrawIdFilter = Rx<int?>(null);
+  
   // Note: We don't use onInit to avoid initialization errors with app binding
   // Call fetchAvailableDraws() manually when needed
   
@@ -361,26 +369,46 @@ class BettingController extends GetxController {
     }
   }
   
-  // List cancelled bets
-  Future<void> fetchCancelledBets({String? search, String? date, int? drawId}) async {
+  // List cancelled bets with pagination
+  Future<void> fetchCancelledBets({
+    String? search, 
+    String? date, 
+    int? drawId,
+    int page = 1,
+    int perPage = 50,
+    bool refresh = false,
+  }) async {
+    // If refreshing, reset to page 1
+    if (refresh) {
+      cancelledBetsCurrentPage.value = 1;
+      cancelledBets.clear();
+    }
+    
+    // Store filter values for load more function
+    cancelledBetsLastSearchQuery.value = search ?? '';
+    cancelledBetsLastDateFilter.value = date ?? '';
+    cancelledBetsLastDrawIdFilter.value = drawId;
+    cancelledBetsPerPage.value = perPage;
+    
     isLoadingCancelledBets.value = true;
     
     try {
-      final queryParams = <String, dynamic>{};
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (date != null) queryParams['date'] = date;
       if (drawId != null) queryParams['draw_id'] = drawId;
       
-      final result = await _dioService.authGet<List<Bet>>(
+      final result = await _dioService.authGet<Map<String, dynamic>>(
         ApiConfig.cancelledBets,
         queryParameters: queryParams,
         fromJson: (data) {
-          if (data is Map && data.containsKey('data')) {
-            return (data['data'] as List)
-                .map((item) => Bet.fromJson(item))
-                .toList();
+          if (data is Map<String, dynamic>) {
+            return data;
           }
-          return [];
+          return <String, dynamic>{};
         },
       );
       
@@ -392,7 +420,29 @@ class BettingController extends GetxController {
           );
         },
         (data) {
-          cancelledBets.value = data;
+          if (data.containsKey('data')) {
+            final List<dynamic> betsData = data['data'] as List;
+            final List<Bet> newBets = betsData.map((item) => Bet.fromJson(item)).toList();
+            
+            // If refreshing or first page, replace the list
+            if (refresh || page == 1) {
+              cancelledBets.value = newBets;
+            } else {
+              // Otherwise append to the list
+              cancelledBets.addAll(newBets);
+            }
+            
+            // Update pagination info
+            if (data.containsKey('meta')) {
+              final meta = data['meta'] as Map<String, dynamic>;
+              cancelledBetsCurrentPage.value = meta['current_page'] ?? 1;
+              cancelledBetsTotalPages.value = meta['last_page'] ?? 1;
+            }
+          } else {
+            if (refresh || page == 1) {
+              cancelledBets.clear();
+            }
+          }
         },
       );
     } catch (e) {
@@ -435,5 +485,18 @@ class BettingController extends GetxController {
     selectedDate.value = null;
     selectedDrawIdFilter.value = null;
     selectedStatus.value = null;
+  }
+  
+  // Load more cancelled bets (pagination)
+  Future<void> loadMoreCancelledBets() async {
+    if (cancelledBetsCurrentPage.value < cancelledBetsTotalPages.value && !isLoadingCancelledBets.value) {
+      await fetchCancelledBets(
+        page: cancelledBetsCurrentPage.value + 1,
+        search: cancelledBetsLastSearchQuery.value.isEmpty ? null : cancelledBetsLastSearchQuery.value,
+        date: cancelledBetsLastDateFilter.value.isEmpty ? null : cancelledBetsLastDateFilter.value,
+        drawId: cancelledBetsLastDrawIdFilter.value,
+        perPage: cancelledBetsPerPage.value,
+      );
+    }
   }
 }

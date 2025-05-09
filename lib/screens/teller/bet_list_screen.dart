@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:bettingapp/controllers/betting_controller.dart';
-import 'package:bettingapp/models/bet.dart';
 import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/utils/app_colors.dart';
-import 'package:bettingapp/widgets/common/modal.dart';
+import 'package:bettingapp/widgets/common/local_lottie_image.dart';
+import 'package:bettingapp/widgets/common/bet_card.dart';
 
 class BetListScreen extends StatefulWidget {
   const BetListScreen({super.key});
@@ -79,6 +79,7 @@ class _BetListScreenState extends State<BetListScreen> {
     
     Get.dialog(
       AlertDialog(
+        backgroundColor: Colors.white,
         title: Text(
           'Filter Bets',
           style: TextStyle(
@@ -380,16 +381,18 @@ class _BetListScreenState extends State<BetListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.list_alt,
-                          size: 64,
-                          color: Colors.grey.shade400,
+                        const LocalLottieImage(
+                          path: 'assets/animations/empty_state.json',
+                          width: 180,
+                          height: 180,
+                          repeat: true,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No bets found',
                           style: TextStyle(
                             fontSize: 18,
+                            fontWeight: FontWeight.w500,
                             color: Colors.grey.shade700,
                           ),
                         ),
@@ -424,7 +427,11 @@ class _BetListScreenState extends State<BetListScreen> {
                         }
                         
                         final bet = bettingController.bets[index];
-                        return _buildBetCard(bet);
+                        return BetCard(
+                          bet: bet,
+                          onCancelBet: _cancelBet,
+                          showCancelButton: true,
+                        );
                       },
                     ),
                     
@@ -455,218 +462,5 @@ class _BetListScreenState extends State<BetListScreen> {
     );
   }
   
-  Widget _buildBetCard(Bet bet) {
-    final isCancelled = bet.isRejected ?? false;
-    final isClaimed = bet.isClaimed ?? false;
-    
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: isCancelled
-              ? Colors.red.shade200
-              : isClaimed
-                  ? Colors.green.shade200
-                  : Colors.grey.shade200,
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Ticket ID
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ticket ID',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      Text(
-                        bet.ticketId ?? 'Unknown',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Status badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isCancelled
-                        ? Colors.red.shade100
-                        : isClaimed
-                            ? Colors.green.shade100
-                            : Colors.blue.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    isCancelled
-                        ? 'Cancelled'
-                        : isClaimed
-                            ? 'Claimed'
-                            : 'Active',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isCancelled
-                          ? Colors.red.shade800
-                          : isClaimed
-                              ? Colors.green.shade800
-                              : Colors.blue.shade800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            
-            const Divider(height: 24),
-            
-            // Bet details
-            Row(
-              children: [
-                // Bet number
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Bet Number',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      Text(
-                        bet.betNumber ?? 'Unknown',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Amount
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Amount',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    Text(
-                      '₱ ${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: AppColors.primaryRed,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Date and time
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Date',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      Text(
-                        bet.betDateFormatted ?? 'Unknown',
-                        style: const TextStyle(
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Draw time
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Draw Time',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    Text(
-                      bet.draw?.drawTimeFormatted ?? 'Unknown',
-                      style: const TextStyle(
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            
-            // Only show cancel button for active bets
-            if (!(isCancelled || isClaimed))
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        if (bet.id != null) {
-                          // Show confirmation dialog
-                          Modal.showConfirmModal(
-                            title: 'Cancel Bet',
-                            message: 'Are you sure you want to cancel this bet?',
-                            confirmText: 'Cancel Bet',
-                            onConfirm: () {
-                              _cancelBet(bet.id!);
-                            },
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.cancel),
-                      label: const Text('Cancel Bet'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }
