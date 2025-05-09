@@ -8,7 +8,8 @@ import '../../utils/app_colors.dart';
 import '../../models/bet.dart';
 import '../../widgets/common/modal.dart';
 import '../../widgets/common/local_lottie_image.dart';
-import '../../widgets/common/bet_card.dart';
+// Commented out but preserved for future use if we switch back to card-based display
+// import '../../widgets/common/bet_card.dart';
 
 class CancelBetScreen extends StatefulWidget {
   const CancelBetScreen({Key? key}) : super(key: key);
@@ -441,10 +442,9 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
             ),
           ),
           
-          // Table Header
+          // Table Header with horizontal scrolling
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
               color: AppColors.primaryRed.withOpacity(0.1),
               borderRadius: const BorderRadius.only(
@@ -452,36 +452,24 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                 topRight: Radius.circular(8),
               ),
             ),
-            child: Row(
-              children: const [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Bet Number',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Container(
+                // Set a minimum width to ensure it's at least as wide as the screen
+                constraints: BoxConstraints(
+                  minWidth: MediaQuery.of(context).size.width - 32, // Screen width minus margins
                 ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'Amount',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: Row(
+                  children: const [
+                    SizedBox(width: 100, child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold))),
+                    SizedBox(width: 120, child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold))),
+                    SizedBox(width: 100, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold))),
+                    SizedBox(width: 100, child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold))),
+                    SizedBox(width: 100, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
+                  ],
                 ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'Schedule',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
           
@@ -537,32 +525,149 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                   );
                 }
                 
+                // Create a single scroll controller for horizontal scrolling
+                final horizontalScrollController = ScrollController();
+                
                 return Stack(
                   children: [
-                    ListView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: bettingController.cancelledBets.length + 
-                        (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        // Show loading indicator at the end when more items are being loaded
-                        if (index == bettingController.cancelledBets.length) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: CircularProgressIndicator(),
+                    Column(
+                      children: [
+                        // Table Header with synchronized horizontal scrolling
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryRed.withOpacity(0.1),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8),
                             ),
-                          );
-                        }
+                          ),
+                          child: SingleChildScrollView(
+                            controller: horizontalScrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: Container(
+                              // Set a minimum width to ensure it's at least as wide as the screen
+                              constraints: BoxConstraints(
+                                minWidth: MediaQuery.of(context).size.width - 32, // Screen width minus margins
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              child: Row(
+                                children: const [
+                                  SizedBox(width: 100, child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  SizedBox(width: 120, child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  SizedBox(width: 100, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  SizedBox(width: 100, child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  SizedBox(width: 100, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                         
-                        final bet = bettingController.cancelledBets[index];
-                        return BetCard(
-                          bet: bet,
-                          onTap: () => _showBetDetails(bet),
-                          showCancelButton: false,
-                          isCompactMode: true,
-                        );
-                      },
+                        // Table Body
+                        Expanded(
+                          child: ListView.builder(
+                            controller: scrollController,
+                            padding: EdgeInsets.zero,
+                            itemCount: bettingController.cancelledBets.length + 
+                              (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              // Show loading indicator at the end when more items are being loaded
+                              if (index == bettingController.cancelledBets.length) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+                              
+                              final bet = bettingController.cancelledBets[index];
+                              
+                              // Table-style row display with synchronized horizontal scrolling
+                              return Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border(
+                                    bottom: BorderSide(color: Colors.grey.shade200),
+                                  ),
+                                ),
+                                child: SingleChildScrollView(
+                                  controller: horizontalScrollController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: Container(
+                                    // Set a minimum width to ensure it's at least as wide as the screen
+                                    constraints: BoxConstraints(
+                                      minWidth: MediaQuery.of(context).size.width - 32, // Screen width minus margins
+                                    ),
+                                    child: InkWell(
+                                      onTap: () => _showBetDetails(bet),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                        child: Row(
+                                          children: [
+                                            // Ticket ID
+                                            SizedBox(
+                                              width: 100,
+                                              child: Text(
+                                                bet.ticketId ?? 'Unknown',
+                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                            // Bet Number
+                                            SizedBox(
+                                              width: 120,
+                                              child: Text(
+                                                bet.betNumber ?? 'Unknown',
+                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                            // Amount
+                                            SizedBox(
+                                              width: 100,
+                                              child: Text(
+                                                '₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
+                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                            // Draw Time
+                                            SizedBox(
+                                              width: 100,
+                                              child: Text(
+                                                bet.draw?.drawTimeFormatted ?? 'Unknown',
+                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                            // Date
+                                            SizedBox(
+                                              width: 100,
+                                              child: Text(
+                                                bet.betDateFormatted ?? 'Unknown',
+                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                              
+                              // Original card-based display (commented out)
+                              /*
+                              return BetCard(
+                                bet: bet,
+                                onTap: () => _showBetDetails(bet),
+                                showCancelButton: false,
+                                isCompactMode: true,
+                              );
+                              */
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     
                     // Loading overlay when refreshing with existing data
