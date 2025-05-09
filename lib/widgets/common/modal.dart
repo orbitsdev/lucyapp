@@ -178,6 +178,29 @@ class Modal {
     VoidCallback? onConfirm,
     bool isDangerousAction = false,
   }) {
+    showConfirmModal(
+      title: title,
+      message: message,
+      animation: animation,
+      cancelText: cancelText,
+      confirmText: confirmText,
+      onCancel: onCancel,
+      onConfirm: onConfirm,
+      isDangerousAction: isDangerousAction,
+    );
+  }
+  
+  // Alias for showConfirmationModal with the same functionality
+  static void showConfirmModal({
+    String title = 'Confirmation',
+    String message = 'Are you sure you want to proceed?',
+    String animation = _defaultConfirmationAnimation,
+    String cancelText = 'Cancel',
+    String confirmText = 'Confirm',
+    VoidCallback? onCancel,
+    VoidCallback? onConfirm,
+    bool isDangerousAction = false,
+  }) {
     Get.dialog(
       Dialog(
         backgroundColor: _dialogBackgroundColor,
@@ -414,4 +437,6 @@ class Modal {
       Get.back();
     }
   }
+  
+
 }

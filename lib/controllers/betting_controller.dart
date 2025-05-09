@@ -362,12 +362,14 @@ class BettingController extends GetxController {
   }
   
   // List cancelled bets
-  Future<void> fetchCancelledBets({String? search}) async {
+  Future<void> fetchCancelledBets({String? search, String? date, int? drawId}) async {
     isLoadingCancelledBets.value = true;
     
     try {
       final queryParams = <String, dynamic>{};
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (date != null) queryParams['date'] = date;
+      if (drawId != null) queryParams['draw_id'] = drawId;
       
       final result = await _dioService.authGet<List<Bet>>(
         ApiConfig.cancelledBets,

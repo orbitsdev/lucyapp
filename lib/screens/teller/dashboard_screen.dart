@@ -344,6 +344,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFFC62828),
                 route: AppRoutes.newBet,
               ),
+                  DashboardCard(
+                title: 'BET LIST',
+                icon: Icons.format_list_numbered,
+                color: const Color(0xFF3F51B5),
+                route: AppRoutes.betList,
+              ),
               
               DashboardCard(
                 title: 'CLAIM',
@@ -385,6 +391,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFFE91E63),
                 route: AppRoutes.sales,
               ),
+              
+          
               
               DashboardCard(
                 title: 'TALLY SHEET',

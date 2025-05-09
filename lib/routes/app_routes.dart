@@ -29,6 +29,7 @@ import 'package:bettingapp/screens/teller/tally_sheet_screen.dart' as teller_tal
 import 'package:bettingapp/screens/teller/commission_screen.dart';
 import 'package:bettingapp/screens/teller/combination_screen.dart';
 import 'package:bettingapp/screens/teller/sold_out_screen.dart';
+import 'package:bettingapp/screens/teller/bet_list_screen.dart';
 
 // Customer screens
 import 'package:bettingapp/screens/customer/dashboard_screen.dart' as customer;
@@ -73,6 +74,7 @@ class AppRoutes {
   static const String commission = '/teller/commission'; // Teller commission screen
   static const String combination = '/teller/combination';
   static const String soldOut = '/teller/sold-out';
+  static const String betList = '/teller/bet-list'; // Bet list screen
   
   // Customer routes
   static const String placeBet = '/customer/place-bet';
@@ -197,6 +199,11 @@ class AppRoutes {
     GetPage(
       name: combination,
       page: () => const CombinationScreen(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: betList,
+      page: () => const BetListScreen(),
       transition: Transition.cupertino,
     ),
     GetPage(
