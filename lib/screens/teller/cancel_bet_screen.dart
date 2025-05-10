@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../controllers/betting_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../models/bet.dart';
+import '../../models/draw.dart';
 import '../../widgets/common/modal.dart';
 import '../../widgets/common/local_lottie_image.dart';
-// Commented out but preserved for future use if we switch back to card-based display
-// import '../../widgets/common/bet_card.dart';
+
+/// Defines the fixed column widths for the cancelled bet list table
+class TableColumnWidths {
+  static const double ticketIdWidth = 130.0;
+  static const double betNumberWidth = 120.0;
+  static const double amountWidth = 100.0;
+  static const double drawTimeWidth = 100.0;
+  static const double dateWidth = 150.0;
+  
+  // Total width of all columns
+  static const double totalWidth = ticketIdWidth + betNumberWidth + amountWidth + 
+                                  drawTimeWidth + dateWidth;
+}
 
 class CancelBetScreen extends StatefulWidget {
   const CancelBetScreen({Key? key}) : super(key: key);
@@ -20,13 +31,15 @@ class CancelBetScreen extends StatefulWidget {
 
 class _CancelBetScreenState extends State<CancelBetScreen> {
   final BettingController bettingController = Get.find<BettingController>();
-  final RxBool isLoading = false.obs;
   final RxString searchQuery = ''.obs;
   final TextEditingController searchController = TextEditingController();
-  final TextEditingController betNumberController = TextEditingController();
-  final RxString selectedSchedule = 'All'.obs;
   final Rx<String?> selectedDate = Rx<String?>(null);
+  final RxInt? selectedDrawId = RxInt(-1);
   final ScrollController scrollController = ScrollController();
+  final ScrollController horizontalScrollController = ScrollController();
+  
+  // Track the currently selected row for highlighting
+  final RxInt selectedRowIndex = RxInt(-1);
   
   // Debounce worker for search
   Worker? _searchDebounce;
@@ -51,10 +64,10 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
   
   @override
   void dispose() {
-    betNumberController.dispose();
     searchController.dispose();
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
+    horizontalScrollController.dispose();
     _searchDebounce?.dispose();
     super.dispose();
   }
@@ -67,366 +80,271 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
   }
 
   Future<void> _fetchCancelledBets() async {
-    // Convert schedule to drawId if needed
-    int? drawId;
-    if (selectedSchedule.value != 'All') {
-      // Find the draw ID based on the selected schedule
-      final draw = bettingController.availableDraws.firstWhereOrNull(
-        (draw) => draw.drawTimeFormatted == selectedSchedule.value
-      );
-      drawId = draw?.id;
-    }
-    
     await bettingController.fetchCancelledBets(
       search: searchQuery.value.isNotEmpty ? searchQuery.value : null,
       date: selectedDate.value,
-      drawId: drawId,
+      drawId: selectedDrawId?.value != -1 ? selectedDrawId?.value : null,
     );
   }
 
-  void _cancelBetByNumber() {
-    if (betNumberController.text.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter a bet number',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    // First, search for the bet by number
-    isLoading.value = true;
+  void _showFilterDialog() {
+    // Save current filter values to restore if cancelled
+    final currentDate = selectedDate.value;
+    final currentDrawId = selectedDrawId?.value;
     
-    bettingController.fetchBets(
-      search: betNumberController.text,
-      refresh: true,
-    ).then((value) {
-      isLoading.value = false;
-      
-      if (bettingController.bets.isEmpty) {
-        Modal.showErrorModal(
-          title: 'Bet Not Found',
-          message: 'No active bet found with the number ${betNumberController.text}',
-        );
-        return;
-      }
-      
-      // Get the first matching bet
-      final bet = bettingController.bets.first;
-      
-      // Check if the bet is already cancelled or claimed
-      if (bet.isRejected == true) {
-        Modal.showErrorModal(
-          title: 'Already Cancelled',
-          message: 'This bet has already been cancelled',
-        );
-        return;
-      }
-      
-      if (bet.isClaimed == true) {
-        Modal.showErrorModal(
-          title: 'Already Claimed',
-          message: 'This bet has already been claimed and cannot be cancelled',
-        );
-        return;
-      }
-      
-      // Show confirmation dialog
-      Modal.showConfirmModal(
-        title: 'Cancel Bet',
-        message: 'Are you sure you want to cancel bet ${betNumberController.text}?',
-        onConfirm: () async {
-          isLoading.value = true;
-          try {
-            if (bet.id != null) {
-              final result = await bettingController.cancelBet(bet.id!);
-              if (result) {
-                betNumberController.clear();
-                // Refresh the cancelled bets list
-                await _fetchCancelledBets();
-              }
-            }
-          } catch (e) {
-            Modal.showErrorModal(
-              title: 'Error',
-              message: 'Failed to cancel bet: ${e.toString()}',
-            );
-          } finally {
-            isLoading.value = false;
-          }
-        },
-      );
-    }).catchError((error) {
-      isLoading.value = false;
-      Modal.showErrorModal(
-        title: 'Error',
-        message: 'Failed to search for bet: ${error.toString()}',
-      );
-    });
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(
+          'Filter Cancelled Bets',
+          style: TextStyle(
+            color: AppColors.primaryRed,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Date filter
+              Text(
+                'Date',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              SizedBox(height: 8),
+              Obx(() => OutlinedButton.icon(
+                onPressed: () async {
+                  final selectedDatePicker = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate.value != null
+                        ? DateTime.parse(selectedDate.value!)
+                        : DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                    builder: (context, child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: AppColors.primaryRed,
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
+                  );
+                  
+                  if (selectedDatePicker != null) {
+                    selectedDate.value = 
+                        DateFormat('yyyy-MM-dd').format(selectedDatePicker);
+                  }
+                },
+                icon: const Icon(Icons.calendar_today),
+                label: Text(
+                  selectedDate.value != null
+                      ? DateFormat('MMM dd, yyyy').format(
+                          DateTime.parse(selectedDate.value!))
+                      : 'Select Date',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryRed,
+                ),
+              )),
+              
+              SizedBox(height: 16),
+              
+              // Draw filter
+              Text(
+                'Draw Time',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              SizedBox(height: 8),
+              Obx(() => DropdownButtonFormField<int?>(
+                value: selectedDrawId?.value == -1 ? null : selectedDrawId?.value,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('All Draw Times'),
+                  ),
+                  ...bettingController.availableDraws.map((draw) => 
+                    DropdownMenuItem<int?>(
+                      value: draw.id,
+                      child: Text(draw.drawTimeFormatted ?? 'Unknown'),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  selectedDrawId?.value = value ?? -1;
+                },
+              )),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              // Restore previous values
+              selectedDate.value = currentDate;
+              selectedDrawId?.value = currentDrawId ?? -1;
+              Get.back();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              _fetchCancelledBets();
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Use resizeToAvoidBottomInset to handle keyboard properly
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('CANCEL BET'),
+        title: const Text('Cancel Bet'),
         backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
-        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _showFilterDialog,
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Cancel Bet Form
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by ticket ID or bet number',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    searchController.clear();
+                    searchQuery.value = '';
+                    _fetchCancelledBets();
+                  },
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Bet Number',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: betNumberController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter bet number',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: Obx(() => ElevatedButton.icon(
-                    onPressed: isLoading.value
-                        ? null
-                        : _cancelBetByNumber,
-                    icon: isLoading.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.cancel_outlined, size: 20),
-                    label: Text(
-                      isLoading.value ? 'PROCESSING...' : 'CANCEL BET',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF616161), // Dark gray
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor: const Color(0xFF9E9E9E), // Medium gray when disabled
-                      elevation: 1,
-                    ),
-                  )),
-                ),
-              ],
-            ),
-          ).animate()
-            .fadeIn(duration: 300.ms)
-            .slideY(begin: 0.1, end: 0, duration: 300.ms),
-          
-          // Filter and Search Bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Date Filter
-                Row(
-                  children: [
-                    const Text(
-                      'Date:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Obx(() => OutlinedButton.icon(
-                        onPressed: () async {
-                          final selectedDatePicker = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDate.value != null
-                                ? DateTime.parse(selectedDate.value!)
-                                : DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now(),
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: ColorScheme.light(
-                                    primary: AppColors.primaryRed,
-                                  ),
-                                ),
-                                child: child!,
-                              );
-                            },
-                          );
-                          
-                          if (selectedDatePicker != null) {
-                            selectedDate.value = 
-                                DateFormat('yyyy-MM-dd').format(selectedDatePicker);
-                            _fetchCancelledBets();
-                          }
-                        },
-                        icon: const Icon(Icons.calendar_today, size: 18),
-                        label: Text(
-                          selectedDate.value != null
-                              ? DateFormat('MMM dd, yyyy').format(
-                                  DateTime.parse(selectedDate.value!))
-                              : 'Select Date',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primaryRed,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                      )),
-                    ),
-                    if (selectedDate.value != null)
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () {
-                          selectedDate.value = null;
-                          _fetchCancelledBets();
-                        },
-                        tooltip: 'Clear date filter',
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Schedule Filter
-                Row(
-                  children: [
-                    const Text(
-                      'Draw Filter:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Obx(() => DropdownButton<String>(
-                        value: selectedSchedule.value,
-                        isExpanded: true,
-                        underline: const SizedBox(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            selectedSchedule.value = newValue;
-                            _fetchCancelledBets();
-                          }
-                        },
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: 'All',
-                            child: Text('All Draws'),
-                          ),
-                          ...bettingController.availableDraws.map((draw) => 
-                            DropdownMenuItem<String>(
-                              value: draw.drawTimeFormatted ?? 'Unknown',
-                              child: Text(draw.drawTimeFormatted ?? 'Unknown'),
-                            ),
-                          ),
-                        ],
-                      )),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Search Bar
-                TextField(
-                  controller: searchController,
-                  onChanged: (value) => searchQuery.value = value,
-                  decoration: InputDecoration(
-                    hintText: 'Search bet number or ticket ID',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: Obx(() => searchQuery.value.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            searchController.clear();
-                            searchQuery.value = '';
-                          },
-                        )
-                      : const SizedBox.shrink()),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  onSubmitted: (_) => _fetchCancelledBets(),
-                ),
-              ],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              onSubmitted: (_) => _fetchCancelledBets(),
+              onChanged: (value) => searchQuery.value = value,
             ),
           ),
           
-          // Cancelled Bets Header
+          // Active filters display
+          Obx(() {
+            final hasFilters = selectedDate.value != null ||
+                selectedDrawId?.value != -1;
+                
+            if (!hasFilters) return SizedBox.shrink();
+            
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Active Filters',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          selectedDate.value = null;
+                          selectedDrawId?.value = -1;
+                          _fetchCancelledBets();
+                        },
+                        child: const Text('Clear All'),
+                      ),
+                    ],
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (selectedDate.value != null)
+                        Chip(
+                          label: Text(
+                            'Date: ${DateFormat('MMM dd, yyyy').format(
+                              DateTime.parse(selectedDate.value!)
+                            )}',
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            selectedDate.value = null;
+                            _fetchCancelledBets();
+                          },
+                        ),
+                      if (selectedDrawId?.value != -1 && selectedDrawId?.value != null)
+                        Chip(
+                          label: Text(
+                            'Draw: ${bettingController.availableDraws
+                              .firstWhere(
+                                (draw) => draw.id == selectedDrawId?.value,
+                                orElse: () => Draw(id: 0, drawTimeFormatted: 'Unknown')
+                              ).drawTimeFormatted ?? 'Unknown'}'
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            selectedDrawId?.value = -1;
+                            _fetchCancelledBets();
+                          },
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+          
+          // Cancelled Bets count
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 const Text(
                   'Cancelled Bets',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(12),
@@ -435,41 +353,11 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                     '${bettingController.cancelledBets.length}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   )),
                 ),
               ],
-            ),
-          ),
-          
-          // Table Header with horizontal scrolling
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.primaryRed.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                // Set a minimum width to ensure it's at least as wide as the screen
-                constraints: BoxConstraints(
-                  minWidth: MediaQuery.of(context).size.width - 32, // Screen width minus margins
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: Row(
-                  children: const [
-                    SizedBox(width: 100, child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold))),
-                    SizedBox(width: 120, child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold))),
-                    SizedBox(width: 100, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold))),
-                    SizedBox(width: 100, child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold))),
-                    SizedBox(width: 100, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                ),
-              ),
             ),
           ),
           
@@ -525,169 +413,224 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                   );
                 }
                 
-                // Create a single scroll controller for horizontal scrolling
-                final horizontalScrollController = ScrollController();
-                
-                return Stack(
-                  children: [
-                    Column(
-                      children: [
-                        // Table Header with synchronized horizontal scrolling
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryRed.withOpacity(0.1),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(8),
-                              topRight: Radius.circular(8),
-                            ),
-                          ),
-                          child: SingleChildScrollView(
-                            controller: horizontalScrollController,
-                            scrollDirection: Axis.horizontal,
-                            child: Container(
-                              // Set a minimum width to ensure it's at least as wide as the screen
-                              constraints: BoxConstraints(
-                                minWidth: MediaQuery.of(context).size.width - 32, // Screen width minus margins
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                              child: Row(
-                                children: const [
-                                  SizedBox(width: 100, child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold))),
-                                  SizedBox(width: 120, child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold))),
-                                  SizedBox(width: 100, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold))),
-                                  SizedBox(width: 100, child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold))),
-                                  SizedBox(width: 100, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
-                                ],
-                              ),
-                            ),
-                          ),
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Hint text for scrollable table
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2.0),
+                        child: Text(
+                          'Scrollable (Horizontal)',
+                          style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
                         ),
-                        
-                        // Table Body
-                        Expanded(
-                          child: ListView.builder(
-                            controller: scrollController,
-                            padding: EdgeInsets.zero,
-                            itemCount: bettingController.cancelledBets.length + 
-                              (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              // Show loading indicator at the end when more items are being loaded
-                              if (index == bettingController.cancelledBets.length) {
-                                return const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                );
-                              }
-                              
-                              final bet = bettingController.cancelledBets[index];
-                              
-                              // Table-style row display with synchronized horizontal scrolling
-                              return Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border(
-                                    bottom: BorderSide(color: Colors.grey.shade200),
-                                  ),
-                                ),
-                                child: SingleChildScrollView(
-                                  controller: horizontalScrollController,
-                                  scrollDirection: Axis.horizontal,
-                                  child: Container(
-                                    // Set a minimum width to ensure it's at least as wide as the screen
-                                    constraints: BoxConstraints(
-                                      minWidth: MediaQuery.of(context).size.width - 32, // Screen width minus margins
+                      ),
+                      // Table container
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            // Horizontal scrollable table
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const ClampingScrollPhysics(),
+                              controller: horizontalScrollController,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Table header
+                                  Container(
+                                    width: TableColumnWidths.totalWidth,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryRed,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(8),
+                                        topRight: Radius.circular(8),
+                                      ),
                                     ),
-                                    child: InkWell(
-                                      onTap: () => _showBetDetails(bet),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                        child: Row(
+                                    child: Row(
+                                      children: const [
+                                        SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                          child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                        )),
+                                        SizedBox(width: TableColumnWidths.betNumberWidth, child: Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                          child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                        )),
+                                        SizedBox(width: TableColumnWidths.amountWidth, child: Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                          child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                        )),
+                                        SizedBox(width: TableColumnWidths.drawTimeWidth, child: Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                          child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                        )),
+                                        SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                          child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                        )),
+                                      ],
+                                    ),
+                                  ),
+                                  
+                                  // Table body
+                                  Container(
+                                    width: TableColumnWidths.totalWidth,
+                                    height: MediaQuery.of(context).viewInsets.bottom > 0
+                                        ? MediaQuery.of(context).size.height * 0.25 // Smaller when keyboard is shown
+                                        : MediaQuery.of(context).size.height * 0.45, // Normal height when keyboard is hidden
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: const BorderRadius.only(
+                                        bottomLeft: Radius.circular(8),
+                                        bottomRight: Radius.circular(8),
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ListView.builder(
+                                      controller: scrollController,
+                                      padding: EdgeInsets.zero,
+                                      itemCount: bettingController.cancelledBets.length + 
+                                        (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
+                                      itemBuilder: (context, index) {
+                                        if (index == bettingController.cancelledBets.length) {
+                                          return const Center(
+                                            child: Padding(
+                                              padding: EdgeInsets.all(16.0),
+                                              child: CircularProgressIndicator(),
+                                            ),
+                                          );
+                                        }
+                                        
+                                        final bet = bettingController.cancelledBets[index];
+                                        final isLastRow = index == bettingController.cancelledBets.length - 1;
+                                        
+                                        return Obx(() => Column(
                                           children: [
-                                            // Ticket ID
-                                            SizedBox(
-                                              width: 100,
-                                              child: Text(
-                                                bet.ticketId ?? 'Unknown',
-                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                            // Add a separator line except for the first row
+                                            if (index > 0)
+                                              Divider(height: 1, color: Colors.grey.shade300),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                // Use a reactive color based on selection state
+                                                color: selectedRowIndex.value == index 
+                                                    ? AppColors.primaryRed.withOpacity(0.1) // Highlight selected row
+                                                    : (index.isEven ? Colors.grey.shade50 : Colors.white),
+                                                borderRadius: isLastRow
+                                                    ? const BorderRadius.only(
+                                                        bottomLeft: Radius.circular(8),
+                                                        bottomRight: Radius.circular(8),
+                                                      )
+                                                    : null,
                                               ),
-                                            ),
-                                            // Bet Number
-                                            SizedBox(
-                                              width: 120,
-                                              child: Text(
-                                                bet.betNumber ?? 'Unknown',
-                                                style: const TextStyle(fontWeight: FontWeight.w500),
-                                              ),
-                                            ),
-                                            // Amount
-                                            SizedBox(
-                                              width: 100,
-                                              child: Text(
-                                                '₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
-                                                style: const TextStyle(fontWeight: FontWeight.w500),
-                                              ),
-                                            ),
-                                            // Draw Time
-                                            SizedBox(
-                                              width: 100,
-                                              child: Text(
-                                                bet.draw?.drawTimeFormatted ?? 'Unknown',
-                                                style: const TextStyle(fontWeight: FontWeight.w500),
-                                              ),
-                                            ),
-                                            // Date
-                                            SizedBox(
-                                              width: 100,
-                                              child: Text(
-                                                bet.betDateFormatted ?? 'Unknown',
-                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                              child: InkWell(
+                                                onTap: () {
+                                                  // Toggle row selection
+                                                  if (selectedRowIndex.value == index) {
+                                                    selectedRowIndex.value = -1; // Deselect
+                                                  } else {
+                                                    selectedRowIndex.value = index; // Select
+                                                    _showBetDetails(bet);
+                                                  }
+                                                },
+                                                child: Row(
+                                                  children: [
+                                                    // Ticket ID
+                                                    SizedBox(
+                                                      width: TableColumnWidths.ticketIdWidth,
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                        child: Text(
+                                                          bet.ticketId ?? 'Unknown',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                          softWrap: false,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // Bet Number
+                                                    SizedBox(
+                                                      width: TableColumnWidths.betNumberWidth,
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                        child: Text(
+                                                          bet.betNumber ?? 'Unknown',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // Amount
+                                                    SizedBox(
+                                                      width: TableColumnWidths.amountWidth,
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                        child: Text(
+                                                          '₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // Draw Time
+                                                    SizedBox(
+                                                      width: TableColumnWidths.drawTimeWidth,
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                        child: Text(
+                                                          bet.draw?.drawTimeFormatted ?? 'Unknown',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // Date
+                                                    SizedBox(
+                                                      width: TableColumnWidths.dateWidth,
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                        child: Text(
+                                                          bet.betDateFormatted ?? 'Unknown',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ],
-                                        ),
-                                      ),
+                                        ));
+                                      },
                                     ),
                                   ),
-                                ),
-                              );
-                              
-                              // Original card-based display (commented out)
-                              /*
-                              return BetCard(
-                                bet: bet,
-                                onTap: () => _showBetDetails(bet),
-                                showCancelButton: false,
-                                isCompactMode: true,
-                              );
-                              */
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    // Loading overlay when refreshing with existing data
-                    if (bettingController.isLoadingCancelledBets.value && bettingController.cancelledBets.isNotEmpty)
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          color: Colors.black54,
-                          child: const Center(
-                            child: Text(
-                              'Loading more cancelled bets...',
-                              style: TextStyle(color: Colors.white),
+                                ],
+                              ),
                             ),
-                          ),
+                            
+                            // Loading indicator at the bottom
+                            if (bettingController.isLoadingCancelledBets.value && bettingController.cancelledBets.isNotEmpty)
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  color: Colors.black54,
+                                  height: 40,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 );
               }),
             ),
@@ -780,4 +723,3 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
     );
   }
 }
-
