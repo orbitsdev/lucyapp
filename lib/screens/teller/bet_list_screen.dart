@@ -324,19 +324,28 @@ class _BetListScreenState extends State<BetListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Bet List'),
         backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
         actions: [
+          // Refresh button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _fetchBets(refresh: true),
+            tooltip: 'Refresh',
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
+            tooltip: 'Filter',
           ),
         ],
       ),
-      body: Column(
-        children: [
+      body: SafeArea(
+        child: Column(
+          children: [
           // Search bar
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -498,6 +507,7 @@ class _BetListScreenState extends State<BetListScreen> {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Hint text for scrollable table
@@ -564,7 +574,10 @@ class _BetListScreenState extends State<BetListScreen> {
                               // Table body
                               Container(
                                 width: TableColumnWidths.totalWidth,
-                                height: MediaQuery.of(context).size.height - 300, // Adjust height as needed
+                                // Calculate height based on available space and keyboard visibility
+                                height: MediaQuery.of(context).viewInsets.bottom > 0
+                                    ? MediaQuery.of(context).size.height * 0.3 // Even smaller height when keyboard is visible
+                                    : MediaQuery.of(context).size.height * 0.6, // Normal height when keyboard is hidden
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: const BorderRadius.only(
@@ -729,13 +742,24 @@ class _BetListScreenState extends State<BetListScreen> {
                         ),
                       ),
                       
-                      // Loading overlay for additional data
+                      // Loading indicator at the bottom of the table
                       if (bettingController.isLoadingBets.value && bettingController.bets.isNotEmpty)
                         Container(
+                          width: TableColumnWidths.totalWidth,
                           padding: const EdgeInsets.all(8),
-                          color: Colors.black54,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(8),
+                              bottomRight: Radius.circular(8),
+                            ),
+                          ),
                           child: const Center(
-                            child: CircularProgressIndicator(),
+                            child: SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
                           ),
                         ),
                     ],
@@ -744,7 +768,8 @@ class _BetListScreenState extends State<BetListScreen> {
               }),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

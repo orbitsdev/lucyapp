@@ -225,9 +225,17 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
         backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
         actions: [
+          // Refresh button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchCancelledBets,
+            tooltip: 'Refresh',
+          ),
+          // Filter button
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
+            tooltip: 'Filter',
           ),
         ],
       ),
