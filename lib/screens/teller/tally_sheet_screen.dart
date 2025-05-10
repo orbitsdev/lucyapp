@@ -346,7 +346,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
         final isLoading = reportController.isLoadingDetailedTallysheet.value;
         
         // Use values from the API response (or defaults if null)
-        final gameType = report?.gameType?.name ?? 'All Games';
+        final gameType = report?.gameType?.name ?? 'All Bet';
         final totalAmount = report?.totalAmountFormatted ?? '0.00';
         
         return Column(
