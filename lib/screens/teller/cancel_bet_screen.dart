@@ -14,7 +14,7 @@ class TableColumnWidths {
   static const double ticketIdWidth = 130.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
-  static const double drawTimeWidth = 100.0;
+  static const double drawTimeWidth = 160.0;
   static const double dateWidth = 150.0;
   
   // Total width of all columns
@@ -487,7 +487,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                     width: TableColumnWidths.totalWidth,
                                     height: MediaQuery.of(context).viewInsets.bottom > 0
                                         ? MediaQuery.of(context).size.height * 0.25 // Smaller when keyboard is shown
-                                        : MediaQuery.of(context).size.height * 0.45, // Normal height when keyboard is hidden
+                                        : MediaQuery.of(context).size.height * 0.6, // Increased height to fill the empty space
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: const BorderRadius.only(
@@ -579,7 +579,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                       child: Padding(
                                                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                         child: Text(
-                                                          '₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
+                                                          '₱${bet.amount?.toInt() ?? bet.amount}',
                                                           style: const TextStyle(fontWeight: FontWeight.w500),
                                                         ),
                                                       ),
@@ -678,7 +678,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
-          _buildDetailRow('Amount', '₱ ${bet.amount?.toStringAsFixed(2) ?? '0.00'}'),
+          _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
           _buildDetailRow('Status', 'Cancelled'),
           const SizedBox(height: 16),
           SizedBox(

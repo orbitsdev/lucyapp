@@ -97,7 +97,7 @@ class _BetListScreenState extends State<BetListScreen> {
       message: 'Are you sure you want to cancel this bet?\n\n' 
               'Ticket ID: ${bet.ticketId}\n'
               'Bet Number: ${bet.betNumber}\n'
-              'Amount: ₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}\n'
+              'Amount: ₱${bet.amount?.toInt() ?? bet.amount}\n'
               'Draw Time: $drawTime\n'
               'Date: $betDate\n\n'
               'This action cannot be undone and will update your sales records.', 
@@ -668,7 +668,7 @@ class _BetListScreenState extends State<BetListScreen> {
                                                   child: Padding(
                                                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                     child: Text(
-                                                      '₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
+                                                      '₱${bet.amount?.toInt() ?? bet.amount}',
                                                       style: const TextStyle(fontWeight: FontWeight.w500),
                                                     ),
                                                   ),
