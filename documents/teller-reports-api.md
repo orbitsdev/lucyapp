@@ -371,3 +371,194 @@ Common error codes:
      ]
    }
    ```
+
+12. **Pagination**: For endpoints that return large datasets, pagination is implemented with a simplified structure. The pagination data only includes the essential fields needed for mobile applications:
+   - `total`: Total number of records
+   - `current_page`: Current page number
+
+   This simplified approach makes it easier to implement pagination in mobile applications while reducing response size.
+
+## Detailed Tallysheet Report
+
+The Detailed Tallysheet Report provides a breakdown of individual bet numbers and their total amounts for a specific date, with optional filtering by game type and draw.
+
+### Endpoint
+
+```
+GET /api/teller/detailed-tallysheet
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| date | string (YYYY-MM-DD) | Yes | The date to generate the report for |
+| game_type_id | integer | No | Filter by specific game type ID |
+| draw_id | integer | No | Filter by specific draw ID |
+| per_page | integer | No | Number of items per page (default: 50, min: 10, max: 100) |
+| page | integer | No | Page number (default: 1) |
+| all | boolean | No | If true, returns all results without pagination |
+
+### Example Request
+
+```
+GET /api/teller/detailed-tallysheet?date=2025-05-08&game_type_id=1&per_page=20&page=1
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Detailed tally sheet retrieved successfully",
+  "data": {
+    "date": "2025-05-08",
+    "date_formatted": "May 8, 2025",
+    "game_type": {
+      "id": 1,
+      "code": "S2",
+      "name": "Swertres 2"
+    },
+    "total_amount": 5000,
+    "total_amount_formatted": "5,000.00",
+    "bets": [
+      {
+        "bet_number": "00",
+        "amount": 270,
+        "amount_formatted": "270.0",
+        "game_type_code": "S2"
+      },
+      {
+        "bet_number": "01",
+        "amount": 50,
+        "amount_formatted": "50.0",
+        "game_type_code": "S2"
+      },
+      {
+        "bet_number": "02",
+        "amount": 185,
+        "amount_formatted": "185.0",
+        "game_type_code": "S2"
+      }
+    ],
+    "bets_by_game_type": {
+      "S2": [
+        {
+          "bet_number": "00",
+          "amount": 270,
+          "amount_formatted": "270.0",
+          "game_type_code": "S2"
+        },
+        {
+          "bet_number": "01",
+          "amount": 50,
+          "amount_formatted": "50.0",
+          "game_type_code": "S2"
+        },
+        {
+          "bet_number": "02",
+          "amount": 185,
+          "amount_formatted": "185.0",
+          "game_type_code": "S2"
+        }
+      ],
+      "S3": [
+        {
+          "bet_number": "03",
+          "amount": 60,
+          "amount_formatted": "60.0",
+          "game_type_code": "S3"
+        },
+        {
+          "bet_number": "05",
+          "amount": 325,
+          "amount_formatted": "325.0",
+          "game_type_code": "S3"
+        }
+      ],
+      "D4": [
+        {
+          "bet_number": "07",
+          "amount": 105,
+          "amount_formatted": "105.0",
+          "game_type_code": "D4"
+        },
+        {
+          "bet_number": "09",
+          "amount": 140,
+          "amount_formatted": "140.0",
+          "game_type_code": "D4"
+        }
+      ]
+    }
+  },
+  "pagination": {
+    "total": 7,
+    "current_page": 1
+  }
+}
+```
+
+### Visualization Example
+
+#### Mobile Card Grid Layout
+
+```
++----------------------------------------------------------+
+|              DETAILED TALLYSHEET REPORT                   |
++----------------------------------------------------------+
+| Date: May 8, 2025  [Calendar Icon]  [< Prev] [Next >]    |
++----------------------------------------------------------+
+| Total Amount: 1,135.00                                   |
++----------------------------------------------------------+
+| [S2]  |  [S3]  |  [D4]  |  [ALL]                         |
++----------------------------------------------------------+
+
++---------------+  +---------------+  +---------------+
+|      00       |  |      01       |  |      02       |
+|               |  |               |  |               |
+|    270.0      |  |     50.0      |  |    185.0      |
+|               |  |               |  |               |
+|      S2       |  |      S2       |  |      S2       |
++---------------+  +---------------+  +---------------+
+
++---------------+  +---------------+
+|      03       |  |      05       |
+|               |  |               |
+|     60.0      |  |    325.0      |
+|               |  |               |
+|      S3       |  |      S3       |
++---------------+  +---------------+
+
++---------------+  +---------------+
+|      07       |  |      09       |
+|               |  |               |
+|    105.0      |  |    140.0      |
+|               |  |               |
+|      D4       |  |      D4       |
++---------------+  +---------------+
+```
+
+#### Alternative Table Layout
+
+```
++----------------------------------------------------------+
+|              DETAILED TALLYSHEET REPORT                   |
+|                    May 8, 2025                           |
++----------------------------------------------------------+
+| SUMMARY                                                  |
+| Total Amount: 1,135.00                                   |
++----------------------------------------------------------+
+| BET BREAKDOWN BY GAME TYPE                               |
++----------------------------------------------------------+
+|         S2         |         S3         |        D4        |
++----------------------------------------------------------+
+| Bet# | Amount      | Bet# | Amount      | Bet# | Amount    |
++----------------------------------------------------------+
+| 00   | 270.0       | 03   | 60.0        | 07   | 105.0     |
+| 01   | 50.0        | 05   | 325.0       | 09   | 140.0     |
+| 02   | 185.0       |      |             |      |           |
++----------------------------------------------------------+
+```
+
+The card grid layout is optimized for mobile interfaces, with each bet displayed as a tappable card. The tabs at the top allow filtering by game type. This layout makes efficient use of mobile screen space while maintaining a clean, modern appearance.

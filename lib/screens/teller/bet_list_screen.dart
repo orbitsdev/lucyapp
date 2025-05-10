@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:bettingapp/controllers/betting_controller.dart';
+import 'package:bettingapp/controllers/report_controller.dart';
 import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:bettingapp/widgets/common/local_lottie_image.dart';
+import 'package:bettingapp/widgets/common/modal.dart';
 
 class BetListScreen extends StatefulWidget {
   const BetListScreen({super.key});
@@ -15,7 +17,7 @@ class BetListScreen extends StatefulWidget {
 
 /// Defines the fixed column widths for the bet list table
 class TableColumnWidths {
-  static const double ticketIdWidth = 120.0;
+  static const double ticketIdWidth = 130.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
   static const double drawTimeWidth = 100.0;
@@ -80,13 +82,71 @@ class _BetListScreenState extends State<BetListScreen> {
     _fetchBets(refresh: true);
   }
   
-  // Cancel a bet
+  // Cancel a bet with confirmation
   Future<void> _cancelBet(int betId) async {
-    final result = await bettingController.cancelBet(betId);
-    if (result) {
-      // Refresh the list after cancellation
-      _fetchBets(refresh: true);
-    }
+    // Get the bet details for the confirmation message
+    final bet = bettingController.bets.firstWhere((bet) => bet.id == betId);
+    
+    // Format draw time and date for better readability
+    final drawTime = bet.draw?.drawTimeFormatted ?? 'Unknown';
+    final betDate = bet.betDateFormatted ?? 'Unknown';
+    
+    // Show confirmation dialog
+    Modal.showConfirmationModal(
+      title: 'Cancel Bet Confirmation',
+      message: 'Are you sure you want to cancel this bet?\n\n' 
+              'Ticket ID: ${bet.ticketId}\n'
+              'Bet Number: ${bet.betNumber}\n'
+              'Amount: ₱${bet.amount?.toStringAsFixed(2) ?? '0.00'}\n'
+              'Draw Time: $drawTime\n'
+              'Date: $betDate\n\n'
+              'This action cannot be undone and will update your sales records.', 
+      confirmText: 'Yes,Cancel Bet',
+      cancelText: 'No,Close',
+      isDangerousAction: true,
+      animation: 'assets/animations/questionmark.json',
+      onConfirm: () async {
+        // Show loading indicator
+        Modal.showProgressModal(
+          title: 'Cancelling Bet',
+          message: 'Please wait while we process your request...',
+        );
+        
+        try {
+          // Proceed with cancellation
+          final result = await bettingController.cancelBet(betId);
+          
+          // Close the loading modal
+          Modal.closeDialog();
+          
+          if (result) {
+            // Refresh the list after cancellation
+            _fetchBets(refresh: true);
+            
+            // Reload today's sales data to reflect the updated cancellation count
+            final reportController = Get.find<ReportController>();
+            await reportController.fetchTodaySales();
+            
+            // Show success message
+            Modal.showSuccessModal(
+              title: 'Bet Cancelled',
+              message: 'The bet has been cancelled successfully.',
+              showButton: true,
+              buttonText: 'OK',
+            );
+          }
+        } catch (e) {
+          // Make sure to close the loading modal even if there's an error
+          Modal.closeDialog();
+          
+          // Show error message
+          Modal.showErrorModal(
+            title: 'Cancellation Failed',
+            message: 'Failed to cancel the bet. Please try again.',
+          );
+        }
+      },
+    );
   }
   
   // Show filter dialog
@@ -438,7 +498,16 @@ class _BetListScreenState extends State<BetListScreen> {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Hint text for scrollable table
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          'Scrollable ->',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                        ),
+                      ),
                       // Use a single horizontal scroll view for the entire table
                       Expanded(
                         child: SingleChildScrollView(

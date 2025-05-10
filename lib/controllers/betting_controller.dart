@@ -345,13 +345,6 @@ class BettingController extends GetxController {
             bets[index] = updatedBet;
           }
           
-          // Show success message
-          Modal.showSuccessModal(
-            title: 'Bet Cancelled',
-            message: 'The bet has been cancelled successfully.',
-            showButton: true,
-          );
-          
           // Refresh cancelled bets list
           fetchCancelledBets();
           

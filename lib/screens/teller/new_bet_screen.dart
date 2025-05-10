@@ -124,7 +124,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
       message: 'Are you sure you want to place a bet with the following details?\n\n'  
           'Bet Number: ${betNumberController.text}\n'
           'Amount: PHP ${amountController.text}\n'
-          'Game Type: ${dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)?.name ?? ''}\n'
+          'Bet Type: ${dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)?.name ?? ''}\n'
           'Draw: ${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawTimeFormatted ?? ''} (${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDateFormatted ?? bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDate ?? ''})',
       confirmText: 'Place Bet',
       onConfirm: () async {
@@ -198,7 +198,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
               children: [
                 // Game Type Selection
                 const Text(
-                  'Game Type',
+                  'Bet Type',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -214,7 +214,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
                       isExpanded: true,
-                      hint: const Text('Select Game Type'),
+                      hint: const Text('Select Bet Type'),
                       value: bettingController.selectedGameTypeId.value,
                       items: dropdownController.gameTypes.map((gameType) {
                         return DropdownMenuItem<int>(
