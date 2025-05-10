@@ -176,9 +176,9 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
                       ),
                     ),
                     Expanded(
-                      flex: 2,
+                      flex: 1,
                       child: Text(
-                        'Game Type',
+                        'Type',
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           color: Colors.white,
@@ -286,7 +286,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
           
           // Game type
           Expanded(
-            flex: 2,
+            flex: 1,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [

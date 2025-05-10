@@ -109,20 +109,76 @@ class BetDetail {
   final double? amount;
   final String? amountFormatted;
   final String? gameTypeCode;
+  final List<int>? betIds;
+  final List<int>? ticketIds;
+  final int? ticketCount;
 
   BetDetail({
     this.betNumber,
     this.amount,
     this.amountFormatted,
     this.gameTypeCode,
+    this.betIds,
+    this.ticketIds,
+    this.ticketCount,
   });
 
   factory BetDetail.fromJson(Map<String, dynamic> json) {
+    // Parse bet_ids and ticket_ids arrays if they exist
+    List<int>? betIds;
+    if (json['bet_ids'] != null) {
+      try {
+        betIds = List<int>.from(json['bet_ids'].map((x) {
+          // Handle different types safely
+          if (x is int) return x;
+          if (x is String) {
+            return int.tryParse(x) ?? 0; // Use tryParse with fallback
+          }
+          return 0; // Default fallback
+        }));
+      } catch (e) {
+        // If parsing fails, create an empty list
+        betIds = [];
+      }
+    }
+    
+    List<int>? ticketIds;
+    if (json['ticket_ids'] != null) {
+      try {
+        ticketIds = List<int>.from(json['ticket_ids'].map((x) {
+          // Handle different types safely
+          if (x is int) return x;
+          if (x is String) {
+            return int.tryParse(x) ?? 0; // Use tryParse with fallback
+          }
+          return 0; // Default fallback
+        }));
+      } catch (e) {
+        // If parsing fails, create an empty list
+        ticketIds = [];
+      }
+    }
+    
+    // Parse ticket count safely
+    int? ticketCount;
+    if (json['ticket_count'] != null) {
+      if (json['ticket_count'] is int) {
+        ticketCount = json['ticket_count'];
+      } else if (json['ticket_count'] is String) {
+        ticketCount = int.tryParse(json['ticket_count']) ?? 0;
+      } else {
+        ticketCount = 0;
+      }
+    }
+    
     return BetDetail(
       betNumber: json['bet_number'],
       amount: json['amount'] != null ? double.tryParse(json['amount'].toString()) : null,
       amountFormatted: json['amount_formatted'],
       gameTypeCode: json['game_type_code'],
+      betIds: betIds,
+      ticketIds: ticketIds,
+      ticketCount: ticketCount,
     );
   }
 
@@ -132,6 +188,9 @@ class BetDetail {
       'amount': amount,
       'amount_formatted': amountFormatted,
       'game_type_code': gameTypeCode,
+      'bet_ids': betIds,
+      'ticket_ids': ticketIds,
+      'ticket_count': ticketCount,
     };
   }
 }
