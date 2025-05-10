@@ -29,11 +29,20 @@ class _NewBetScreenState extends State<NewBetScreen> {
   }
   
   Future<void> _loadData() async {
+    // Reset selected values before fetching new data
+    bettingController.selectedDrawId.value = null;
+    
     // Fetch game types and available draws
     await Future.wait([
       dropdownController.fetchGameTypes(),
       bettingController.fetchAvailableDraws(),
     ]);
+    
+    // Set default draw ID if available and none is selected
+    if (bettingController.selectedDrawId.value == null && 
+        bettingController.availableDraws.isNotEmpty) {
+      bettingController.selectedDrawId.value = bettingController.availableDraws.first.id;
+    }
   }
   
   // Get the max length for bet number based on game type
@@ -252,7 +261,9 @@ class _NewBetScreenState extends State<NewBetScreen> {
                     child: DropdownButton<int>(
                       isExpanded: true,
                       hint: const Text('Select Draw Schedule'),
-                      value: bettingController.selectedDrawId.value,
+                      value: bettingController.availableDraws.any((draw) => draw.id == bettingController.selectedDrawId.value)
+                          ? bettingController.selectedDrawId.value
+                          : null,
                       items: bettingController.availableDraws.map((draw) {
                         return DropdownMenuItem<int>(
                           value: draw.id,

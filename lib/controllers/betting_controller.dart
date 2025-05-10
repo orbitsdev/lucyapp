@@ -103,6 +103,50 @@ class BettingController extends GetxController {
     }
   }
   
+  // Smart format amount function that handles both string and numeric inputs
+  String formatAmount(dynamic amount) {
+    // Handle null case
+    if (amount == null) return '0';
+    
+    // Convert to double first
+    double numAmount;
+    
+    if (amount is String) {
+      // Try to parse the string to a double
+      try {
+        // Remove any currency symbols or commas
+        final cleanAmount = amount.replaceAll(RegExp(r'[^0-9.]'), '');
+        numAmount = double.parse(cleanAmount);
+      } catch (e) {
+        print('Error parsing amount string: $e');
+        return '0'; // Return 0 if parsing fails
+      }
+    } else if (amount is int) {
+      numAmount = amount.toDouble();
+    } else if (amount is double) {
+      numAmount = amount;
+    } else {
+      print('Unsupported amount type: ${amount.runtimeType}');
+      return '0'; // Return 0 for unsupported types
+    }
+    
+    // Check if it's a whole number
+    if (numAmount == numAmount.truncateToDouble()) {
+      return numAmount.toInt().toString(); // No decimal places for whole numbers
+    } else {
+      // For non-whole numbers, show only necessary decimal places (max 2)
+      // First, round to 2 decimal places
+      numAmount = (numAmount * 100).round() / 100;
+      
+      // If the fractional part ends with 0, show only 1 decimal place
+      if ((numAmount * 10).round() % 10 == 0) {
+        return numAmount.toStringAsFixed(1);
+      } else {
+        return numAmount.toStringAsFixed(2);
+      }
+    }
+  }
+  
   // Place a new bet
   Future<bool> placeBet() async {
     if (betNumber.value.isEmpty) {
@@ -183,10 +227,8 @@ class BettingController extends GetxController {
             final betNumber = betData['bet_number']?.toString() ?? 'Unknown';
             final amount = betData['amount'];
             
-            // Format amount with proper currency
-            final formattedAmount = amount != null 
-                ? 'PHP ${(amount is int ? amount.toDouble() : amount).toStringAsFixed(2)}' 
-                : 'PHP 0.00';
+            // Format amount with proper currency using our smart formatter
+            final formattedAmount = 'PHP ${formatAmount(amount)}';
             
             print('Extracted values - Ticket ID: $ticketId, Bet Number: $betNumber, Amount: $amount');
             

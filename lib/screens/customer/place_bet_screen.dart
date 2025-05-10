@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:bettingapp/utils/app_colors.dart';
+import 'package:bettingapp/controllers/place_bet_controller.dart';
 
 class PlaceBetScreen extends StatelessWidget {
   const PlaceBetScreen({super.key});
+  
+  // Get the controller
+  PlaceBetController get controller => Get.put(PlaceBetController());
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +76,11 @@ class PlaceBetScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildGameTypeOption('3D Game', 'Select 3 numbers from 0-9'),
+          Obx(() => _buildGameTypeOption('3D Game', 'Select 3 numbers from 0-9')),
           SizedBox(height: 12.h),
-          _buildGameTypeOption('2D Game', 'Select 2 numbers from 0-9'),
+          Obx(() => _buildGameTypeOption('2D Game', 'Select 2 numbers from 0-9')),
           SizedBox(height: 12.h),
-          _buildGameTypeOption('1D Game', 'Select 1 number from 0-9'),
+          Obx(() => _buildGameTypeOption('1D Game', 'Select 1 number from 0-9')),
         ],
       ),
     );
@@ -86,15 +90,26 @@ class PlaceBetScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: controller.selectedGameType.value == title 
+              ? AppColors.primaryBlue 
+              : Colors.grey.shade300
+        ),
         borderRadius: BorderRadius.circular(8),
+        color: controller.selectedGameType.value == title 
+            ? AppColors.primaryBlue.withOpacity(0.05) 
+            : Colors.white,
       ),
       child: Row(
         children: [
           Radio(
             value: title,
-            groupValue: '3D Game', // This would be controlled by a controller
-            onChanged: (value) {},
+            groupValue: controller.selectedGameType.value,
+            onChanged: (value) {
+              if (value != null) {
+                controller.updateGameType(value);
+              }
+            },
             activeColor: AppColors.primaryBlue,
           ),
           SizedBox(width: 8.w),
@@ -162,6 +177,19 @@ class PlaceBetScreen extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: Icon(Icons.backspace_outlined, color: AppColors.primaryBlue),
+                onPressed: () => controller.removeLastNumber(),
+              ),
+              IconButton(
+                icon: Icon(Icons.clear, color: Colors.red),
+                onPressed: () => controller.clearNumbers(),
+              ),
+            ],
+          ),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             decoration: BoxDecoration(
@@ -178,14 +206,14 @@ class PlaceBetScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  '_ _ _', // This would be controlled by a controller
+                Obx(() => Text(
+                  controller.selectedNumbersFormatted,
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 8.w,
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -195,25 +223,42 @@ class PlaceBetScreen extends StatelessWidget {
   }
 
   Widget _buildNumberButton(String number) {
-    return InkWell(
-      onTap: () {},
-      child: Container(
-        width: 50.w,
-        height: 50.w,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          number,
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.bold,
+    return Obx(() {
+      final bool isSelected = controller.selectedNumbers.contains(number);
+      final bool isDisabled = controller.selectedNumbers.length >= controller.maxDigits.value && !isSelected;
+      
+      return InkWell(
+        onTap: isDisabled ? null : () => controller.addNumber(number),
+        child: Container(
+          width: 50.w,
+          height: 50.w,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isSelected 
+                  ? AppColors.primaryBlue 
+                  : isDisabled 
+                      ? Colors.grey.shade200 
+                      : Colors.grey.shade300
+            ),
+            borderRadius: BorderRadius.circular(8),
+            color: isSelected 
+                ? AppColors.primaryBlue.withOpacity(0.1) 
+                : isDisabled 
+                    ? Colors.grey.shade100 
+                    : Colors.white,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            number,
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.bold,
+              color: isDisabled ? Colors.grey.shade400 : Colors.black,
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildAmountInput() {
@@ -234,10 +279,13 @@ class PlaceBetScreen extends StatelessWidget {
       child: Column(
         children: [
           TextField(
+            controller: controller.amountController,
             keyboardType: TextInputType.number,
+            onChanged: (value) => controller.updateAmount(value),
             decoration: InputDecoration(
               labelText: 'Enter Amount',
-              prefixIcon: Icon(Icons.attach_money),
+              prefixText: '₱ ',
+              prefixIcon: Icon(Icons.payments_outlined),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -260,7 +308,7 @@ class PlaceBetScreen extends StatelessWidget {
 
   Widget _buildQuickAmountButton(String amount) {
     return InkWell(
-      onTap: () {},
+      onTap: () => controller.setAmount(amount),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
@@ -280,15 +328,45 @@ class PlaceBetScreen extends StatelessWidget {
   }
 
   Widget _buildPlaceBetButton() {
-    return SizedBox(
+    return Obx(() => SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {
-          // This would be handled by a controller
+        onPressed: controller.canPlaceBet() ? () {
+          // Show confirmation dialog
+          final betNumber = controller.selectedNumbers.join('');
+          final amountFormatted = controller.formatAmount(controller.amount.value);
+          
           Get.dialog(
             AlertDialog(
-              title: Text('Confirm Bet'),
-              content: Text('Are you sure you want to place this bet?'),
+              title: const Text('Confirm Bet'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Are you sure you want to place this bet?'),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Text('Game Type: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(controller.selectedGameType.value),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text('Number: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(betNumber, style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text('Amount: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('₱$amountFormatted', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ],
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Get.back(),
@@ -297,21 +375,18 @@ class PlaceBetScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     Get.back();
-                    Get.snackbar(
-                      'Success',
-                      'Your bet has been placed successfully!',
-                      backgroundColor: Colors.green,
-                      colorText: Colors.white,
-                    );
+                    controller.placeBet();
                   },
                   child: Text('Confirm'),
                 ),
               ],
             ),
           );
-        },
+        } : null,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 16.h),
+          backgroundColor: AppColors.primaryBlue,
+          disabledBackgroundColor: Colors.grey.shade300,
         ),
         child: Text(
           'Place Bet',
@@ -321,6 +396,6 @@ class PlaceBetScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }

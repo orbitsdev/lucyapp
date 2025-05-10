@@ -150,9 +150,12 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         // Use the formatted date from the API response
         final dateStr = report.dateFormatted ?? 'Today';
             
-        return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
+        return RefreshIndicator(
+          color: AppColors.primaryRed,
+          onRefresh: _loadTallysheetData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
             // Date Display
@@ -687,7 +690,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
             ),
           ],
         ),
-      );
+      ),
+    );
       }),
     );
   }
