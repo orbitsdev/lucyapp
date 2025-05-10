@@ -227,7 +227,6 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
   // Build a row for each bet
   Widget _buildBetRow(BetDetail bet, int index) {
     final betNumber = bet.betNumber?.toString() ?? '';
-    final amount = bet.amountFormatted ?? '0.00';
     final gameTypeCode = bet.gameTypeCode ?? '';
     
     // Different colors for different game types
@@ -274,7 +273,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
           Expanded(
             flex: 2,
             child: Text(
-              '₱$amount',
+              '₱${bet.amountFormatted ?? '0'}',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -347,7 +346,6 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
         
         // Use values from the API response (or defaults if null)
         final gameType = report?.gameType?.name ?? 'All Bet';
-        final totalAmount = report?.totalAmountFormatted ?? '0.00';
         
         return Column(
           children: [
@@ -386,7 +384,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
                           ),
                         ),
                         Text(
-                          '₱$totalAmount',
+                          '₱${report?.totalAmountFormatted ?? '0'}',
                           style: const TextStyle(
                             color: AppColors.primaryRed,
                             fontWeight: FontWeight.bold,
