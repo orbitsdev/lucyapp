@@ -357,129 +357,140 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
               color: AppColors.primaryRed,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Date and Game Type display
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.category, color: Colors.white, size: 16),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Bet Type: $gameType',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                  // Total Amount display at the top
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Total Amount',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text(
-                              'Total Amount',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              '₱$totalAmount',
-                              style: const TextStyle(
-                                color: AppColors.primaryRed,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          '₱$totalAmount',
+                          style: const TextStyle(
+                            color: AppColors.primaryRed,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   
-                  // Date selection button
-                  Center(
-                    child: GestureDetector(
-                      onTap: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2030),
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: const ColorScheme.light(
-                                  primary: AppColors.primaryRed,
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
-                        );
-                        if (picked != null) {
-                          // Format date for API (yyyy-MM-dd)
-                          final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
-                          
-                          // Format date for display (Month d, yyyy)
-                          final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
-                          
-                          // Immediately update the displayed date
-                          selectedDateFormatted.value = displayDateFormat;
-                          
-                          // Clear any existing data to show loading state
-                          reportController.isLoadingDetailedTallysheet.value = true;
-                          
-                          // Update the date parameter only, don't pass drawId
-                          await reportController.fetchDetailedTallysheet(
-                            date: apiDateFormat,
-                            gameTypeId: reportController.selectedGameTypeId.value,
-                            page: 1,
-                            perPage: reportController.perPage.value,
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  // Group Bet Type and Date together
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Bet Type display
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        margin: const EdgeInsets.only(right: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.calendar_today, color: Colors.white, size: 18),
+                            const Icon(Icons.category, color: Colors.white, size: 16),
                             const SizedBox(width: 8),
-                            Obx(() => Text(
-                              selectedDateFormatted.value,
+                            Text(
+                              gameType,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
-                            )),
+                            ),
                           ],
                         ),
                       ),
-                    ),
+                      
+                      // Date selection button
+                      GestureDetector(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: AppColors.primaryRed,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            // Format date for API (yyyy-MM-dd)
+                            final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
+                            
+                            // Format date for display (Month d, yyyy)
+                            final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
+                            
+                            // Immediately update the displayed date
+                            selectedDateFormatted.value = displayDateFormat;
+                            
+                            // Clear any existing data to show loading state
+                            reportController.isLoadingDetailedTallysheet.value = true;
+                            
+                            // Update the date parameter only, don't pass drawId
+                            await reportController.fetchDetailedTallysheet(
+                              date: apiDateFormat,
+                              gameTypeId: reportController.selectedGameTypeId.value,
+                              page: 1,
+                              perPage: reportController.perPage.value,
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.calendar_today, color: Colors.white, size: 16),
+                              const SizedBox(width: 8),
+                              Obx(() => Text(
+                                selectedDateFormatted.value,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              )),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
