@@ -16,7 +16,7 @@ class TableColumnWidths {
   static const double amountWidth = 100.0;
   static const double drawTimeWidth = 160.0;
   static const double dateWidth = 150.0;
-  
+    
   // Total width of all columns
   static const double totalWidth = ticketIdWidth + betNumberWidth + amountWidth + 
                                   drawTimeWidth + dateWidth;

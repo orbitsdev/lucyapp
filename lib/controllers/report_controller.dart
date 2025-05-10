@@ -41,21 +41,32 @@ class ReportController extends GetxController {
   
   // Get tallysheet report
   Future<void> fetchTallysheetReport({
-    required String date,
+    String? date,
     int? tellerId,
     int? locationId,
-    int? drawId,
+    String? drawId,
   }) async {
     isLoadingTallysheet.value = true;
     
     try {
-      final queryParams = <String, dynamic>{
-        'date': date,
-      };
+      final queryParams = <String, dynamic>{};
+      
+      // The API requires a date parameter
+      if (date != null) {
+        queryParams['date'] = date;
+      } else {
+        // Default to today if no date is provided
+        final today = DateTime.now().toIso8601String().split('T')[0];
+        queryParams['date'] = today;
+      }
+      
+      // Add draw_id if provided
+      if (drawId != null) {
+        queryParams['draw_id'] = drawId;
+      }
       
       if (tellerId != null) queryParams['teller_id'] = tellerId;
       if (locationId != null) queryParams['location_id'] = locationId;
-      if (drawId != null) queryParams['draw_id'] = drawId;
       
       final result = await _dioService.authGet<TallysheetReport>(
         ApiConfig.tallySheet,

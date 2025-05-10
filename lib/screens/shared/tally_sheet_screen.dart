@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:bettingapp/controllers/report_controller.dart';
-import 'package:bettingapp/models/draw.dart';
+import 'package:bettingapp/widgets/common/local_lottie_image.dart';
 
 class TallySheetScreen extends StatefulWidget {
   const TallySheetScreen({super.key});
@@ -26,31 +26,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
     await reportController.fetchAvailableDates();
   }
   
-  // Helper method to find the ID of a date in the available dates list
-  String? _findValueInList(String? dateValue, List<dynamic> items) {
-    if (dateValue == null || items.isEmpty) return null;
-    
-    // Normalize the date format by removing time part if present
-    String normalizedValue = dateValue;
-    if (dateValue.contains('T')) {
-      normalizedValue = dateValue.split('T')[0];
-    }
-    
-    // Find a matching date in the list and return its ID
-    for (var item in items) {
-      String itemDate = item.drawDate ?? '';
-      if (itemDate.contains('T')) {
-        itemDate = itemDate.split('T')[0];
-      }
-      
-      if (itemDate == normalizedValue) {
-        return item.id?.toString();
-      }
-    }
-    
-    // If no match found, return the first item's ID as fallback
-    return items.isNotEmpty ? items.first.id?.toString() : null;
-  }
+  // No longer needed as we're using the calendar directly
   
   Future<void> _loadTallysheetData() async {
     await reportController.fetchTodayTallysheetReport();
@@ -91,31 +67,31 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.calendar_today, color: Colors.white),
-            onPressed: () async {
-              final DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2030),
-                builder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: ColorScheme.light(
-                        primary: AppColors.primaryRed,
-                      ),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (picked != null) {
-                final date = DateFormat('yyyy-MM-dd').format(picked);
-                reportController.fetchTallysheetReport(date: date);
-              }
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.calendar_today, color: Colors.white),
+          //   onPressed: () async {
+          //     final DateTime? picked = await showDatePicker(
+          //       context: context,
+          //       initialDate: DateTime.now(),
+          //       firstDate: DateTime(2020),
+          //       lastDate: DateTime(2030),
+          //       builder: (context, child) {
+          //         return Theme(
+          //           data: Theme.of(context).copyWith(
+          //             colorScheme: ColorScheme.light(
+          //               primary: AppColors.primaryRed,
+          //             ),
+          //           ),
+          //           child: child!,
+          //         );
+          //       },
+          //     );
+          //     if (picked != null) {
+          //       final date = DateFormat('yyyy-MM-dd').format(picked);
+          //       reportController.fetchTallysheetReport(date: date);
+          //     }
+          //   },
+          // ),
         ],
       ),
       body: Obx(() {
@@ -133,12 +109,26 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+                // Use Lottie animation for empty state
+                LocalLottieImage(
+                  path: 'assets/animations/empty_state.json',
+                  width: 180,
+                  height: 180,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'No tallysheet data available',
                   style: TextStyle(
                     fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Try selecting a different date',
+                  style: TextStyle(
+                    fontSize: 14,
                     color: Colors.grey[600],
                   ),
                 ),
@@ -316,82 +306,69 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                   //   ),
                   // ),
                   
-                  // Available dates dropdown
-                  Obx(() {
-                    final availableDates = reportController.availableDates.value;
-                    if (availableDates.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    
-                    return Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                  // Date selection with calendar button
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.calendar_today, size: 16),
+                      label: Text(
+                        dateStr,
+                        style: const TextStyle(fontSize: 14),
                       ),
-                      child: DropdownButton<String>(
-                        underline: const SizedBox.shrink(),
-                        dropdownColor: AppColors.primaryRed,
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                        isExpanded: true,
-                        hint: const Text(
-                          'Select date',
-                          style: TextStyle(color: Colors.white70),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.2),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        // Use the date ID as the value
-                        value: _findValueInList(report.date, availableDates),
-                        items: availableDates.map((date) {
-                          // Use the ID as the value to ensure uniqueness
-                          final value = date.id?.toString() ?? '';
-                          // Create a better combined display string with date and time
-                          String displayText;
-                          if (date.drawDateFormatted != null && date.drawTimeFormatted != null) {
-                            displayText = '${date.drawDateFormatted} (${date.drawTimeFormatted})';
-                          } else if (date.drawDateFormatted != null) {
-                            displayText = date.drawDateFormatted!;
-                          } else if (date.drawTimeFormatted != null) {
-                            displayText = date.drawTimeFormatted!;
-                          } else {
-                            displayText = value;
-                          }
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              displayText,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            // Find the selected date object to get the full date string
-                            final selectedDate = availableDates.firstWhere(
-                              (date) => date.id?.toString() == value,
-                              orElse: () => Draw(),
+                      ),
+                      onPressed: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: AppColors.primaryRed,
+                                ),
+                              ),
+                              child: child!,
                             );
-                            
-                            // Debug print to see the selected date
-                            print('Selected date ID: $value');
-                            print('Found date object: ${selectedDate.drawDate}');
-                            
-                            if (selectedDate.drawDate != null) {
-                              // Make sure we're passing the correct date format
-                              String dateToFetch = selectedDate.drawDate!;
-                              // If it has a time component, strip it off
-                              if (dateToFetch.contains('T')) {
-                                dateToFetch = dateToFetch.split('T')[0];
-                              }
-                              print('Fetching tallysheet for date: $dateToFetch');
-                              reportController.fetchTallysheetReport(date: dateToFetch);
-                            } else {
-                              print('Error: Selected date is null');
+                          },
+                        );
+                        
+                        if (picked != null) {
+                          final date = DateFormat('yyyy-MM-dd').format(picked);
+                          
+                          // Find if there's a matching draw ID for this date
+                          final availableDates = reportController.availableDates.value;
+                          String? drawId;
+                          
+                          for (var draw in availableDates) {
+                            if (draw.drawDate != null && draw.drawDate!.contains(date)) {
+                              drawId = draw.id?.toString();
+                              break;
                             }
                           }
-                        },
-                      ),
-                    );
-                  }),
+                          
+                          if (drawId != null) {
+                            // If we found a matching draw ID, use it
+                            print('Found draw ID $drawId for date $date');
+                            reportController.fetchTallysheetReport(drawId: drawId);
+                          } else {
+                            // Otherwise fall back to using the date
+                            print('No draw ID found for date $date, using date directly');
+                            reportController.fetchTallysheetReport(date: date);
+                          }
+                        }
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -584,14 +561,35 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                          SizedBox(height: MediaQuery.of(context).size.height * 0.1),
                           Center(
-                            child: Text(
-                              'No draw data available',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Use Lottie animation for empty state
+                                LocalLottieImage(
+                                  path: 'assets/animations/empty_state.json',
+                                  width: 120,
+                                  height: 120,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No draw data available',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'for ${report.dateFormatted ?? dateStr}',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
