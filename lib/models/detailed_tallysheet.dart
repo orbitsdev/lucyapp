@@ -114,6 +114,7 @@ class BetDetail {
   final int? ticketCount;
   final String? drawTime;
   final String? drawTimeFormatted;
+  final String? drawTimeSimple;
 
   BetDetail({
     this.betNumber,
@@ -125,6 +126,7 @@ class BetDetail {
     this.ticketCount,
     this.drawTime,
     this.drawTimeFormatted,
+    this.drawTimeSimple,
   });
 
   factory BetDetail.fromJson(Map<String, dynamic> json) {
@@ -185,6 +187,7 @@ class BetDetail {
       ticketCount: ticketCount,
       drawTime: json['draw_time'],
       drawTimeFormatted: json['draw_time_formatted'],
+      drawTimeSimple: json['draw_time_simple'],
     );
   }
 
@@ -199,6 +202,7 @@ class BetDetail {
       'ticket_count': ticketCount,
       'draw_time': drawTime,
       'draw_time_formatted': drawTimeFormatted,
+      'draw_time_simple': drawTimeSimple,
     };
   }
 }

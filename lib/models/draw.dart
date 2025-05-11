@@ -4,6 +4,7 @@ class Draw {
   final String? drawDateFormatted;
   final String? drawTime;
   final String? drawTimeFormatted;
+  final String? drawTimeSimple;
   final bool? isOpen;
   final bool? isActive;
   
@@ -13,6 +14,7 @@ class Draw {
     this.drawDateFormatted,
     this.drawTime,
     this.drawTimeFormatted,
+    this.drawTimeSimple,
     this.isOpen,
     this.isActive,
   });
@@ -24,6 +26,7 @@ class Draw {
       drawDateFormatted: json['draw_date_formatted']?.toString(),
       drawTime: json['draw_time']?.toString(),
       drawTimeFormatted: json['draw_time_formatted']?.toString(),
+      drawTimeSimple: json['draw_time_simple']?.toString(),
       isOpen: json['is_open'],
       isActive: json['is_active'],
     );
@@ -36,6 +39,7 @@ class Draw {
       drawDateFormatted: map['draw_date_formatted']?.toString(),
       drawTime: map['draw_time']?.toString(),
       drawTimeFormatted: map['draw_time_formatted']?.toString(),
+      drawTimeSimple: map['draw_time_simple']?.toString(),
       isOpen: map['is_open'],
       isActive: map['is_active'],
     );
@@ -48,6 +52,7 @@ class Draw {
       'draw_date_formatted': drawDateFormatted,
       'draw_time': drawTime,
       'draw_time_formatted': drawTimeFormatted,
+      'draw_time_simple': drawTimeSimple,
       'is_open': isOpen,
       'is_active': isActive,
     };
@@ -59,6 +64,7 @@ class Draw {
     String? drawDateFormatted,
     String? drawTime,
     String? drawTimeFormatted,
+    String? drawTimeSimple,
     bool? isOpen,
     bool? isActive,
   }) {
@@ -68,6 +74,7 @@ class Draw {
       drawDateFormatted: drawDateFormatted ?? this.drawDateFormatted,
       drawTime: drawTime ?? this.drawTime,
       drawTimeFormatted: drawTimeFormatted ?? this.drawTimeFormatted,
+      drawTimeSimple: drawTimeSimple ?? this.drawTimeSimple,
       isOpen: isOpen ?? this.isOpen,
       isActive: isActive ?? this.isActive,
     );
@@ -75,6 +82,6 @@ class Draw {
   
   @override
   String toString() {
-    return 'Draw(id: $id, drawDate: $drawDate, drawDateFormatted: $drawDateFormatted, drawTime: $drawTime, drawTimeFormatted: $drawTimeFormatted, isOpen: $isOpen, isActive: $isActive)';
+    return 'Draw(id: $id, drawDate: $drawDate, drawDateFormatted: $drawDateFormatted, drawTime: $drawTime, drawTimeFormatted: $drawTimeFormatted, drawTimeSimple: $drawTimeSimple, isOpen: $isOpen, isActive: $isActive)';
   }
 }

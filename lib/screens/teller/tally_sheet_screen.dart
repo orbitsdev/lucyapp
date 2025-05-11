@@ -219,9 +219,9 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
   Widget _buildBetRow(BetDetail bet, int index) {
     final betNumber = bet.betNumber?.toString() ?? '';
     final gameTypeCode = bet.gameTypeCode ?? '';
-    final drawTime = bet.drawTimeFormatted ?? '';
-    
-    // Different colors for different game types
+    final drawTimeSimple = bet.drawTimeSimple ?? '';
+
+    // Color for game type
     Color gameTypeColor;
     switch (gameTypeCode) {
       case 'S2':
@@ -236,79 +236,80 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
       default:
         gameTypeColor = AppColors.primaryRed;
     }
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: index.isEven ? Colors.grey.shade50 : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade200,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Game type + draw time
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Material(
+        elevation: 1,
+        borderRadius: BorderRadius.circular(8),
+        color: index.isEven ? Colors.white : Colors.grey.shade50,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          child: Row(
+            children: [
+              // Type (pill style)
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: gameTypeColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    color: gameTypeColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    gameTypeCode,
-                    style: TextStyle(
-                      color: gameTypeColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: drawTimeSimple,
+                          style: TextStyle(
+                            color: gameTypeColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: ' ',
+                        ),
+                        TextSpan(
+                          text: gameTypeCode,
+                          style: TextStyle(
+                            color: gameTypeColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                if (drawTime.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2.0, left: 2.0),
-                    child: Text(
-                      drawTime,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
+              ),
+              // Bet number
+              Expanded(
+                flex: 2,
+                child: Text(
+                  betNumber,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
                   ),
-              ],
-            ),
-          ),
-          // Bet number
-          Expanded(
-            flex: 2,
-            child: Text(
-              betNumber,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 16,
+                ),
               ),
-            ),
-          ),
-          // Amount
-          Expanded(
-            flex: 2,
-            child: Text(
-              '₱${bet.amountFormatted ?? '0'}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: AppColors.primaryRed,
+              // Amount (right aligned)
+              Expanded(
+                flex: 2,
+                child: Text(
+                  '₱${bet.amountFormatted ?? '0'}',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.primaryRed,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     ).animate().fadeIn(duration: 300.ms, delay: (index * 30).ms);
   }
@@ -321,7 +322,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         title: const Text('TALLYSHEET'),
         backgroundColor: AppColors.primaryRed,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: AppColors.primaryRed),
           onPressed: () => Get.back(),
         ),
         actions: [
@@ -509,6 +510,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       labelColor: AppColors.primaryRed,
                       unselectedLabelColor: Colors.grey[600],
                       indicatorColor: AppColors.primaryRed,
+                      backIcon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryRed, size: 20),
+                      nextIcon: Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primaryRed, size: 20),
                       onTabChanged: (index) {
                         _currentTabIndex.value = index ?? 0;
                       },

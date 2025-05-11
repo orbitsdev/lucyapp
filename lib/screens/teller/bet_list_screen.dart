@@ -658,18 +658,29 @@ class _BetListScreenState extends State<BetListScreen> {
                                                       child: Column(
                                                         crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
-                                                          Text(
-                                                            bet.gameType?.code ?? 'Unknown',
-                                                            style: const TextStyle(fontWeight: FontWeight.w500),
-                                                          ),
-                                                          if ((bet.draw?.drawTimeFormatted ?? '').isNotEmpty)
-                                                            Padding(
-                                                              padding: const EdgeInsets.only(top: 2.0),
-                                                              child: Text(
-                                                                bet.draw?.drawTimeFormatted ?? '',
-                                                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                                              ),
+                                                          RichText(
+                                                            text: TextSpan(
+                                                              style:  TextStyle(color: Colors.grey[600]),
+                                                              children: <TextSpan>[
+                                                                TextSpan(
+                                                                  text: bet.draw?.drawTimeSimple ?? 'Unknown',
+                                                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                                                ),
+                                                                TextSpan(
+                                                                  text: bet.gameType?.code ?? 'Unknown',
+                                                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                                                ),
+                                                              ],
                                                             ),
+                                                          ),
+                                                          // if ((bet.draw?.drawTimeFormatted ?? '').isNotEmpty)
+                                                          //   Padding(
+                                                          //     padding: const EdgeInsets.only(top: 2.0),
+                                                          //     child: Text(
+                                                          //       bet.draw?.drawTimeFormatted ?? '',
+                                                          //       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                                          //     ),
+                                                          //   ),
                                                         ],
                                                       ),
                                                     ),
