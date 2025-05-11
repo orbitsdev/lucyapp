@@ -6,6 +6,7 @@ import 'package:bettingapp/controllers/report_controller.dart';
 import 'package:bettingapp/models/detailed_tallysheet.dart';
 import 'package:bettingapp/widgets/common/local_lottie_image.dart';
 import 'package:intl/intl.dart';
+import 'package:dynamic_tabbar/dynamic_tabbar.dart';
 
 class TallySheetScreen extends StatefulWidget {
   const TallySheetScreen({Key? key}) : super(key: key);
@@ -14,13 +15,11 @@ class TallySheetScreen extends StatefulWidget {
   State<TallySheetScreen> createState() => _TallySheetScreenState();
 }
 
-class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerProviderStateMixin {
+class _TallySheetScreenState extends State<TallySheetScreen> {
   final ReportController reportController = Get.find<ReportController>();
   final ScrollController scrollController = ScrollController();
-  late TabController _tabController;
   final RxInt _currentTabIndex = 0.obs;
-  // Start with default tabs that will be shown before data loads
-  final RxList<String> _tabs = <String>['ALL', 'S2', 'S3', 'D4'].obs;
+  final RxList<TabData> _tabs = <TabData>[].obs;
   
   // Track the selected date for immediate UI updates
   final RxString selectedDateFormatted = 'Today'.obs;
@@ -30,12 +29,6 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
     super.initState();
     _loadData();
     _loadAvailableDates();
-    
-    // Initialize tab controller with initial value
-    _tabController = TabController(length: _tabs.length, vsync: this);
-    _tabController.addListener(() {
-      _currentTabIndex.value = _tabController.index;
-    });
     
     // Add scroll listener for pagination
     scrollController.addListener(_scrollListener);
@@ -49,7 +42,6 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
   void dispose() {
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
   
@@ -71,36 +63,35 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
     
     // Only update tabs if we have valid data
     if (report?.betsByGameType != null && report!.betsByGameType!.isNotEmpty) {
-      // Start with 'ALL' tab
-      final newTabs = <String>['ALL'];
+      final newTabs = <TabData>[];
       
-      // Add tabs for each game type in the response
-      report.betsByGameType!.keys.forEach((gameTypeCode) {
-        newTabs.add(gameTypeCode);
+      // Add ALL tab
+      newTabs.add(
+        TabData(
+          index: 0,
+          title: const Tab(text: 'ALL'),
+          content: Obx(() => _buildBetsGrid(reportController.detailedTallysheet.value?.bets ?? [])),
+        ),
+      );
+      
+      // Add tabs for each game type
+      int index = 1;
+      report.betsByGameType!.forEach((gameTypeCode, bets) {
+        newTabs.add(
+          TabData(
+            index: index,
+            title: Tab(text: gameTypeCode),
+            content: Obx(() => _buildBetsGrid(
+              reportController.detailedTallysheet.value?.betsByGameType?[gameTypeCode] ?? []
+            )),
+          ),
+        );
+        index++;
       });
       
-      // Only update if the tabs have changed
-      if (!_areTabsEqual(_tabs, newTabs)) {
-        // Update tabs list
-        _tabs.value = newTabs;
-        
-        // Recreate tab controller with new length
-        _tabController.dispose();
-        _tabController = TabController(length: _tabs.length, vsync: this);
-        _tabController.addListener(() {
-          _currentTabIndex.value = _tabController.index;
-        });
-      }
+      // Update tabs list
+      _tabs.value = newTabs;
     }
-  }
-  
-  // Helper to compare two lists of tabs
-  bool _areTabsEqual(List<String> tabs1, List<String> tabs2) {
-    if (tabs1.length != tabs2.length) return false;
-    for (int i = 0; i < tabs1.length; i++) {
-      if (tabs1[i] != tabs2[i]) return false;
-    }
-    return true;
   }
   
   Future<void> _loadAvailableDates() async {
@@ -116,8 +107,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
     
     // Add tab views for each game type
     for (int i = 1; i < _tabs.length; i++) {
-      final gameTypeCode = _tabs[i];
-      tabViews.add(_buildBetsGrid(report.betsByGameType?[gameTypeCode] ?? []));
+      final gameTypeCode = _tabs[i].title.text;
+      tabViews.add(_tabs[i].content);
     }
     
     return tabViews;
@@ -228,6 +219,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
   Widget _buildBetRow(BetDetail bet, int index) {
     final betNumber = bet.betNumber?.toString() ?? '';
     final gameTypeCode = bet.gameTypeCode ?? '';
+    final drawTime = bet.drawTimeFormatted ?? '';
     
     // Different colors for different game types
     Color gameTypeColor;
@@ -260,12 +252,25 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
           // Bet number
           Expanded(
             flex: 2,
-            child: Text(
-              betNumber,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 16,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  betNumber,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                if (drawTime.isNotEmpty)
+                  Text(
+                    drawTime,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+              ],
             ),
           ),
           
@@ -317,7 +322,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('DETAILED TALLYSHEET'),
+        title: const Text('TALLYSHEET'),
         backgroundColor: AppColors.primaryRed,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -337,7 +342,6 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
               );
             },
           ),
-          
         ],
       ),
       body: Obx(() {
@@ -494,78 +498,57 @@ class _TallySheetScreenState extends State<TallySheetScreen> with SingleTickerPr
               ),
             ),
             
-            // Tab Bar for game types
-            Container(
-              color: Colors.white,
-              child: Obx(() => TabBar(
-                controller: _tabController,
-                labelColor: AppColors.primaryRed,
-                unselectedLabelColor: Colors.grey[600],
-                indicatorColor: AppColors.primaryRed,
-                isScrollable: true,
-                tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-              )),
-            ),
-            
-            // Bet list with tabs
+            // Dynamic TabBar
             Expanded(
-              child: RefreshIndicator(
-                color: AppColors.primaryRed,
-                onRefresh: () async {
-                  // Refresh data with current filters
-                  if (report?.date != null) {
-                    await reportController.fetchDetailedTallysheet(
-                      date: report!.date!,
-                      gameTypeId: reportController.selectedGameTypeId.value,
-                      page: 1,
-                      perPage: reportController.perPage.value,
-                    );
-                  } else {
-                    await _loadData();
-                  }
-                },
-                child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
-                      ),
+              child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
+                    ),
+                  )
+                : report?.bets != null && report!.bets!.isNotEmpty
+                  ? DynamicTabBarWidget(
+                      dynamicTabs: _tabs,
+                      isScrollable: true,
+                      labelColor: AppColors.primaryRed,
+                      unselectedLabelColor: Colors.grey[600],
+                      indicatorColor: AppColors.primaryRed,
+                      onTabChanged: (index) {
+                        _currentTabIndex.value = index ?? 0;
+                      },
+                      onTabControllerUpdated: (controller) {
+                        // Handle tab controller updates if needed
+                      },
                     )
-                  : report?.bets != null && report!.bets!.isNotEmpty
-                    ? TabBarView(
-                        controller: _tabController,
-                        children: _buildTabViews(report),
-                      )
-                    : Center(
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Container(
-                            height: 300,
-                            alignment: Alignment.center,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // Use Lottie animation for empty state
-                                LocalLottieImage(
-                                  path: 'assets/animations/empty_state.json',
-                                  width: 180,
-                                  height: 180,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No bet details available',
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'for ${report?.dateFormatted ?? selectedDateFormatted.value}',
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                                ),
-                              ],
-                            ),
+                  : Center(
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Container(
+                          height: 300,
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              LocalLottieImage(
+                                path: 'assets/animations/empty_state.json',
+                                width: 180,
+                                height: 180,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No bet details available',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'for ${report?.dateFormatted ?? selectedDateFormatted.value}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-              ),
+                    ),
             ),
           ],
         );
