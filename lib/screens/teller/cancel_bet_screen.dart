@@ -375,26 +375,14 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
               color: AppColors.primaryRed,
               onRefresh: _fetchCancelledBets,
               child: Obx(() {
-                // Temporary frontend filter for draw date
-                final filteredBets = selectedDate.value == null
-                    ? bettingController.cancelledBets
-                    : bettingController.cancelledBets.where((bet) {
-                        final drawDateStr = bet.draw?.drawDate;
-                        if (drawDateStr == null) return false;
-                        final drawDate = DateTime.tryParse(drawDateStr);
-                        final selected = DateTime.tryParse(selectedDate.value ?? '');
-                        if (drawDate == null || selected == null) return false;
-                        return drawDate.year == selected.year && drawDate.month == selected.month && drawDate.day == selected.day;
-                      }).toList();
-
                 if (bettingController.isLoadingCancelledBets.value && 
-                    filteredBets.isEmpty) {
+                    bettingController.cancelledBets.isEmpty) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
                 }
                 
-                if (filteredBets.isEmpty) {
+                if (bettingController.cancelledBets.isEmpty) {
                   return Center(
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -519,10 +507,10 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                       child: ListView.builder(
                                         controller: scrollController,
                                         padding: EdgeInsets.zero,
-                                        itemCount: filteredBets.length + 
+                                        itemCount: bettingController.cancelledBets.length + 
                                           (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
                                         itemBuilder: (context, index) {
-                                          if (index == filteredBets.length) {
+                                          if (index == bettingController.cancelledBets.length) {
                                             return const Center(
                                               child: Padding(
                                                 padding: EdgeInsets.all(16.0),
@@ -530,8 +518,8 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                               ),
                                             );
                                           }
-                                          final bet = filteredBets[index];
-                                          final isLastRow = index == filteredBets.length - 1;
+                                          final bet = bettingController.cancelledBets[index];
+                                          final isLastRow = index == bettingController.cancelledBets.length - 1;
                                           return Obx(() => Column(
                                             children: [
                                               if (index > 0)
