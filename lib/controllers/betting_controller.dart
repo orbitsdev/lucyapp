@@ -413,6 +413,7 @@ class BettingController extends GetxController {
     String? search, 
     String? date, 
     int? drawId,
+    int? gameTypeId,
     int page = 1,
     int perPage = 50,
     bool refresh = false,
@@ -439,6 +440,7 @@ class BettingController extends GetxController {
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (date != null) queryParams['date'] = date;
       if (drawId != null) queryParams['draw_id'] = drawId;
+      if (gameTypeId != null) queryParams['game_type_id'] = gameTypeId;
       
       final result = await _dioService.authGet<Map<String, dynamic>>(
         ApiConfig.cancelledBets,
@@ -485,7 +487,7 @@ class BettingController extends GetxController {
         },
       );
     } catch (e) {
-    Modal.showErrorModal(
+      Modal.showErrorModal(
         title: 'Error',
         message: 'Failed to load cancelled bets: ${e.toString()}',
       );

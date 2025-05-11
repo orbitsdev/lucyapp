@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../controllers/betting_controller.dart';
+import '../../controllers/dropdown_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../models/bet.dart';
 import '../../models/draw.dart';
+import '../../models/game_type.dart';
 import '../../widgets/common/modal.dart';
 import '../../widgets/common/local_lottie_image.dart';
 
@@ -31,10 +33,12 @@ class CancelBetScreen extends StatefulWidget {
 
 class _CancelBetScreenState extends State<CancelBetScreen> {
   final BettingController bettingController = Get.find<BettingController>();
+  final DropdownController dropdownController = Get.find<DropdownController>();
   final RxString searchQuery = ''.obs;
   final TextEditingController searchController = TextEditingController();
   final Rx<String?> selectedDate = Rx<String?>(null);
   final RxInt? selectedDrawId = RxInt(-1);
+  final RxInt selectedGameTypeId = RxInt(-1);
   final ScrollController scrollController = ScrollController();
   final ScrollController horizontalScrollController = ScrollController();
   
@@ -47,8 +51,9 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch available draws for filtering
+    // Fetch available draws and game types for filtering
     bettingController.fetchAvailableDraws();
+    dropdownController.fetchGameTypes();
     _fetchCancelledBets();
     
     // Setup debounce for search
@@ -84,6 +89,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
       search: searchQuery.value.isNotEmpty ? searchQuery.value : null,
       date: selectedDate.value,
       drawId: selectedDrawId?.value != -1 ? selectedDrawId?.value : null,
+      gameTypeId: selectedGameTypeId.value != -1 ? selectedGameTypeId.value : null,
     );
   }
 
@@ -91,6 +97,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
     // Save current filter values to restore if cancelled
     final currentDate = selectedDate.value;
     final currentDrawId = selectedDrawId?.value;
+    final currentGameTypeId = selectedGameTypeId.value;
     
     Get.dialog(
       AlertDialog(
@@ -107,6 +114,40 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Bet Type filter
+              Text(
+                'Bet Type',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              SizedBox(height: 8),
+              Obx(() => DropdownButtonFormField<int?>(
+                value: selectedGameTypeId.value == -1 ? null : selectedGameTypeId.value,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('All Bet Types'),
+                  ),
+                  ...dropdownController.gameTypes.map((gameType) => 
+                    DropdownMenuItem<int?>(
+                      value: gameType.id,
+                      child: Text(gameType.name ?? 'Unknown'),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  selectedGameTypeId.value = value ?? -1;
+                },
+              )),
+              SizedBox(height: 16),
               // Date filter
               Text(
                 'Date',
@@ -153,9 +194,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                   foregroundColor: AppColors.primaryRed,
                 ),
               )),
-              
               SizedBox(height: 16),
-              
               // Draw filter
               Text(
                 'Draw Time',
@@ -198,6 +237,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
               // Restore previous values
               selectedDate.value = currentDate;
               selectedDrawId?.value = currentDrawId ?? -1;
+              selectedGameTypeId.value = currentGameTypeId;
               Get.back();
             },
             child: const Text('Cancel'),
@@ -270,7 +310,9 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
           // Active filters display
           Obx(() {
             final hasFilters = selectedDate.value != null ||
-                selectedDrawId?.value != -1;
+                selectedDrawId?.value != -1 ||
+                selectedGameTypeId.value != -1 ||
+                searchQuery.value.isNotEmpty;
                 
             if (!hasFilters) return SizedBox.shrink();
             
@@ -293,6 +335,8 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                         onPressed: () {
                           selectedDate.value = null;
                           selectedDrawId?.value = -1;
+                          selectedGameTypeId.value = -1;
+                          searchQuery.value = '';
                           _fetchCancelledBets();
                         },
                         child: const Text('Clear All'),
@@ -328,6 +372,27 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                           deleteIcon: const Icon(Icons.close, size: 18),
                           onDeleted: () {
                             selectedDrawId?.value = -1;
+                            _fetchCancelledBets();
+                          },
+                        ),
+                      if (selectedGameTypeId.value != -1)
+                        Chip(
+                          label: Text(
+                            'Bet Type: ${dropdownController.gameTypes
+                              .firstWhereOrNull((type) => type.id == selectedGameTypeId.value)?.name ?? 'Unknown'}'
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            selectedGameTypeId.value = -1;
+                            _fetchCancelledBets();
+                          },
+                        ),
+                      if (searchQuery.value.isNotEmpty)
+                        Chip(
+                          label: Text('Search: ${searchQuery.value}'),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            searchQuery.value = '';
                             _fetchCancelledBets();
                           },
                         ),

@@ -83,20 +83,28 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         ),
       );
       
-      // Add tabs for each game type
-      int index = 1;
-      report.betsByGameType!.forEach((gameTypeCode, bets) {
+      // Preferred order for game type codes
+      final preferredOrder = ['S2', 'S3', 'D4', 'D6', 'D8', 'D10'];
+      final allCodes = report.betsByGameType!.keys.toList();
+      allCodes.sort((a, b) {
+        final aIndex = preferredOrder.indexOf(a);
+        final bIndex = preferredOrder.indexOf(b);
+        if (aIndex == -1 && bIndex == -1) return a.compareTo(b);
+        if (aIndex == -1) return 1;
+        if (bIndex == -1) return -1;
+        return aIndex.compareTo(bIndex);
+      });
+      for (final gameTypeCode in allCodes) {
         newTabs.add(
           TabData(
-            index: index,
+            index: newTabs.length,
             title: Tab(text: gameTypeCode),
             content: Obx(() => _buildBetsGrid(
               reportController.detailedTallysheet.value?.betsByGameType?[gameTypeCode] ?? []
             )),
           ),
         );
-        index++;
-      });
+      }
       
       // Update tabs list
       _tabs.value = newTabs;
@@ -276,7 +284,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '$drawTimeSimple $gameTypeCode',
+                      '$drawTimeSimple$gameTypeCode',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: gameTypeColor,
