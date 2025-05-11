@@ -17,17 +17,17 @@ class BetListScreen extends StatefulWidget {
 
 /// Defines the fixed column widths for the bet list table
 class TableColumnWidths {
-  static const double ticketIdWidth = 130.0;
+  static const double typeWidth = 80.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
-  static const double drawTimeWidth = 100.0;
+  static const double ticketIdWidth = 130.0;
+  static const double drawTimeWidth = 160.0;
   static const double dateWidth = 200.0;
   static const double statusWidth = 100.0;
   static const double actionWidth = 80.0;
   
   // Total width of all columns
-  static const double totalWidth = ticketIdWidth + betNumberWidth + amountWidth + 
-                                  drawTimeWidth + dateWidth + statusWidth + actionWidth;
+  static const double totalWidth = typeWidth + betNumberWidth + amountWidth + ticketIdWidth + drawTimeWidth + dateWidth + statusWidth + actionWidth;
 }
 
 class _BetListScreenState extends State<BetListScreen> {
@@ -94,8 +94,9 @@ class _BetListScreenState extends State<BetListScreen> {
     // Show confirmation dialog
     Modal.showConfirmationModal(
       title: 'Cancel Bet Confirmation',
-      message: 'Are you sure you want to cancel this bet?\n\n' 
+      message: 'Are you sure you want to cancel this bet?\n\n'
               'Ticket ID: ${bet.ticketId}\n'
+              'Type: ${bet.gameType?.code ?? 'Unknown']\n'
               'Bet Number: ${bet.betNumber}\n'
               'Amount: ₱${bet.amount?.toInt() ?? bet.amount}\n'
               'Draw Time: $drawTime\n'
@@ -539,9 +540,9 @@ class _BetListScreenState extends State<BetListScreen> {
                                 ),
                                 child: Row(
                                   children: const [
-                                    SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
+                                    SizedBox(width: TableColumnWidths.typeWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                      child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                      child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                     )),
                                     SizedBox(width: TableColumnWidths.betNumberWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -550,6 +551,10 @@ class _BetListScreenState extends State<BetListScreen> {
                                     SizedBox(width: TableColumnWidths.amountWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                       child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
+                                    SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                     )),
                                     SizedBox(width: TableColumnWidths.drawTimeWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -639,15 +644,14 @@ class _BetListScreenState extends State<BetListScreen> {
                                             },
                                             child: Row(
                                               children: [
-                                                // Ticket ID
+                                                // Type
                                                 SizedBox(
-                                                  width: TableColumnWidths.ticketIdWidth,
+                                                  width: TableColumnWidths.typeWidth,
                                                   child: Padding(
                                                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                     child: Text(
-                                                      bet.ticketId ?? 'Unknown',
+                                                      bet.gameType?.code ?? 'Unknown',
                                                       style: const TextStyle(fontWeight: FontWeight.w500),
-                                                      softWrap: false,
                                                     ),
                                                   ),
                                                 ),
@@ -670,6 +674,18 @@ class _BetListScreenState extends State<BetListScreen> {
                                                     child: Text(
                                                       '₱${bet.amount?.toInt() ?? bet.amount}',
                                                       style: const TextStyle(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Ticket ID
+                                                SizedBox(
+                                                  width: TableColumnWidths.ticketIdWidth,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                    child: Text(
+                                                      bet.ticketId ?? 'Unknown',
+                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                      softWrap: false,
                                                     ),
                                                   ),
                                                 ),
