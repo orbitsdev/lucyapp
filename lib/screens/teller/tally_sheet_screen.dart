@@ -7,6 +7,7 @@ import 'package:bettingapp/models/detailed_tallysheet.dart';
 import 'package:bettingapp/widgets/common/local_lottie_image.dart';
 import 'package:intl/intl.dart';
 import 'package:dynamic_tabbar/dynamic_tabbar.dart';
+import 'dart:math';
 
 class TallySheetScreen extends StatefulWidget {
   const TallySheetScreen({Key? key}) : super(key: key);
@@ -23,6 +24,14 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
   
   // Track the selected date for immediate UI updates
   final RxString selectedDateFormatted = 'Today'.obs;
+  
+  // Dynamic game type color map (can be extended or loaded from API/config in the future)
+  final Map<String, Color> gameTypeColorMap = {
+    'S2': Colors.blue,
+    'S3': Colors.green,
+    'D4': Colors.purple,
+    // Add more as needed, or load from API/config
+  };
   
   @override
   void initState() {
@@ -192,11 +201,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                   bottomRight: Radius.circular(8),
                 ),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
+                  
                 ],
               ),
               child: ListView.builder(
@@ -215,27 +220,38 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
     );
   }
   
+  // Generate a readable, system-matching color for each game type code
+  Color colorFromCode(String code) {
+    // Use a palette of system colors for consistency and readability
+    final palette = [
+      AppColors.primaryBlue,
+      AppColors.primaryRed,
+      AppColors.historyColor,
+      AppColors.hitsColor,
+      AppColors.claimColor,
+      AppColors.comboColor,
+      AppColors.salesColor,
+      AppColors.tallyColor,
+      AppColors.summaryColor,
+      AppColors.betWinColor,
+      AppColors.generateColor,
+      AppColors.info,
+      AppColors.success,
+      AppColors.warning,
+      AppColors.error,
+    ];
+    final hash = code.codeUnits.fold(0, (prev, elem) => prev + elem);
+    return palette[hash % palette.length];
+  }
+  
   // Build a row for each bet
   Widget _buildBetRow(BetDetail bet, int index) {
     final betNumber = bet.betNumber?.toString() ?? '';
     final gameTypeCode = bet.gameTypeCode ?? '';
     final drawTimeSimple = bet.drawTimeSimple ?? '';
 
-    // Color for game type
-    Color gameTypeColor;
-    switch (gameTypeCode) {
-      case 'S2':
-        gameTypeColor = Colors.blue;
-        break;
-      case 'S3':
-        gameTypeColor = Colors.green;
-        break;
-      case 'D4':
-        gameTypeColor = Colors.purple;
-        break;
-      default:
-        gameTypeColor = AppColors.primaryRed;
-    }
+    // Use system palette for game type color
+    final gameTypeColor = colorFromCode(gameTypeCode);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -246,64 +262,57 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Type (pill style)
+              // Type (pill style, centered)
               Expanded(
                 flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: gameTypeColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: drawTimeSimple,
-                          style: TextStyle(
-                            color: gameTypeColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const TextSpan(
-                          text: ' ',
-                        ),
-                        TextSpan(
-                          text: gameTypeCode,
-                          style: TextStyle(
-                            color: gameTypeColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: gameTypeColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$drawTimeSimple $gameTypeCode',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: gameTypeColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),
               ),
-              // Bet number
+              // Bet number (centered)
               Expanded(
                 flex: 2,
-                child: Text(
-                  betNumber,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
+                child: Center(
+                  child: Text(
+                    betNumber,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
-              // Amount (right aligned)
+              // Amount (right aligned and centered vertically)
               Expanded(
                 flex: 2,
-                child: Text(
-                  '₱${bet.amountFormatted ?? '0'}',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.primaryRed,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '₱${bet.amountFormatted ?? '0'}',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.primaryRed,
+                    ),
                   ),
                 ),
               ),
@@ -322,7 +331,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         title: const Text('TALLYSHEET'),
         backgroundColor: AppColors.primaryRed,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.primaryRed),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
         actions: [
@@ -366,11 +375,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
+                      
                       ],
                     ),
                     child: Column(
@@ -505,6 +510,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                   )
                 : report?.bets != null && report!.bets!.isNotEmpty
                   ? DynamicTabBarWidget(
+                    tabAlignment: TabAlignment.center,
                       dynamicTabs: _tabs,
                       isScrollable: true,
                       labelColor: AppColors.primaryRed,

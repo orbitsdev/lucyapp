@@ -11,7 +11,7 @@ import '../../widgets/common/local_lottie_image.dart';
 
 /// Defines the fixed column widths for the cancelled bet list table
 class TableColumnWidths {
-  static const double typeWidth = 80.0;
+  static const double typeWidth = 100.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
   static const double ticketIdWidth = 130.0;

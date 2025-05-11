@@ -39,7 +39,7 @@ Retrieves a detailed tallysheet of bets for a specific date, with options to fil
         },
         "total_amount": 1500.00,
         "total_amount_formatted": "1,500",
-        "bets": [
+    "bets": [
             {
                 "bet_number": "22",
                 "amount": 100.00,

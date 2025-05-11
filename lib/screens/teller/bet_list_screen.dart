@@ -18,7 +18,7 @@ class BetListScreen extends StatefulWidget {
 
 /// Defines the fixed column widths for the bet list table
 class TableColumnWidths {
-  static const double betTypeWidth = 80.0;
+  static const double betTypeWidth = 100.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
   static const double ticketIdWidth = 130.0;
