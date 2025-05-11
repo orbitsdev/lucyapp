@@ -483,7 +483,7 @@ class BettingController extends GetxController {
         },
       );
     } catch (e) {
-      Modal.showErrorModal(
+    Modal.showErrorModal(
         title: 'Error',
         message: 'Failed to load cancelled bets: ${e.toString()}',
       );
