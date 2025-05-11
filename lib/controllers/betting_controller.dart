@@ -280,8 +280,9 @@ class BettingController extends GetxController {
     String? search,
     String? date,
     int? drawId,
-    String? status,
     bool refresh = false,
+    bool? is_claimed,
+    bool? is_rejected,
   }) async {
     isLoadingBets.value = true;
     
@@ -299,7 +300,8 @@ class BettingController extends GetxController {
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (date != null) queryParams['date'] = date;
       if (drawId != null) queryParams['draw_id'] = drawId;
-      if (status != null) queryParams['status'] = status;
+      if (is_claimed != null) queryParams['is_claimed'] = is_claimed;
+      if (is_rejected != null) queryParams['is_rejected'] = is_rejected;
       
       final result = await _dioService.authGet<Map<String, dynamic>>(
         ApiConfig.bets,
@@ -498,7 +500,8 @@ class BettingController extends GetxController {
         search: searchQuery.value.isEmpty ? null : searchQuery.value,
         date: selectedDate.value,
         drawId: selectedDrawIdFilter.value,
-        status: selectedStatus.value,
+        is_claimed: selectedStatus.value == 'claimed',
+        is_rejected: selectedStatus.value == 'rejected',
       );
     }
   }
@@ -510,7 +513,8 @@ class BettingController extends GetxController {
       search: searchQuery.value.isEmpty ? null : searchQuery.value,
       date: selectedDate.value,
       drawId: selectedDrawIdFilter.value,
-      status: selectedStatus.value,
+      is_claimed: selectedStatus.value == 'claimed',
+      is_rejected: selectedStatus.value == 'rejected',
     );
   }
   
@@ -534,4 +538,7 @@ class BettingController extends GetxController {
       );
     }
   }
+  
+  final RxBool showClaimed = false.obs;
+  final RxBool showCancelled = false.obs;
 }

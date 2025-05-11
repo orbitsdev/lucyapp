@@ -72,7 +72,8 @@ class _BetListScreenState extends State<BetListScreen> {
       search: searchController.text.isEmpty ? null : searchController.text,
       date: bettingController.selectedDate.value,
       drawId: bettingController.selectedDrawIdFilter.value,
-      status: bettingController.selectedStatus.value,
+      is_claimed: bettingController.showClaimed.value ? true : null,
+      is_rejected: bettingController.showCancelled.value ? true : null,
     );
   }
   
@@ -256,44 +257,21 @@ class _BetListScreenState extends State<BetListScreen> {
               
               SizedBox(height: 16),
               
-              // Status filter
-              Text(
-                'Status',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-              SizedBox(height: 8),
-              Obx(() => DropdownButtonFormField<String?>(
-                value: bettingController.selectedStatus.value,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-                items: const [
-                  DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('All Statuses'),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: 'active',
-                    child: Text('Active'),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: 'claimed',
-                    child: Text('Claimed'),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: 'rejected',
-                    child: Text('Cancelled'),
-                  ),
-                ],
-                onChanged: (value) {
-                  bettingController.selectedStatus.value = value;
-                },
+              // Claimed filter
+              Obx(() => CheckboxListTile(
+                title: Text('Show Claimed'),
+                value: bettingController.showClaimed.value,
+                onChanged: (val) => bettingController.showClaimed.value = val ?? false,
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+              )),
+              // Cancelled filter
+              Obx(() => CheckboxListTile(
+                title: Text('Show Cancelled'),
+                value: bettingController.showCancelled.value,
+                onChanged: (val) => bettingController.showCancelled.value = val ?? false,
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
               )),
             ],
           ),
@@ -374,10 +352,9 @@ class _BetListScreenState extends State<BetListScreen> {
           Obx(() {
             final hasFilters = bettingController.selectedDate.value != null ||
                 bettingController.selectedDrawIdFilter.value != null ||
-                bettingController.selectedStatus.value != null;
-                
+                bettingController.showClaimed.value ||
+                bettingController.showCancelled.value;
             if (!hasFilters) return SizedBox.shrink();
-            
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
@@ -409,9 +386,7 @@ class _BetListScreenState extends State<BetListScreen> {
                       if (bettingController.selectedDate.value != null)
                         Chip(
                           label: Text(
-                            'Date: ${DateFormat('MMM dd, yyyy').format(
-                              DateTime.parse(bettingController.selectedDate.value!)
-                            )}',
+                            'Date: ${DateFormat('MMM dd, yyyy').format(DateTime.parse(bettingController.selectedDate.value!))}',
                           ),
                           deleteIcon: const Icon(Icons.close, size: 18),
                           onDeleted: () {
@@ -422,11 +397,7 @@ class _BetListScreenState extends State<BetListScreen> {
                       if (bettingController.selectedDrawIdFilter.value != null)
                         Chip(
                           label: Text(
-                            'Draw: ${bettingController.availableDraws
-                              .firstWhere(
-                                (draw) => draw.id == bettingController.selectedDrawIdFilter.value,
-                                orElse: () => Draw(id: 0, drawTimeFormatted: 'Unknown')
-                              ).drawTimeFormatted ?? 'Unknown'}'
+                            'Draw: ${bettingController.availableDraws.firstWhere((draw) => draw.id == bettingController.selectedDrawIdFilter.value, orElse: () => Draw(id: 0, drawTimeFormatted: 'Unknown')).drawTimeFormatted ?? 'Unknown'}'
                           ),
                           deleteIcon: const Icon(Icons.close, size: 18),
                           onDeleted: () {
@@ -434,14 +405,21 @@ class _BetListScreenState extends State<BetListScreen> {
                             _fetchBets(refresh: true);
                           },
                         ),
-                      if (bettingController.selectedStatus.value != null)
+                      if (bettingController.showClaimed.value)
                         Chip(
-                          label: Text(
-                            'Status: ${bettingController.selectedStatus.value!.capitalizeFirst}'
-                          ),
+                          label: const Text('Claimed'),
                           deleteIcon: const Icon(Icons.close, size: 18),
                           onDeleted: () {
-                            bettingController.selectedStatus.value = null;
+                            bettingController.showClaimed.value = false;
+                            _fetchBets(refresh: true);
+                          },
+                        ),
+                      if (bettingController.showCancelled.value)
+                        Chip(
+                          label: const Text('Cancelled'),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            bettingController.showCancelled.value = false;
                             _fetchBets(refresh: true);
                           },
                         ),
