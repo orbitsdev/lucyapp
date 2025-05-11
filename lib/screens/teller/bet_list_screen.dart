@@ -94,9 +94,8 @@ class _BetListScreenState extends State<BetListScreen> {
     // Show confirmation dialog
     Modal.showConfirmationModal(
       title: 'Cancel Bet Confirmation',
-      message: 'Are you sure you want to cancel this bet?\n\n'
+      message: 'Are you sure you want to cancel this bet?\n\n' 
               'Ticket ID: ${bet.ticketId}\n'
-              'Type: ${bet.gameType?.code ?? 'Unknown']\n'
               'Bet Number: ${bet.betNumber}\n'
               'Amount: ₱${bet.amount?.toInt() ?? bet.amount}\n'
               'Draw Time: $drawTime\n'
