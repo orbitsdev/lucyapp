@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:bettingapp/controllers/betting_controller.dart';
 import 'package:bettingapp/controllers/report_controller.dart';
+import 'package:bettingapp/controllers/dropdown_controller.dart';
 import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:bettingapp/widgets/common/local_lottie_image.dart';
@@ -17,7 +18,7 @@ class BetListScreen extends StatefulWidget {
 
 /// Defines the fixed column widths for the bet list table
 class TableColumnWidths {
-  static const double typeWidth = 80.0;
+  static const double betTypeWidth = 80.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
   static const double ticketIdWidth = 130.0;
@@ -26,23 +27,26 @@ class TableColumnWidths {
   static const double statusWidth = 100.0;
   static const double actionWidth = 80.0;
   
-  // Total width of all columns
-  static const double totalWidth = typeWidth + betNumberWidth + amountWidth + ticketIdWidth + drawTimeWidth + dateWidth + statusWidth + actionWidth;
+  // Total width of all columns (drawTimeWidth removed)
+  static const double totalWidth = betTypeWidth + betNumberWidth + amountWidth + ticketIdWidth + dateWidth + statusWidth + actionWidth;
 }
 
 class _BetListScreenState extends State<BetListScreen> {
   final BettingController bettingController = Get.find<BettingController>();
+  final DropdownController dropdownController = Get.find<DropdownController>();
   final TextEditingController searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
   final ScrollController horizontalScrollController = ScrollController();
   
   // Track the currently selected row for highlighting
   final RxInt selectedRowIndex = RxInt(-1);
+  final RxInt selectedGameTypeId = RxInt(-1);
   
   @override
   void initState() {
     super.initState();
-    // Fetch bets when the screen loads
+    // Fetch game types for filter dropdown
+    dropdownController.fetchGameTypes();
     _fetchBets();
     
     // Add scroll listener for pagination
@@ -74,6 +78,7 @@ class _BetListScreenState extends State<BetListScreen> {
       drawId: bettingController.selectedDrawIdFilter.value,
       is_claimed: bettingController.showClaimed.value ? true : null,
       is_rejected: bettingController.showCancelled.value ? true : null,
+      gameTypeId: selectedGameTypeId.value != -1 ? selectedGameTypeId.value : null,
     );
   }
   
@@ -152,10 +157,10 @@ class _BetListScreenState extends State<BetListScreen> {
   
   // Show filter dialog
   void _showFilterDialog() {
-    // Save current filter values to restore if cancelled
     final currentDate = bettingController.selectedDate.value;
     final currentDrawId = bettingController.selectedDrawIdFilter.value;
     final currentStatus = bettingController.selectedStatus.value;
+    final currentGameTypeId = selectedGameTypeId.value;
     
     Get.dialog(
       AlertDialog(
@@ -172,6 +177,40 @@ class _BetListScreenState extends State<BetListScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Bet Type filter
+              Text(
+                'Bet Type',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              SizedBox(height: 8),
+              Obx(() => DropdownButtonFormField<int?>(
+                value: selectedGameTypeId.value == -1 ? null : selectedGameTypeId.value,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('All Bet Types'),
+                  ),
+                  ...dropdownController.gameTypes.map((gameType) => 
+                    DropdownMenuItem<int?>(
+                      value: gameType.id,
+                      child: Text(gameType.name ?? 'Unknown'),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  selectedGameTypeId.value = value ?? -1;
+                },
+              )),
+              SizedBox(height: 16),
               // Date filter
               Text(
                 'Date',
@@ -279,10 +318,10 @@ class _BetListScreenState extends State<BetListScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              // Restore previous values
               bettingController.selectedDate.value = currentDate;
               bettingController.selectedDrawIdFilter.value = currentDrawId;
               bettingController.selectedStatus.value = currentStatus;
+              selectedGameTypeId.value = currentGameTypeId;
               Get.back();
             },
             child: const Text('Cancel'),
@@ -517,9 +556,9 @@ class _BetListScreenState extends State<BetListScreen> {
                                 ),
                                 child: Row(
                                   children: const [
-                                    SizedBox(width: TableColumnWidths.typeWidth, child: Padding(
+                                    SizedBox(width: TableColumnWidths.betTypeWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                      child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                      child: Text('Bet Type', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                     )),
                                     SizedBox(width: TableColumnWidths.betNumberWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -532,10 +571,6 @@ class _BetListScreenState extends State<BetListScreen> {
                                     SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                       child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                    )),
-                                    SizedBox(width: TableColumnWidths.drawTimeWidth, child: Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                      child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                     )),
                                     SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -615,14 +650,27 @@ class _BetListScreenState extends State<BetListScreen> {
                                               },
                                               child: Row(
                                                 children: [
-                                                  // Type
+                                                  // Bet Type + draw time
                                                   SizedBox(
-                                                    width: TableColumnWidths.typeWidth,
+                                                    width: TableColumnWidths.betTypeWidth,
                                                     child: Padding(
                                                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        bet.gameType?.code ?? 'Unknown',
-                                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            bet.gameType?.code ?? 'Unknown',
+                                                            style: const TextStyle(fontWeight: FontWeight.w500),
+                                                          ),
+                                                          if ((bet.draw?.drawTimeFormatted ?? '').isNotEmpty)
+                                                            Padding(
+                                                              padding: const EdgeInsets.only(top: 2.0),
+                                                              child: Text(
+                                                                bet.draw?.drawTimeFormatted ?? '',
+                                                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                                              ),
+                                                            ),
+                                                        ],
                                                       ),
                                                     ),
                                                   ),
@@ -657,17 +705,6 @@ class _BetListScreenState extends State<BetListScreen> {
                                                         bet.ticketId ?? 'Unknown',
                                                         style: const TextStyle(fontWeight: FontWeight.w500),
                                                         softWrap: false,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Draw Time
-                                                  SizedBox(
-                                                    width: TableColumnWidths.drawTimeWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Text(
-                                                        bet.draw?.drawTimeFormatted ?? 'Unknown',
-                                                        style: const TextStyle(fontWeight: FontWeight.w500),
                                                       ),
                                                     ),
                                                   ),

@@ -146,6 +146,18 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                     Expanded(
                       flex: 2,
                       child: Text(
+                        'Type',
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
                         'Bet Number',
                         style: TextStyle(
                           color: Colors.white,
@@ -159,18 +171,6 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       child: Text(
                         'Amount',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Text(
-                        'Type',
-                        textAlign: TextAlign.right,
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -249,50 +249,11 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
       ),
       child: Row(
         children: [
-          // Bet number
+          // Game type + draw time
           Expanded(
             flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  betNumber,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                if (drawTime.isNotEmpty)
-                  Text(
-                    drawTime,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          
-          // Amount
-          Expanded(
-            flex: 2,
-            child: Text(
-              '₱${bet.amountFormatted ?? '0'}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: AppColors.primaryRed,
-              ),
-            ),
-          ),
-          
-          // Game type
-          Expanded(
-            flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -309,7 +270,42 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                     ),
                   ),
                 ),
+                if (drawTime.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2.0, left: 2.0),
+                    child: Text(
+                      drawTime,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
               ],
+            ),
+          ),
+          // Bet number
+          Expanded(
+            flex: 2,
+            child: Text(
+              betNumber,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          // Amount
+          Expanded(
+            flex: 2,
+            child: Text(
+              '₱${bet.amountFormatted ?? '0'}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: AppColors.primaryRed,
+              ),
             ),
           ),
         ],

@@ -21,6 +21,7 @@ Retrieves a paginated list of cancelled bets for the authenticated teller. The e
 | date | date | No | Filter bets by draw date (format: YYYY-MM-DD). If not provided, defaults to today's date |
 | draw_id | integer | No | Filter bets by specific draw ID |
 | search | string | No | Search bets by ticket ID or bet number |
+| game_type_id | integer | No | Filter bets by specific game type ID |
 
 ## Response Format
 
@@ -105,6 +106,11 @@ GET /api/betting/cancelled?search=YWF0
 5. Get cancelled bets with custom pagination:
 ```
 GET /api/betting/cancelled?page=1&per_page=50
+```
+
+6. Get cancelled bets for a specific game type:
+```
+GET /api/betting/cancelled?game_type_id=1
 ```
 
 ## Error Responses

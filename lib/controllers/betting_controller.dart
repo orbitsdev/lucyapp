@@ -283,6 +283,7 @@ class BettingController extends GetxController {
     bool refresh = false,
     bool? is_claimed,
     bool? is_rejected,
+    int? gameTypeId,
   }) async {
     isLoadingBets.value = true;
     
@@ -302,6 +303,7 @@ class BettingController extends GetxController {
       if (drawId != null) queryParams['draw_id'] = drawId;
       if (is_claimed != null) queryParams['is_claimed'] = is_claimed;
       if (is_rejected != null) queryParams['is_rejected'] = is_rejected;
+      if (gameTypeId != null) queryParams['game_type_id'] = gameTypeId;
       
       final result = await _dioService.authGet<Map<String, dynamic>>(
         ApiConfig.bets,
@@ -493,15 +495,16 @@ class BettingController extends GetxController {
   }
   
   // Load more bets (pagination)
-  Future<void> loadMoreBets() async {
+  Future<void> loadMoreBets({RxInt? selectedGameTypeId}) async {
     if (currentPage.value < totalPages.value && !isLoadingBets.value) {
       await fetchBets(
         page: currentPage.value + 1,
         search: searchQuery.value.isEmpty ? null : searchQuery.value,
         date: selectedDate.value,
         drawId: selectedDrawIdFilter.value,
-        is_claimed: selectedStatus.value == 'claimed',
-        is_rejected: selectedStatus.value == 'rejected',
+        is_claimed: showClaimed.value ? true : null,
+        is_rejected: showCancelled.value ? true : null,
+        gameTypeId: selectedGameTypeId != null && selectedGameTypeId.value != -1 ? selectedGameTypeId.value : null,
       );
     }
   }

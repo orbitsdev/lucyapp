@@ -18,8 +18,8 @@ class TableColumnWidths {
   static const double drawTimeWidth = 160.0;
   static const double dateWidth = 150.0;
     
-  // Total width of all columns
-  static const double totalWidth = typeWidth + betNumberWidth + amountWidth + ticketIdWidth + drawTimeWidth + dateWidth;
+  // Total width of all columns (drawTimeWidth removed)
+  static const double totalWidth = typeWidth + betNumberWidth + amountWidth + ticketIdWidth + dateWidth;
 }
 
 class CancelBetScreen extends StatefulWidget {
@@ -474,10 +474,6 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                           child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                         )),
-                                        SizedBox(width: TableColumnWidths.drawTimeWidth, child: Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                          child: Text('Draw Time', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                        )),
                                         SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
                                           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                           child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
@@ -547,14 +543,27 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                   },
                                                   child: Row(
                                                     children: [
-                                                      // Type
+                                                      // Type + draw time
                                                       SizedBox(
                                                         width: TableColumnWidths.typeWidth,
                                                         child: Padding(
                                                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                          child: Text(
-                                                            bet.gameType?.code ?? 'Unknown',
-                                                            style: const TextStyle(fontWeight: FontWeight.w500),
+                                                          child: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Text(
+                                                                bet.gameType?.code ?? 'Unknown',
+                                                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                                              ),
+                                                              if ((bet.draw?.drawTimeFormatted ?? '').isNotEmpty)
+                                                                Padding(
+                                                                  padding: const EdgeInsets.only(top: 2.0),
+                                                                  child: Text(
+                                                                    bet.draw?.drawTimeFormatted ?? '',
+                                                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                                                  ),
+                                                                ),
+                                                            ],
                                                           ),
                                                         ),
                                                       ),
@@ -589,17 +598,6 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                             bet.ticketId ?? 'Unknown',
                                                             style: const TextStyle(fontWeight: FontWeight.w500),
                                                             softWrap: false,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Draw Time
-                                                      SizedBox(
-                                                        width: TableColumnWidths.drawTimeWidth,
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                          child: Text(
-                                                            bet.draw?.drawTimeFormatted ?? 'Unknown',
-                                                            style: const TextStyle(fontWeight: FontWeight.w500),
                                                           ),
                                                         ),
                                                       ),
