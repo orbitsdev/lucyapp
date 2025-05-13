@@ -25,10 +25,9 @@ class TableColumnWidths {
   static const double drawTimeWidth = 160.0;
   static const double dateWidth = 200.0;
   static const double statusWidth = 100.0;
-  static const double actionWidth = 80.0;
   
   // Total width of all columns (drawTimeWidth removed)
-  static const double totalWidth = betTypeWidth + betNumberWidth + amountWidth + ticketIdWidth + dateWidth + statusWidth + actionWidth;
+  static const double totalWidth = betTypeWidth + betNumberWidth + amountWidth + ticketIdWidth + dateWidth + statusWidth;
 }
 
 class _BetListScreenState extends State<BetListScreen> {
@@ -580,10 +579,6 @@ class _BetListScreenState extends State<BetListScreen> {
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                       child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                     )),
-                                    SizedBox(width: TableColumnWidths.actionWidth, child: Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                      child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                    )),
                                   ],
                                 ),
                               ),
@@ -746,23 +741,6 @@ class _BetListScreenState extends State<BetListScreen> {
                                                       ),
                                                     ),
                                                   ),
-                                                  // Cancel Button
-                                                  SizedBox(
-                                                    width: TableColumnWidths.actionWidth,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                                      child: bet.isRejected != true && bet.isClaimed != true
-                                                        ? IconButton(
-                                                            icon: const Icon(Icons.cancel_outlined, size: 20),
-                                                            color: AppColors.primaryRed,
-                                                            onPressed: () => _cancelBet(bet.id!),
-                                                            tooltip: 'Cancel Bet',
-                                                            padding: EdgeInsets.zero,
-                                                            constraints: const BoxConstraints(),
-                                                          )
-                                                        : const SizedBox(),
-                                                    ),
-                                                  ),
                                                 ],
                                               ),
                                             ),
@@ -806,6 +784,91 @@ class _BetListScreenState extends State<BetListScreen> {
           ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showBetDetails(bet) {
+    Modal.showCustomModal(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: AppColors.primaryRed,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Bet Details',
+                style: TextStyle(
+                  color: AppColors.primaryRed,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow('Ticket ID', bet.ticketId ?? 'Unknown'),
+          _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
+          _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
+          _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
+          _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
+          _buildDetailRow('Status', bet.isRejected == true ? 'Cancelled' : (bet.isClaimed == true ? 'Claimed' : 'Active')),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade200,
+                    foregroundColor: Colors.grey.shade800,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('CLOSE'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

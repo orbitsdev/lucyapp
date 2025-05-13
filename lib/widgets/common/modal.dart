@@ -395,35 +395,37 @@ class Modal {
     Get.dialog(
       Dialog(
         shape: _defaultDialogShape,
-        child: Padding(
-          padding: EdgeInsets.all(20.r),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LocalLottieImage(
-                path: _defaultNoInternetAnimation,
-                width: 120.w,
-                height: 120.w,
-                repeat: true,
-              ),
-              SizedBox(height: 16.h),
-              Text(title, style: _titleStyle),
-              SizedBox(height: 8.h),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: _messageStyle,
-              ),
-              SizedBox(height: 16.h),
-              ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                  if (onRetry != null) onRetry();
-                },
-                style: _defaultButtonStyle,
-                child: Text(retryText, style: _buttonTextStyle),
-              ),
-            ],
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(20.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LocalLottieImage(
+                  path: _defaultNoInternetAnimation,
+                  width: 120.w,
+                  height: 120.w,
+                  repeat: true,
+                ),
+                SizedBox(height: 16.h),
+                Text(title, style: _titleStyle),
+                SizedBox(height: 8.h),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: _messageStyle,
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    if (onRetry != null) onRetry();
+                  },
+                  style: _defaultButtonStyle,
+                  child: Text(retryText, style: _buttonTextStyle),
+                ),
+              ],
+            ),
           ),
         ),
       ),
