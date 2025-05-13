@@ -1,5 +1,3 @@
-
-
 class ApiConfig {
   // LuckyBet Admin API Configuration
   
@@ -18,6 +16,7 @@ class ApiConfig {
   static const String bets = '/betting/list';
   static const String createBet = '/betting/place';
   static const String cancelBet = '/betting/cancel';
+  static const String cancelBetByTicket = '/betting/cancel-by-ticket/';
   static const String availableDraws = '/betting/available-draws';
   static const String cancelledBets = '/betting/cancelled';
   

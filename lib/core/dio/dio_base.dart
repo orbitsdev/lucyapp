@@ -482,16 +482,11 @@ class DioService {
     String? code;
     int? statusCode = exception.response?.statusCode;
     
+    // First check if we have a direct error message from the API
     if (exception.response?.data is Map && 
-        exception.response!.data.containsKey('status') && 
         exception.response!.data.containsKey('message')) {
       message = exception.response!.data['message'];
-      
-      if (exception.response!.data.containsKey('errors')) {
-        code = 'validation_error';
-      } else {
-        code = 'api_error';
-      }
+      code = exception.response!.data.containsKey('errors') ? 'validation_error' : 'api_error';
       
       return ApiError(
         message: message,
@@ -522,21 +517,19 @@ class DioService {
           message = 'Unauthorized. Please login again.';
           code = 'unauthorized';
         } else if (statusCode == 404) {
-          message = 'Resource not found.';
+          // Check if we have a custom message from the API
+          if (exception.response?.data is Map && 
+              exception.response!.data.containsKey('message')) {
+            message = exception.response!.data['message'];
+          } else {
+            message = 'Resource not found.';
+          }
           code = 'not_found';
         } else if (statusCode == 400) {
-          if (exception.response?.data is Map && exception.response!.data.containsKey('message')) {
-            message = exception.response!.data['message'];
-          } else {
-            message = 'Bad request. Please check your input.';
-          }
+          message = 'Bad request. Please check your input.';
           code = 'bad_request';
         } else if (statusCode == 422) {
-          if (exception.response?.data is Map && exception.response!.data.containsKey('message')) {
-            message = exception.response!.data['message'];
-          } else {
-            message = 'Validation error. Please check your input.';
-          }
+          message = 'Validation error. Please check your input.';
           code = 'validation_error';
         } else {
           message = 'Server error. Please try again later.';

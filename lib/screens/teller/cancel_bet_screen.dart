@@ -10,6 +10,7 @@ import '../../models/draw.dart';
 import '../../models/game_type.dart';
 import '../../widgets/common/modal.dart';
 import '../../widgets/common/local_lottie_image.dart';
+import '../../widgets/common/qr_scanner.dart';
 
 /// Defines the fixed column widths for the cancelled bet list table
 class TableColumnWidths {
@@ -41,6 +42,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
   final RxInt selectedGameTypeId = RxInt(-1);
   final ScrollController scrollController = ScrollController();
   final ScrollController horizontalScrollController = ScrollController();
+  final TextEditingController betNumberController = TextEditingController();
   
   // Track the currently selected row for highlighting
   final RxInt selectedRowIndex = RxInt(-1);
@@ -69,6 +71,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
   
   @override
   void dispose() {
+     betNumberController.dispose();
     searchController.dispose();
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
@@ -281,6 +284,149 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
       ),
       body: Column(
         children: [
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ticket Number',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: betNumberController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter ticket number',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.qr_code_scanner),
+                      tooltip: 'Scan QR',
+                      onPressed: () async {
+                        await Get.to(
+                          () => QrScannerPage(
+                            onScanned: (ticket) {
+                              betNumberController.text = ticket;
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: Obx(() => ElevatedButton.icon(
+                    onPressed: bettingController.isCancellingBet.value
+                        ? null
+                        : () async {
+                            if (betNumberController.text.isEmpty) {
+                              Modal.showErrorModal(
+                                title: 'Validation Error',
+                                message: 'Please enter a ticket number',
+                              );
+                              return;
+                            }
+
+                            // Show confirmation dialog
+                            Modal.showConfirmationModal(
+                              title: 'Cancel Bet Confirmation',
+                              message: 'Are you sure you want to cancel this bet?\n\n' 
+                                      'Ticket Number: ${betNumberController.text}\n\n'
+                                      'This action cannot be undone and will update your sales records.', 
+                              confirmText: 'Yes,Cancel Bet',
+                              cancelText: 'No,Close',
+                              isDangerousAction: true,
+                              animation: 'assets/animations/questionmark.json',
+                              onConfirm: () async {
+                                // Show loading indicator
+                                Modal.showProgressModal(
+                                  title: 'Cancelling Bet',
+                                  message: 'Please wait while we process your request...',
+                                );
+                                
+                                try {
+                                  
+                                  // Proceed with cancellation
+                                  final result = await bettingController.cancelBetByTicketId(betNumberController.text);
+                                  
+                                  if (result) {
+                                    Modal.closeDialog();
+                                    // Clear the input
+                                    betNumberController.clear();
+                                    
+                                    // Refresh the list
+                                    _fetchCancelledBets();
+                                    
+                                    // Show success message
+                                    Modal.showSuccessModal(
+                                      title: 'Bet Cancelled',
+                                      message: 'The bet has been cancelled successfully.',
+                                      showButton: true,
+                                      buttonText: 'OK',
+                                    );
+                                  }
+                                } catch (e) {
+                                  // Show error message
+                                  Modal.showErrorModal(
+                                    title: 'Cancellation Failed',
+                                    message: 'Failed to cancel the bet. Please try again.',
+                                  );
+                                }
+                              },
+                            );
+                          },
+                    icon: bettingController.isCancellingBet.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.cancel_outlined, size: 20),
+                    label: Text(
+                      bettingController.isCancellingBet.value ? 'PROCESSING...' : 'CANCEL BET',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryRed,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.5),
+                      elevation: 1,
+                    ),
+                  )),
+                ),
+              ],
+            ),
+          ),
           // Search bar
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
@@ -617,28 +763,20 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                             crossAxisAlignment: CrossAxisAlignment.start,
                                                             children: [
                                                               RichText(
-                                                            text: TextSpan(
-                                                              style:  TextStyle(color: Colors.grey[600]),
-                                                              children: <TextSpan>[
-                                                                TextSpan(
-                                                                  text: bet.draw?.drawTimeSimple ?? 'Unknown',
-                                                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                                                text: TextSpan(
+                                                                  style: TextStyle(color: Colors.grey[600]),
+                                                                  children: <TextSpan>[
+                                                                    TextSpan(
+                                                                      text: bet.draw?.drawTimeSimple ?? 'Unknown',
+                                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: bet.gameType?.code ?? 'Unknown',
+                                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                                TextSpan(
-                                                                  text: bet.gameType?.code ?? 'Unknown',
-                                                                  style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                              // if ((bet.draw?.drawTimeFormatted ?? '').isNotEmpty)
-                                                              //   Padding(
-                                                              //     padding: const EdgeInsets.only(top: 2.0),
-                                                              //     child: Text(
-                                                              //       bet.draw?.drawTimeFormatted ?? '',
-                                                              //       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                                              //     ),
-                                                              //   ),
+                                                              ),
                                                             ],
                                                           ),
                                                         ),
@@ -764,20 +902,81 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
           _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
           _buildDetailRow('Status', 'Cancelled'),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Get.back(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade200,
+                    foregroundColor: Colors.grey.shade800,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('CLOSE'),
                 ),
               ),
-              child: const Text('CLOSE'),
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Obx(() => ElevatedButton(
+                  onPressed: bettingController.isCancellingBet.value 
+                    ? null 
+                    : () async {
+                        final confirmed = await Get.dialog<bool>(
+                          AlertDialog(
+                            title: const Text('Confirm Cancellation'),
+                            content: const Text('Are you sure you want to cancel this bet?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Get.back(result: false),
+                                child: const Text('NO'),
+                              ),
+                              TextButton(
+                                onPressed: () => Get.back(result: true),
+                                child: const Text('YES'),
+                              ),
+                            ],
+                          ),
+                        );
+                        
+                        if (confirmed == true) {
+                          final success = await bettingController.cancelBet(bet.id!);
+                          if (success) {
+                            Get.back(); // Close the details dialog
+                            // Show success message
+                            Get.snackbar(
+                              'Success',
+                              'Bet cancelled successfully',
+                              backgroundColor: Colors.green,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                          }
+                        }
+                      },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: bettingController.isCancellingBet.value
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text('CANCEL BET'),
+                )),
+              ),
+            ],
           ),
         ],
       ),

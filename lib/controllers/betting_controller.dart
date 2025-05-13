@@ -4,6 +4,7 @@ import 'package:bettingapp/core/dio/dio_base.dart';
 import 'package:bettingapp/models/bet.dart';
 import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
+import 'package:dio/dio.dart';
 
 class BettingController extends GetxController {
   static BettingController get to => Get.find<BettingController>();
@@ -368,15 +369,16 @@ class BettingController extends GetxController {
   // Cancel a bet
   Future<bool> cancelBet(int betId) async {
     isCancellingBet.value = true;
-    
+
     try {
       final result = await _dioService.authPost<void>(
         '${ApiConfig.cancelBet}/$betId',
         fromJson: (_) => null,
       );
-      
+
       return result.fold(
         (error) {
+          Modal.closeDialog();
           Modal.showErrorModal(
             title: 'Error Cancelling Bet',
             message: error.message,
@@ -390,19 +392,10 @@ class BettingController extends GetxController {
             final updatedBet = bets[index].copyWith(isRejected: true);
             bets[index] = updatedBet;
           }
-          
-          // Refresh cancelled bets list
           fetchCancelledBets();
-          
           return true;
         },
       );
-    } catch (e) {
-      Modal.showErrorModal(
-        title: 'Error',
-        message: 'Failed to cancel bet: ${e.toString()}',
-      );
-      return false;
     } finally {
       isCancellingBet.value = false;
     }
@@ -546,4 +539,57 @@ class BettingController extends GetxController {
   
   final RxBool showClaimed = false.obs;
   final RxBool showCancelled = false.obs;
+  
+  // Helper to close dialog and show another after a short delay
+  Future<void> _showModalAfterClose(Future<void> Function() showModal) async {
+    Modal.closeDialog();
+    await Future.delayed(const Duration(milliseconds: 300));
+    await showModal();
+  }
+
+  Future<bool> cancelBetByTicketId(String ticketId) async {
+    isCancellingBet.value = true;
+
+    try {
+      final result = await _dioService.authPost<void>(
+        '${ApiConfig.cancelBetByTicket}/$ticketId',
+        fromJson: (_) => null,
+      );
+
+      return await result.fold(
+        (error) async {
+          await _showModalAfterClose(() async {
+            Modal.showErrorModal(
+              title: 'Error Cancelling Bet',
+              message: error.message.isNotEmpty
+                  ? error.message
+                  : 'Failed to cancel bet.',
+            );
+          });
+          return false;
+        },
+        (_) {
+          fetchCancelledBets();
+          return Future.value(true);
+        },
+      );
+    } catch (e) {
+      await _showModalAfterClose(() async {
+        String message = 'Failed to cancel bet: ${e.toString()}';
+        if (e is DioError && e.response?.data != null) {
+          final data = e.response?.data;
+          if (data is Map && data['message'] != null) {
+            message = data['message'];
+          }
+        }
+        Modal.showErrorModal(
+          title: 'Error',
+          message: message,
+        );
+      });
+      return false;
+    } finally {
+      isCancellingBet.value = false;
+    }
+  }
 }

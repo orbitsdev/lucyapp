@@ -53,6 +53,7 @@ Retrieves a paginated list of cancelled bets for the authenticated teller. The e
                 "draw_date_formatted": "May 11, 2025",
                 "draw_time": "14:00:00",
                 "draw_time_formatted": "2:00 PM",
+                "draw_time_simple": "2PM",
                 "is_open": true,
                 "is_active": true
             },
@@ -131,7 +132,8 @@ GET /api/betting/cancelled?game_type_id=1
     "message": "The given data was invalid",
     "data": {
         "date": ["The date field must be a valid date"],
-        "per_page": ["The per page field must be between 1 and 100"]
+        "per_page": ["The per page field must be between 1 and 100"],
+        "game_type_id": ["The selected game type id is invalid"]
     }
 }
 ```
@@ -140,4 +142,5 @@ GET /api/betting/cancelled?game_type_id=1
 - All dates are handled in the application's timezone
 - The API uses proper timezone conversion to ensure accurate date filtering
 - Results are always filtered by the authenticated teller's ID
-- The endpoint supports both date-based and draw-specific filtering 
+- The endpoint supports both date-based and draw-specific filtering
+- Game type filtering can be combined with other filters 
