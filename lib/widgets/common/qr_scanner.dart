@@ -1,3 +1,4 @@
+import 'package:bettingapp/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -19,7 +20,12 @@ class _QrScannerPageState extends State<QrScannerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.primaryRed,
         title: Text(widget.title ?? 'Scan Ticket QR'),
+        leading: IconButton(
+          onPressed: () =>Get.back(),
+          icon: Icon(Icons.arrow_back,color: Colors.white,),
+        ),
       ),
       body: MobileScanner(
         onDetect: (BarcodeCapture capture) {
@@ -31,10 +37,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: Icon(Icons.close),
-      ),
+     
     );
   }
 } 
