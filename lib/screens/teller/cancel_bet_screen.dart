@@ -58,12 +58,12 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
     dropdownController.fetchGameTypes();
     _fetchCancelledBets();
     
-    // Setup debounce for search
-    _searchDebounce = debounce(
-      searchQuery, 
-      (_) => _fetchCancelledBets(),
-      time: const Duration(milliseconds: 500),
-    );
+    // Setup debounce for search (disabled for now, preserved for future use)
+    // _searchDebounce = debounce(
+    //   searchQuery, 
+    //   (_) => _fetchCancelledBets(),
+    //   time: const Duration(milliseconds: 500),
+    // );
     
     // Add scroll listener for pagination
     scrollController.addListener(_scrollListener);
@@ -448,8 +448,12 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                onSubmitted: (_) => _fetchCancelledBets(),
-                onChanged: (value) => searchQuery.value = value,
+                onSubmitted: (value) {
+                  searchQuery.value = value;
+                  _fetchCancelledBets();
+                }, // Only search on submit
+                // onChanged: (value) => searchQuery.value = value, // Disable auto-search on change
+                textInputAction: TextInputAction.search, // Show search button on keyboard
               ),
             ),
             // --- FILTER CHIPS, ACTIVE FILTERS, ETC. ---
