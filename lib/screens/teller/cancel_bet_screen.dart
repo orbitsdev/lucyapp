@@ -259,22 +259,19 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use resizeToAvoidBottomInset to handle keyboard properly
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text('Cancel Bet'),
         backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
         actions: [
-          // Refresh button
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _fetchCancelledBets,
             tooltip: 'Refresh',
           ),
-          // Filter button
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
@@ -282,589 +279,588 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Ticket Number',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: betNumberController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter ticket number',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.qr_code_scanner),
-                      tooltip: 'Scan QR',
-                      onPressed: () async {
-                        await Get.to(
-                          () => QrScannerPage(
-                            onScanned: (ticket) {
-                              betNumberController.text = ticket;
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: Obx(() => ElevatedButton.icon(
-                    onPressed: bettingController.isCancellingBet.value
-                        ? null
-                        : () async {
-                            if (betNumberController.text.isEmpty) {
-                              Modal.showErrorModal(
-                                title: 'Validation Error',
-                                message: 'Please enter a ticket number',
-                              );
-                              return;
-                            }
-
-                            // Show confirmation dialog
-                            Modal.showConfirmationModal(
-                              title: 'Cancel Bet Confirmation',
-                              message: 'Are you sure you want to cancel this bet?\n\n' 
-                                      'Ticket Number: ${betNumberController.text}\n\n'
-                                      'This action cannot be undone and will update your sales records.', 
-                              confirmText: 'Yes,Cancel Bet',
-                              cancelText: 'No,Close',
-                              isDangerousAction: true,
-                              animation: 'assets/animations/questionmark.json',
-                              onConfirm: () async {
-                                // Show loading indicator
-                                Modal.showProgressModal(
-                                  title: 'Cancelling Bet',
-                                  message: 'Please wait while we process your request...',
-                                );
-                                
-                                try {
-                                  
-                                  // Proceed with cancellation
-                                  final result = await bettingController.cancelBetByTicketId(betNumberController.text);
-                                  
-                                  if (result) {
-                                    Modal.closeDialog();
-                                    // Clear the input
-                                    betNumberController.clear();
-                                    
-                                    // Refresh the list
-                                    _fetchCancelledBets();
-                                    
-                                    // Show success message
-                                    Modal.showSuccessModal(
-                                      title: 'Bet Cancelled',
-                                      message: 'The bet has been cancelled successfully.',
-                                      showButton: true,
-                                      buttonText: 'OK',
-                                    );
-                                  }
-                                } catch (e) {
-                                  // Show error message
-                                  Modal.showErrorModal(
-                                    title: 'Cancellation Failed',
-                                    message: 'Failed to cancel the bet. Please try again.',
-                                  );
-                                }
-                              },
-                            );
-                          },
-                    icon: bettingController.isCancellingBet.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.cancel_outlined, size: 20),
-                    label: Text(
-                      bettingController.isCancellingBet.value ? 'PROCESSING...' : 'CANCEL BET',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryRed,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.5),
-                      elevation: 1,
-                    ),
-                  )),
-                ),
-              ],
-            ),
-          ),
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-            child: TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by ticket ID or bet number',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    searchController.clear();
-                    searchQuery.value = '';
-                    _fetchCancelledBets();
-                  },
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              onSubmitted: (_) => _fetchCancelledBets(),
-              onChanged: (value) => searchQuery.value = value,
-            ),
-          ),
-          
-          // Active filters display
-          Obx(() {
-            final hasFilters = selectedDate.value != null ||
-                selectedDrawId?.value != -1 ||
-                selectedGameTypeId.value != -1 ||
-                searchQuery.value.isNotEmpty;
-                
-            if (!hasFilters) return SizedBox.shrink();
-            
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Active Filters',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          selectedDate.value = null;
-                          selectedDrawId?.value = -1;
-                          selectedGameTypeId.value = -1;
-                          searchQuery.value = '';
-                          _fetchCancelledBets();
-                        },
-                        child: const Text('Clear All'),
-                      ),
-                    ],
-                  ),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      if (selectedDate.value != null)
-                        Chip(
-                          label: Text(
-                            'Date: ${DateFormat('MMM dd, yyyy').format(
-                              DateTime.parse(selectedDate.value!)
-                            )}',
-                          ),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            selectedDate.value = null;
-                            _fetchCancelledBets();
-                          },
-                        ),
-                      if (selectedDrawId?.value != -1 && selectedDrawId?.value != null)
-                        Chip(
-                          label: Text(
-                            'Draw: ${bettingController.availableDraws
-                              .firstWhere(
-                                (draw) => draw.id == selectedDrawId?.value,
-                                orElse: () => Draw(id: 0, drawTimeFormatted: 'Unknown')
-                              ).drawTimeFormatted ?? 'Unknown'}'
-                          ),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            selectedDrawId?.value = -1;
-                            _fetchCancelledBets();
-                          },
-                        ),
-                      if (selectedGameTypeId.value != -1)
-                        Chip(
-                          label: Text(
-                            'Bet Type: ${dropdownController.gameTypes
-                              .firstWhereOrNull((type) => type.id == selectedGameTypeId.value)?.name ?? 'Unknown'}'
-                          ),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            selectedGameTypeId.value = -1;
-                            _fetchCancelledBets();
-                          },
-                        ),
-                      if (searchQuery.value.isNotEmpty)
-                        Chip(
-                          label: Text('Search: ${searchQuery.value}'),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            searchQuery.value = '';
-                            _fetchCancelledBets();
-                          },
-                        ),
-                    ],
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
+          children: [
+            // --- FORM CARD ---
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-            );
-          }),
-          
-          // Cancelled Bets count
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                const Text(
-                  'Cancelled Bets',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Obx(() => Text(
-                    '${bettingController.cancelledBets.length}',
-                    style: const TextStyle(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ticket Number',
+                    style: TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
                     ),
-                  )),
-                ),
-              ],
-            ),
-          ),
-          
-          // Cancelled Bets List
-          Expanded(
-            child: RefreshIndicator(
-              color: AppColors.primaryRed,
-              onRefresh: _fetchCancelledBets,
-              child: Obx(() {
-                if (bettingController.isLoadingCancelledBets.value && 
-                    bettingController.cancelledBets.isEmpty) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                
-                if (bettingController.cancelledBets.isEmpty) {
-                  return Center(
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const LocalLottieImage(
-                              path: 'assets/animations/empty_state.json',
-                              width: 150,
-                              height: 150,
-                              repeat: true,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: betNumberController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter ticket number',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.qr_code_scanner),
+                        tooltip: 'Scan QR',
+                        onPressed: () async {
+                          await Get.to(
+                            () => QrScannerPage(
+                              onScanned: (ticket) {
+                                betNumberController.text = ticket;
+                              },
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No cancelled bets found',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Cancelled bets will appear here',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                     ),
-                  );
-                }
-                
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hint text for scrollable table
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2.0),
-                        child: Text(
-                          'Scrollable (Horizontal)',
-                          style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                      // Table container
-                      Expanded(
-                        child: Stack(
-                          children: [
-                            // Horizontal scrollable table
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const ClampingScrollPhysics(),
-                              controller: horizontalScrollController,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Table header
-                                  Container(
-                                    width: TableColumnWidths.totalWidth,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryRed,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(8),
-                                        topRight: Radius.circular(8),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: const [
-                                        SizedBox(width: TableColumnWidths.typeWidth, child: Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                          child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                        )),
-                                        SizedBox(width: TableColumnWidths.betNumberWidth, child: Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                          child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                        )),
-                                        SizedBox(width: TableColumnWidths.amountWidth, child: Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                          child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                        )),
-                                        SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                          child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                        )),
-                                        SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                          child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                        )),
-                                      ],
-                                    ),
-                                  ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Obx(() => ElevatedButton.icon(
+                      onPressed: bettingController.isCancellingBet.value
+                          ? null
+                          : () async {
+                              if (betNumberController.text.isEmpty) {
+                                Modal.showErrorModal(
+                                  title: 'Validation Error',
+                                  message: 'Please enter a ticket number',
+                                );
+                                return;
+                              }
+
+                              // Show confirmation dialog
+                              Modal.showConfirmationModal(
+                                title: 'Cancel Bet Confirmation',
+                                message: 'Are you sure you want to cancel this bet?\n\n' 
+                                        'Ticket Number: ${betNumberController.text}\n\n'
+                                        'This action cannot be undone and will update your sales records.', 
+                                confirmText: 'Yes,Cancel Bet',
+                                cancelText: 'No,Close',
+                                isDangerousAction: true,
+                                animation: 'assets/animations/questionmark.json',
+                                onConfirm: () async {
+                                  // Show loading indicator
+                                  Modal.showProgressModal(
+                                    title: 'Cancelling Bet',
+                                    message: 'Please wait while we process your request...',
+                                  );
                                   
-                                  // Table body
-                                  Expanded(
-                                    child: Container(
-                                      width: TableColumnWidths.totalWidth,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: const BorderRadius.only(
-                                          bottomLeft: Radius.circular(8),
-                                          bottomRight: Radius.circular(8),
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: ListView.builder(
-                                        controller: scrollController,
-                                        padding: EdgeInsets.zero,
-                                        itemCount: bettingController.cancelledBets.length + 
-                                          (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
-                                        itemBuilder: (context, index) {
-                                          if (index == bettingController.cancelledBets.length) {
-                                            return const Center(
-                                              child: Padding(
-                                                padding: EdgeInsets.all(16.0),
-                                                child: CircularProgressIndicator(),
-                                              ),
-                                            );
-                                          }
-                                          final bet = bettingController.cancelledBets[index];
-                                          final isLastRow = index == bettingController.cancelledBets.length - 1;
-                                          return Obx(() => Column(
-                                            children: [
-                                              if (index > 0)
-                                                Divider(height: 1, color: Colors.grey.shade300),
-                                              Container(
-                                                decoration: BoxDecoration(
-                                                  color: selectedRowIndex.value == index 
-                                                      ? AppColors.primaryRed.withOpacity(0.1)
-                                                      : (index.isEven ? Colors.grey.shade50 : Colors.white),
-                                                  borderRadius: isLastRow
-                                                      ? const BorderRadius.only(
-                                                          bottomLeft: Radius.circular(8),
-                                                          bottomRight: Radius.circular(8),
-                                                        )
-                                                      : null,
-                                                ),
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    if (selectedRowIndex.value == index) {
-                                                      selectedRowIndex.value = -1;
-                                                    } else {
-                                                      selectedRowIndex.value = index;
-                                                      _showBetDetails(bet);
-                                                    }
-                                                  },
-                                                  child: Row(
-                                                    children: [
-                                                      // Type + draw time
-                                                      SizedBox(
-                                                        width: TableColumnWidths.typeWidth,
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                          child: Column(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              RichText(
-                                                                text: TextSpan(
-                                                                  style: TextStyle(color: Colors.grey[600]),
-                                                                  children: <TextSpan>[
-                                                                    TextSpan(
-                                                                      text: bet.draw?.drawTimeSimple ?? 'Unknown',
-                                                                      style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                    ),
-                                                                    TextSpan(
-                                                                      text: bet.gameType?.code ?? 'Unknown',
-                                                                      style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Bet Number
-                                                      SizedBox(
-                                                        width: TableColumnWidths.betNumberWidth,
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                          child: Text(
-                                                            bet.betNumber ?? 'Unknown',
-                                                            style: const TextStyle(fontWeight: FontWeight.w500),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Amount
-                                                      SizedBox(
-                                                        width: TableColumnWidths.amountWidth,
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                          child: Text(
-                                                            '₱${bet.amount?.toInt() ?? bet.amount}',
-                                                            style: const TextStyle(fontWeight: FontWeight.w500),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Ticket ID
-                                                      SizedBox(
-                                                        width: TableColumnWidths.ticketIdWidth,
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                          child: Text(
-                                                            bet.ticketId ?? 'Unknown',
-                                                            style: const TextStyle(fontWeight: FontWeight.w500),
-                                                            softWrap: false,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Date
-                                                      SizedBox(
-                                                        width: TableColumnWidths.dateWidth,
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                          child: Text(
-                                                            bet.betDateFormatted ?? 'Unknown',
-                                                            style: const TextStyle(fontWeight: FontWeight.w500),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ));
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                  try {
+                                    
+                                    // Proceed with cancellation
+                                    final result = await bettingController.cancelBetByTicketId(betNumberController.text);
+                                    
+                                    if (result) {
+                                      Modal.closeDialog();
+                                      // Clear the input
+                                      betNumberController.clear();
+                                      
+                                      // Refresh the list
+                                      _fetchCancelledBets();
+                                      
+                                      // Show success message
+                                      Modal.showSuccessModal(
+                                        title: 'Bet Cancelled',
+                                        message: 'The bet has been cancelled successfully.',
+                                        showButton: true,
+                                        buttonText: 'OK',
+                                      );
+                                    }
+                                  } catch (e) {
+                                    // Show error message
+                                    Modal.showErrorModal(
+                                      title: 'Cancellation Failed',
+                                      message: 'Failed to cancel the bet. Please try again.',
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                      icon: bettingController.isCancellingBet.value
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
                               ),
+                            )
+                          : const Icon(Icons.cancel_outlined, size: 20),
+                      label: Text(
+                        bettingController.isCancellingBet.value ? 'PROCESSING...' : 'CANCEL BET',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.5),
+                        elevation: 1,
+                      ),
+                    )),
+                  ),
+                ],
+              ),
+            ),
+            // --- SEARCH BAR ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+              child: TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by ticket ID or bet number',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      searchController.clear();
+                      searchQuery.value = '';
+                      _fetchCancelledBets();
+                    },
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                onSubmitted: (_) => _fetchCancelledBets(),
+                onChanged: (value) => searchQuery.value = value,
+              ),
+            ),
+            // --- FILTER CHIPS, ACTIVE FILTERS, ETC. ---
+            Obx(() {
+              final hasFilters = selectedDate.value != null ||
+                  selectedDrawId?.value != -1 ||
+                  selectedGameTypeId.value != -1 ||
+                  searchQuery.value.isNotEmpty;
+                  
+              if (!hasFilters) return SizedBox.shrink();
+              
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Active Filters',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () {
+                            selectedDate.value = null;
+                            selectedDrawId?.value = -1;
+                            selectedGameTypeId.value = -1;
+                            searchQuery.value = '';
+                            _fetchCancelledBets();
+                          },
+                          child: const Text('Clear All'),
+                        ),
+                      ],
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (selectedDate.value != null)
+                          Chip(
+                            label: Text(
+                              'Date: ${DateFormat('MMM dd, yyyy').format(
+                                DateTime.parse(selectedDate.value!)
+                              )}',
                             ),
-                            
-                            // Loading indicator at the bottom
-                            if (bettingController.isLoadingCancelledBets.value && bettingController.cancelledBets.isNotEmpty)
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  color: Colors.black54,
-                                  height: 40,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              selectedDate.value = null;
+                              _fetchCancelledBets();
+                            },
+                          ),
+                        if (selectedDrawId?.value != -1 && selectedDrawId?.value != null)
+                          Chip(
+                            label: Text(
+                              'Draw: ${bettingController.availableDraws
+                                .firstWhere(
+                                  (draw) => draw.id == selectedDrawId?.value,
+                                  orElse: () => Draw(id: 0, drawTimeFormatted: 'Unknown')
+                                ).drawTimeFormatted ?? 'Unknown'}'
+                            ),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              selectedDrawId?.value = -1;
+                              _fetchCancelledBets();
+                            },
+                          ),
+                        if (selectedGameTypeId.value != -1)
+                          Chip(
+                            label: Text(
+                              'Bet Type: ${dropdownController.gameTypes
+                                .firstWhereOrNull((type) => type.id == selectedGameTypeId.value)?.name ?? 'Unknown'}'
+                            ),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              selectedGameTypeId.value = -1;
+                              _fetchCancelledBets();
+                            },
+                          ),
+                        if (searchQuery.value.isNotEmpty)
+                          Chip(
+                            label: Text('Search: ${searchQuery.value}'),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              searchQuery.value = '';
+                              _fetchCancelledBets();
+                            },
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+            // --- CANCELLED BETS COUNT ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  const Text(
+                    'Cancelled Bets',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Obx(() => Text(
+                      '${bettingController.cancelledBets.length}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    )),
+                  ),
+                ],
+              ),
+            ),
+            // --- CANCELLED BETS LIST ---
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.primaryRed,
+                onRefresh: _fetchCancelledBets,
+                child: Obx(() {
+                  if (bettingController.isLoadingCancelledBets.value && 
+                      bettingController.cancelledBets.isEmpty) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (bettingController.cancelledBets.isEmpty) {
+                    return Center(
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const LocalLottieImage(
+                                path: 'assets/animations/empty_state.json',
+                                width: 150,
+                                height: 150,
+                                repeat: true,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No cancelled bets found',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade700,
                                 ),
                               ),
-                          ],
+                              const SizedBox(height: 8),
+                              Text(
+                                'Cancelled bets will appear here',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }),
+                    );
+                  }
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Hint text for scrollable table
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2.0),
+                          child: Text(
+                            'Scrollable (Horizontal)',
+                            style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                        // Table container
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              // Horizontal scrollable table
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const ClampingScrollPhysics(),
+                                controller: horizontalScrollController,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Table header
+                                    Container(
+                                      width: TableColumnWidths.totalWidth,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryRed,
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(8),
+                                          topRight: Radius.circular(8),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: const [
+                                          SizedBox(width: TableColumnWidths.typeWidth, child: Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                            child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                          )),
+                                          SizedBox(width: TableColumnWidths.betNumberWidth, child: Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                            child: Text('Bet Number', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                          )),
+                                          SizedBox(width: TableColumnWidths.amountWidth, child: Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                            child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                          )),
+                                          SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                            child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                          )),
+                                          SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                            child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                          )),
+                                        ],
+                                      ),
+                                    ),
+                                    
+                                    // Table body
+                                    Expanded(
+                                      child: Container(
+                                        width: TableColumnWidths.totalWidth,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(8),
+                                            bottomRight: Radius.circular(8),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.05),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ListView.builder(
+                                          controller: scrollController,
+                                          padding: EdgeInsets.zero,
+                                          itemCount: bettingController.cancelledBets.length + 
+                                            (bettingController.cancelledBetsCurrentPage.value < bettingController.cancelledBetsTotalPages.value ? 1 : 0),
+                                          itemBuilder: (context, index) {
+                                            if (index == bettingController.cancelledBets.length) {
+                                              return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(16.0),
+                                                  child: CircularProgressIndicator(),
+                                                ),
+                                              );
+                                            }
+                                            final bet = bettingController.cancelledBets[index];
+                                            final isLastRow = index == bettingController.cancelledBets.length - 1;
+                                            return Obx(() => Column(
+                                              children: [
+                                                if (index > 0)
+                                                  Divider(height: 1, color: Colors.grey.shade300),
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    color: selectedRowIndex.value == index 
+                                                        ? AppColors.primaryRed.withOpacity(0.1)
+                                                        : (index.isEven ? Colors.grey.shade50 : Colors.white),
+                                                    borderRadius: isLastRow
+                                                        ? const BorderRadius.only(
+                                                            bottomLeft: Radius.circular(8),
+                                                            bottomRight: Radius.circular(8),
+                                                          )
+                                                        : null,
+                                                  ),
+                                                  child: InkWell(
+                                                    onTap: () {
+                                                      if (selectedRowIndex.value == index) {
+                                                        selectedRowIndex.value = -1;
+                                                      } else {
+                                                        selectedRowIndex.value = index;
+                                                        _showBetDetails(bet);
+                                                      }
+                                                    },
+                                                    child: Row(
+                                                      children: [
+                                                        // Type + draw time
+                                                        SizedBox(
+                                                          width: TableColumnWidths.typeWidth,
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                            child: Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                RichText(
+                                                                  text: TextSpan(
+                                                                    style: TextStyle(color: Colors.grey[600]),
+                                                                    children: <TextSpan>[
+                                                                      TextSpan(
+                                                                        text: bet.draw?.drawTimeSimple ?? 'Unknown',
+                                                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                                                      ),
+                                                                      TextSpan(
+                                                                        text: bet.gameType?.code ?? 'Unknown',
+                                                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        // Bet Number
+                                                        SizedBox(
+                                                          width: TableColumnWidths.betNumberWidth,
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                            child: Text(
+                                                              bet.betNumber ?? 'Unknown',
+                                                              style: const TextStyle(fontWeight: FontWeight.w500),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        // Amount
+                                                        SizedBox(
+                                                          width: TableColumnWidths.amountWidth,
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                            child: Text(
+                                                              '₱${bet.amount?.toInt() ?? bet.amount}',
+                                                              style: const TextStyle(fontWeight: FontWeight.w500),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        // Ticket ID
+                                                        SizedBox(
+                                                          width: TableColumnWidths.ticketIdWidth,
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                            child: Text(
+                                                              bet.ticketId ?? 'Unknown',
+                                                              style: const TextStyle(fontWeight: FontWeight.w500),
+                                                              softWrap: false,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        // Date
+                                                        SizedBox(
+                                                          width: TableColumnWidths.dateWidth,
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                            child: Text(
+                                                              bet.betDateFormatted ?? 'Unknown',
+                                                              style: const TextStyle(fontWeight: FontWeight.w500),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ));
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              
+                              // Loading indicator at the bottom
+                              if (bettingController.isLoadingCancelledBets.value && bettingController.cancelledBets.isNotEmpty)
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    color: Colors.black54,
+                                    height: 40,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
