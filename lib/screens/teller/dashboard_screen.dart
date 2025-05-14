@@ -365,6 +365,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 route: AppRoutes.betList,
               ),
               
+              DashboardCard(
+                title: 'WINNING BETS (HITS)',
+                icon: Icons.emoji_events,
+                color: const Color(0xFF4CAF50),
+                route: AppRoutes.winningBets,
+              ),
              
               DashboardCard(
                 title: 'CANCELLED BET',
@@ -374,19 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
                
               
-              DashboardCard(
-                title: 'CLAIMED BET',
-                icon: Icons.monetization_on,
-                color: const Color(0xFFE57373),
-                route: AppRoutes.claimedBets,
-              ),
-              
-              DashboardCard(
-                title: 'WINNING BETS (HITS)',
-                icon: Icons.emoji_events,
-                color: const Color(0xFF4CAF50),
-                route: AppRoutes.winningBets,
-              ),
+
               
               // Equipment & Reports
               Padding(
