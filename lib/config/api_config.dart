@@ -19,6 +19,9 @@ class ApiConfig {
   static const String cancelBetByTicket = '/betting/cancel-by-ticket/';
   static const String availableDraws = '/betting/available-draws';
   static const String cancelledBets = '/betting/cancelled';
+  static const String claimedBets = '/betting/claimed';
+  static const String claimBetByTicket = '/betting/claim-ticket/';
+  static const String winningBets = '/betting/hits';
   
   // Dropdown endpoints
   static const String gameTypes = '/dropdown/game-types';

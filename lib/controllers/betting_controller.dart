@@ -14,6 +14,8 @@ class BettingController extends GetxController {
   // Observable lists and objects
   final RxList<Bet> bets = <Bet>[].obs;
   final RxList<Bet> cancelledBets = <Bet>[].obs;
+  final RxList<Bet> claimedBets = <Bet>[].obs;
+  final RxList<Bet> winningBets = <Bet>[].obs;
   final RxList<Draw> availableDraws = <Draw>[].obs;
   
   // Pagination data
@@ -22,12 +24,34 @@ class BettingController extends GetxController {
   final RxInt totalItems = 0.obs;
   final RxInt perPage = 20.obs;
   
+  // Claimed bets pagination data
+  final RxInt claimedBetsCurrentPage = 1.obs;
+  final RxInt claimedBetsTotalPages = 1.obs;
+  final RxInt claimedBetsPerPage = 50.obs;
+  final RxString claimedBetsLastSearchQuery = ''.obs;
+  final RxString claimedBetsLastDateFilter = ''.obs;
+  final Rx<int?> claimedBetsLastDrawIdFilter = Rx<int?>(null);
+  final Rx<int?> claimedBetsLastGameTypeIdFilter = Rx<int?>(null);
+  
+  // Winning bets pagination data
+  final RxInt winningBetsCurrentPage = 1.obs;
+  final RxInt winningBetsTotalPages = 1.obs;
+  final RxInt winningBetsPerPage = 50.obs;
+  final RxString winningBetsLastSearchQuery = ''.obs;
+  final RxString winningBetsLastDateFilter = ''.obs;
+  final Rx<int?> winningBetsLastDrawIdFilter = Rx<int?>(null);
+  final Rx<int?> winningBetsLastGameTypeIdFilter = Rx<int?>(null);
+  final RxBool hasMoreWinningBets = false.obs;
+  
   // Loading states
   final RxBool isLoadingBets = false.obs;
   final RxBool isLoadingCancelledBets = false.obs;
+  final RxBool isLoadingClaimedBets = false.obs;
+  final RxBool isLoadingWinningBets = false.obs;
   final RxBool isLoadingAvailableDraws = false.obs;
   final RxBool isPlacingBet = false.obs;
   final RxBool isCancellingBet = false.obs;
+  final RxBool isClaimingBet = false.obs;
   
   // Selected values for new bet
   final Rx<int?> selectedGameTypeId = Rx<int?>(null);
@@ -590,6 +614,266 @@ class BettingController extends GetxController {
       return false;
     } finally {
       isCancellingBet.value = false;
+    }
+  }
+  
+  // List claimed bets with pagination
+  Future<void> fetchClaimedBets({
+    String? search, 
+    String? date, 
+    int? drawId,
+    int? gameTypeId,
+    int page = 1,
+    int perPage = 50,
+    bool refresh = false,
+  }) async {
+    // If refreshing, reset to page 1
+    if (refresh) {
+      claimedBetsCurrentPage.value = 1;
+      claimedBets.clear();
+    }
+    
+    // Store filter values for load more function
+    claimedBetsLastSearchQuery.value = search ?? '';
+    claimedBetsLastDateFilter.value = date ?? '';
+    claimedBetsLastDrawIdFilter.value = drawId;
+    claimedBetsLastGameTypeIdFilter.value = gameTypeId;
+    claimedBetsPerPage.value = perPage;
+    
+    isLoadingClaimedBets.value = true;
+    
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (date != null) queryParams['date'] = date;
+      if (drawId != null) queryParams['draw_id'] = drawId;
+      if (gameTypeId != null) queryParams['game_type_id'] = gameTypeId;
+      
+      final result = await _dioService.authGet<Map<String, dynamic>>(
+        ApiConfig.claimedBets,
+        queryParameters: queryParams,
+        fromJson: (data) {
+          if (data is Map<String, dynamic>) {
+            return data;
+          }
+          return <String, dynamic>{};
+        },
+      );
+      
+      result.fold(
+        (error) {
+          Modal.showErrorModal(
+            title: 'Error Loading Claimed Bets',
+            message: error.message,
+          );
+        },
+        (data) {
+          if (data.containsKey('data')) {
+            final List<dynamic> betsData = data['data'] as List;
+            final List<Bet> newBets = betsData.map((item) => Bet.fromJson(item)).toList();
+            
+            // If refreshing or first page, replace the list
+            if (refresh || page == 1) {
+              claimedBets.value = newBets;
+            } else {
+              // Otherwise append to the list
+              claimedBets.addAll(newBets);
+            }
+            
+            // Update pagination info
+            if (data.containsKey('pagination')) {
+              final pagination = data['pagination'] as Map<String, dynamic>;
+              claimedBetsCurrentPage.value = pagination['current_page'] ?? 1;
+              claimedBetsTotalPages.value = pagination['last_page'] ?? 1;
+            }
+          } else {
+            if (refresh || page == 1) {
+              claimedBets.clear();
+            }
+          }
+        },
+      );
+    } catch (e) {
+      Modal.showErrorModal(
+        title: 'Error',
+        message: 'Failed to load claimed bets: ${e.toString()}',
+      );
+    } finally {
+      isLoadingClaimedBets.value = false;
+    }
+  }
+  
+  // Load more claimed bets (pagination)
+  Future<void> loadMoreClaimedBets() async {
+    if (claimedBetsCurrentPage.value < claimedBetsTotalPages.value && !isLoadingClaimedBets.value) {
+      await fetchClaimedBets(
+        page: claimedBetsCurrentPage.value + 1,
+        search: claimedBetsLastSearchQuery.value.isEmpty ? null : claimedBetsLastSearchQuery.value,
+        date: claimedBetsLastDateFilter.value.isEmpty ? null : claimedBetsLastDateFilter.value,
+        drawId: claimedBetsLastDrawIdFilter.value,
+        gameTypeId: claimedBetsLastGameTypeIdFilter.value,
+        perPage: claimedBetsPerPage.value,
+      );
+    }
+  }
+  
+  // Claim a bet by ticket ID
+  Future<bool> claimBetByTicketId(String ticketId) async {
+    isClaimingBet.value = true;
+
+    try {
+      final result = await _dioService.authPost<void>(
+        '${ApiConfig.claimBetByTicket}$ticketId',
+        fromJson: (_) => null,
+      );
+
+      return await result.fold(
+        (error) async {
+          await _showModalAfterClose(() async {
+            Modal.showErrorModal(
+              title: 'Error Claiming Bet',
+              message: error.message.isNotEmpty
+                  ? error.message
+                  : 'Failed to claim bet.',
+            );
+          });
+          return false;
+        },
+        (_) {
+          fetchClaimedBets();
+          fetchWinningBets(); // Refresh winning bets after claiming
+          return Future.value(true);
+        },
+      );
+    } catch (e) {
+      await _showModalAfterClose(() async {
+        String message = 'Failed to claim bet: ${e.toString()}';
+        if (e is DioError && e.response?.data != null) {
+          final data = e.response?.data;
+          if (data is Map && data['message'] != null) {
+            message = data['message'];
+          }
+        }
+        Modal.showErrorModal(
+          title: 'Error',
+          message: message,
+        );
+      });
+      return false;
+    } finally {
+      isClaimingBet.value = false;
+    }
+  }
+  
+  // List winning bets with pagination
+  Future<void> fetchWinningBets({
+    String? search, 
+    String? date, 
+    int? drawId,
+    int? gameTypeId,
+    bool? isClaimed,
+    int page = 1,
+    int perPage = 50,
+    bool refresh = false,
+  }) async {
+    // If refreshing, reset to page 1
+    if (refresh) {
+      winningBetsCurrentPage.value = 1;
+      winningBets.clear();
+    }
+    
+    // Store filter values for load more function
+    winningBetsLastSearchQuery.value = search ?? '';
+    winningBetsLastDateFilter.value = date ?? '';
+    winningBetsLastDrawIdFilter.value = drawId;
+    winningBetsLastGameTypeIdFilter.value = gameTypeId;
+    winningBetsPerPage.value = perPage;
+    
+    isLoadingWinningBets.value = true;
+    
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (date != null) queryParams['date'] = date;
+      if (drawId != null) queryParams['draw_id'] = drawId;
+      if (gameTypeId != null) queryParams['game_type_id'] = gameTypeId;
+      if (isClaimed != null) queryParams['is_claimed'] = isClaimed;
+      
+      final result = await _dioService.authGet<Map<String, dynamic>>(
+        ApiConfig.winningBets,
+        queryParameters: queryParams,
+        fromJson: (data) {
+          if (data is Map<String, dynamic>) {
+            return data;
+          }
+          return <String, dynamic>{};
+        },
+      );
+      
+      result.fold(
+        (error) {
+          Modal.showErrorModal(
+            title: 'Error Loading Winning Bets',
+            message: error.message,
+          );
+        },
+        (data) {
+          if (data.containsKey('data')) {
+            final List<dynamic> betsData = data['data'] as List;
+            final List<Bet> newBets = betsData.map((item) => Bet.fromJson(item)).toList();
+            
+            // If refreshing or first page, replace the list
+            if (refresh || page == 1) {
+              winningBets.value = newBets;
+            } else {
+              // Otherwise append to the list
+              winningBets.addAll(newBets);
+            }
+            
+            // Update pagination info
+            if (data.containsKey('pagination')) {
+              final pagination = data['pagination'] as Map<String, dynamic>;
+              winningBetsCurrentPage.value = pagination['current_page'] ?? 1;
+              winningBetsTotalPages.value = pagination['last_page'] ?? 1;
+              hasMoreWinningBets.value = winningBetsCurrentPage.value < winningBetsTotalPages.value;
+            } else {
+              hasMoreWinningBets.value = false;
+            }
+          } else {
+            if (refresh || page == 1) {
+              winningBets.clear();
+            }
+            hasMoreWinningBets.value = false;
+          }
+        },
+      );
+    } catch (e) {
+      Modal.showErrorModal(
+        title: 'Error',
+        message: 'Failed to load winning bets: ${e.toString()}',
+      );
+    } finally {
+      isLoadingWinningBets.value = false;
+    }
+  }
+  
+  // Load more winning bets (pagination)
+  Future<void> loadMoreWinningBets() async {
+    if (winningBetsCurrentPage.value < winningBetsTotalPages.value && !isLoadingWinningBets.value) {
+      await fetchWinningBets(
+        page: winningBetsCurrentPage.value + 1,
+        search: winningBetsLastSearchQuery.value.isEmpty ? null : winningBetsLastSearchQuery.value,
+        date: winningBetsLastDateFilter.value.isEmpty ? null : winningBetsLastDateFilter.value,
+        drawId: winningBetsLastDrawIdFilter.value,
+        gameTypeId: winningBetsLastGameTypeIdFilter.value,
+        perPage: winningBetsPerPage.value,
+      );
     }
   }
 }

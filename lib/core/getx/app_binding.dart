@@ -16,10 +16,8 @@ class AppBinding extends Bindings {
     Get.put(AuthController(), permanent: true);
 
     Get.put(DropdownController(), permanent: true);
-Get.put(BettingController(), permanent: true);
-Get.put(ReportController(), permanent: true);
-Get.put(SalesController(), permanent: true);
-    
-   
+    Get.put(BettingController(), permanent: true);
+    Get.put(ReportController(), permanent: true);
+    Get.put(SalesController(), permanent: true);
   }
 }

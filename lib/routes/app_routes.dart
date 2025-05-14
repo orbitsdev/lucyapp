@@ -1,3 +1,5 @@
+import 'package:bettingapp/screens/teller/claimed_bets_screen.dart';
+import 'package:bettingapp/screens/teller/winning_bets_screen.dart';
 import 'package:get/get.dart';
 // Auth screens
 import 'package:bettingapp/screens/auth/login_screen.dart';
@@ -75,6 +77,8 @@ class AppRoutes {
   static const String combination = '/teller/combination';
   static const String soldOut = '/teller/sold-out';
   static const String betList = '/teller/bet-list'; // Bet list screen
+  static const String claimedBets = '/teller/claimed-bets'; // Claimed bets screen
+  static const String winningBets = '/teller/winning-bets'; // Winning bets screen
   
   // Customer routes
   static const String placeBet = '/customer/place-bet';
@@ -210,6 +214,18 @@ class AppRoutes {
       name: soldOut,
       page: () => const SoldOutScreen(),
       transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: claimedBets,
+      page: () => const ClaimedBetsScreen(),
+      transition: Transition.cupertino,
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: winningBets,
+      page: () => const WinningBetsScreen(),
+      transition: Transition.cupertino,
+      middlewares: [AuthMiddleware()],
     ),
     
     // Customer routes

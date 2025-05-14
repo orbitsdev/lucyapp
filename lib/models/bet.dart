@@ -14,6 +14,10 @@ class Bet {
   final String? betDate;
   final String? betDateFormatted;
   final String? createdAt;
+  final String? claimedAt;
+  final String? claimedAtFormatted;
+  final String? d4SubSelection;
+  final bool? isWinner;
   final GameType? gameType;
   final Draw? draw;
   final User? teller;
@@ -31,6 +35,10 @@ class Bet {
     this.betDate,
     this.betDateFormatted,
     this.createdAt,
+    this.claimedAt,
+    this.claimedAtFormatted,
+    this.d4SubSelection,
+    this.isWinner,
     this.gameType,
     this.draw,
     this.teller,
@@ -63,6 +71,10 @@ class Bet {
       betDate: json['bet_date'],
       betDateFormatted: json['bet_date_formatted'],
       createdAt: json['created_at'],
+      claimedAt: json['claimed_at'],
+      claimedAtFormatted: json['claimed_at_formatted'],
+      d4SubSelection: json['d4_sub_selection'],
+      isWinner: json['is_winner'],
       gameType: json['game_type'] != null 
           ? GameType.fromJson(json['game_type']) 
           : null,
@@ -103,6 +115,10 @@ class Bet {
       betDate: map['bet_date'],
       betDateFormatted: map['bet_date_formatted'],
       createdAt: map['created_at'],
+      claimedAt: map['claimed_at'],
+      claimedAtFormatted: map['claimed_at_formatted'],
+      d4SubSelection: map['d4_sub_selection'],
+      isWinner: map['is_winner'],
       gameType: map['game_type'] != null 
           ? GameType.fromMap(map['game_type'] as Map) 
           : null,
@@ -133,6 +149,10 @@ class Bet {
       'bet_date': betDate,
       'bet_date_formatted': betDateFormatted,
       'created_at': createdAt,
+      'claimed_at': claimedAt,
+      'claimed_at_formatted': claimedAtFormatted,
+      'd4_sub_selection': d4SubSelection,
+      'is_winner': isWinner,
       'game_type': gameType?.toMap(),
       'draw': draw?.toMap(),
       'teller': teller?.toMap(),
@@ -152,6 +172,10 @@ class Bet {
     String? betDate,
     String? betDateFormatted,
     String? createdAt,
+    String? claimedAt,
+    String? claimedAtFormatted,
+    String? d4SubSelection,
+    bool? isWinner,
     GameType? gameType,
     Draw? draw,
     User? teller,
@@ -169,6 +193,10 @@ class Bet {
       betDate: betDate ?? this.betDate,
       betDateFormatted: betDateFormatted ?? this.betDateFormatted,
       createdAt: createdAt ?? this.createdAt,
+      claimedAt: claimedAt ?? this.claimedAt,
+      claimedAtFormatted: claimedAtFormatted ?? this.claimedAtFormatted,
+      d4SubSelection: d4SubSelection ?? this.d4SubSelection,
+      isWinner: isWinner ?? this.isWinner,
       gameType: gameType ?? this.gameType,
       draw: draw ?? this.draw,
       teller: teller ?? this.teller,

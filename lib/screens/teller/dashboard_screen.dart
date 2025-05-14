@@ -372,11 +372,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFFFFC107),
                 route: AppRoutes.cancelBet,
               ),
-               DashboardCard(
-                title: 'CLAIM',
+               
+              
+              DashboardCard(
+                title: 'CLAIMED BET',
                 icon: Icons.monetization_on,
                 color: const Color(0xFFE57373),
-                route: AppRoutes.claim,
+                route: AppRoutes.claimedBets,
+              ),
+              
+              DashboardCard(
+                title: 'WINNING BETS (HITS)',
+                icon: Icons.emoji_events,
+                color: const Color(0xFF4CAF50),
+                route: AppRoutes.winningBets,
               ),
               
               // Equipment & Reports
