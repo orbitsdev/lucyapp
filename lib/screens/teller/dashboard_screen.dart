@@ -366,10 +366,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               
               DashboardCard(
-                title: 'WINNING BETS (HITS)',
+                title:  'HITS & CLAIM',
                 icon: Icons.emoji_events,
                 color: const Color(0xFF4CAF50),
-                route: AppRoutes.winningBets,
+                route: AppRoutes.hitsAndClaim,
               ),
              
               DashboardCard(

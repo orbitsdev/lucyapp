@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:bettingapp/controllers/betting_controller.dart';
-import 'package:bettingapp/controllers/dropdown_controller.dart';
-import 'package:bettingapp/models/bet.dart';
-import 'package:bettingapp/utils/app_colors.dart';
-import 'package:bettingapp/widgets/common/local_lottie_image.dart';
-import 'package:bettingapp/widgets/common/modal.dart';
-import 'package:bettingapp/widgets/common/qr_scanner.dart';
+
+import '../../controllers/betting_controller.dart';
+import '../../controllers/dropdown_controller.dart';
+import '../../utils/app_colors.dart';
+import '../../models/bet.dart';
+import '../../models/draw.dart';
+import '../../models/game_type.dart';
+import '../../widgets/common/modal.dart';
+import '../../widgets/common/local_lottie_image.dart';
+import '../../widgets/common/qr_scanner.dart';
 
 /// Defines the fixed column widths for the winning bet list table
 class TableColumnWidths {
@@ -22,14 +25,14 @@ class TableColumnWidths {
   static const double totalWidth = typeWidth + betNumberWidth + amountWidth + ticketIdWidth + dateWidth + statusWidth;
 }
 
-class WinningBetsScreen extends StatefulWidget {
-  const WinningBetsScreen({Key? key}) : super(key: key);
+class HitsAndClaimScreen extends StatefulWidget {
+  const HitsAndClaimScreen({Key? key}) : super(key: key);
 
   @override
-  State<WinningBetsScreen> createState() => _WinningBetsScreenState();
+  State<HitsAndClaimScreen> createState() => _HitsAndClaimScreenState();
 }
 
-class _WinningBetsScreenState extends State<WinningBetsScreen> {
+class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
   final BettingController bettingController = Get.find<BettingController>();
   final DropdownController dropdownController = Get.find<DropdownController>();
   final RxString searchQuery = ''.obs;
@@ -44,6 +47,9 @@ class _WinningBetsScreenState extends State<WinningBetsScreen> {
   
   // Track the currently selected row for highlighting
   final RxInt selectedRowIndex = RxInt(-1);
+  
+  // Debounce worker for search
+  Worker? _searchDebounce;
 
   @override
   void initState() {
@@ -64,6 +70,7 @@ class _WinningBetsScreenState extends State<WinningBetsScreen> {
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
     horizontalScrollController.dispose();
+    _searchDebounce?.dispose();
     super.dispose();
   }
   
@@ -635,18 +642,22 @@ class _WinningBetsScreenState extends State<WinningBetsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        title: const Text('Hits and Claim'),
         backgroundColor: AppColors.primaryRed,
-        title: const Text(
-          'Winning Bets (Hits)',
-          style: TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchWinningBets,
+            tooltip: 'Refresh',
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
-            tooltip: 'Filter Bets',
+            tooltip: 'Filter',
           ),
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
@@ -660,96 +671,312 @@ class _WinningBetsScreenState extends State<WinningBetsScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Column(
         children: [
-          // Search bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search by ticket ID or bet number',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+          
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    onSubmitted: (value) {
-                      searchQuery.value = value;
-                      _fetchWinningBets();
-                    },
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    searchQuery.value = searchController.text;
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Ticket Number',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: ticketIdController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter ticket number',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.qr_code_scanner),
+                          tooltip: 'Scan QR',
+                          onPressed: _showQRScanner,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Obx(() => ElevatedButton.icon(
+                        onPressed: bettingController.isClaimingBet?.value == true
+                            ? null
+                            : () => _showClaimConfirmation(),
+                        icon: bettingController.isClaimingBet?.value == true
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.emoji_events_outlined, size: 20),
+                        label: Text(
+                          bettingController.isClaimingBet?.value == true ? 'PROCESSING...' : 'CLAIM BET',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          disabledBackgroundColor: Colors.green.withOpacity(0.5),
+                          elevation: 1,
+                        ),
+                      )),
+                    ),
+                  ],
+                ),
+              ),
+              // --- SEARCH BAR ---
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+                child: TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search by ticket ID or bet number',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        searchController.clear();
+                        searchQuery.value = '';
+                        _fetchWinningBets();
+                      },
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                  onSubmitted: (value) {
+                    searchQuery.value = value;
                     _fetchWinningBets();
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Search'),
+                  textInputAction: TextInputAction.search,
                 ),
-              ],
-            ),
-          ),
+              ),
           
-          // Active filters
-          _buildActiveFilters(),
-          
-          // Winning bets list
-          Expanded(
-            child: Obx(() {
-              if (bettingController.isLoadingWinningBets.value) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              
-              if (bettingController.winningBets.isEmpty) {
-                return Center(
+              Obx(() {
+                final hasFilters = selectedDate.value != null ||
+                    selectedDrawId.value != -1 ||
+                    selectedGameTypeId.value != -1 ||
+                    searchQuery.value.isNotEmpty ||
+                    showOnlyUnclaimed.value;
+                    
+                if (!hasFilters) return const SizedBox.shrink();
+                
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      LocalLottieImage(
-                        path: 'assets/animations/empty.json',
-                        width: 200,
-                        height: 200,
-                        repeat: false,
+                      Row(
+                        children: [
+                          Text(
+                            'Active Filters',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              selectedDate.value = null;
+                              selectedDrawId.value = -1;
+                              selectedGameTypeId.value = -1;
+                              searchQuery.value = '';
+                              showOnlyUnclaimed.value = true;
+                              _fetchWinningBets();
+                            },
+                            child: const Text('Clear All'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No winning bets found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        onPressed: _fetchWinningBets,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Refresh'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryRed,
-                          foregroundColor: Colors.white,
-                        ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (selectedDate.value != null)
+                            Chip(
+                              label: Text(
+                                'Date: ${DateFormat('MMM dd, yyyy').format(
+                                  DateTime.parse(selectedDate.value!)
+                                )}',
+                              ),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              onDeleted: () {
+                                selectedDate.value = null;
+                                _fetchWinningBets();
+                              },
+                            ),
+                          if (selectedDrawId.value != -1)
+                            Chip(
+                              label: Text(
+                                'Draw: ${bettingController.availableDraws
+                                  .firstWhere(
+                                    (draw) => draw.id == selectedDrawId.value,
+                                    orElse: () => Draw(id: 0, drawTimeFormatted: 'Unknown')
+                                  ).drawTimeFormatted ?? 'Unknown'}'
+                              ),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              onDeleted: () {
+                                selectedDrawId.value = -1;
+                                _fetchWinningBets();
+                              },
+                            ),
+                          if (selectedGameTypeId.value != -1)
+                            Chip(
+                              label: Text(
+                                'Bet Type: ${dropdownController.gameTypes
+                                  .firstWhereOrNull((type) => type.id == selectedGameTypeId.value)?.name ?? 'Unknown'}'
+                              ),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              onDeleted: () {
+                                selectedGameTypeId.value = -1;
+                                _fetchWinningBets();
+                              },
+                            ),
+                          if (searchQuery.value.isNotEmpty)
+                            Chip(
+                              label: Text('Search: ${searchQuery.value}'),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              onDeleted: () {
+                                searchQuery.value = '';
+                                searchController.clear();
+                                _fetchWinningBets();
+                              },
+                            ),
+                          if (showOnlyUnclaimed.value)
+                            Chip(
+                              label: const Text('Status: Unclaimed Only'),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              onDeleted: () {
+                                showOnlyUnclaimed.value = false;
+                                _fetchWinningBets();
+                              },
+                            ),
+                        ],
                       ),
                     ],
                   ),
                 );
-              }
+              }),
               
-              // Table with single scrollable area for both header and body
-              return Container(
+              // --- WINNING BETS COUNT ---
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Winning Bets',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Obx(() => Text(
+                        '${bettingController.winningBets.length}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      )),
+                    ),
+                  ],
+                ),
+              ),
+          
+              // --- WINNING BETS LIST ---
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.primaryRed,
+                  onRefresh: () async => _fetchWinningBets(),
+                  child: Obx(() {
+                    if (bettingController.isLoadingWinningBets.value && 
+                        bettingController.winningBets.isEmpty) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                  
+                    
+                    if (bettingController.winningBets.isEmpty) {
+                      return Center(
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const LocalLottieImage(
+                                  path: 'assets/animations/empty_state.json',
+                                  width: 150,
+                                  height: 150,
+                                  repeat: true,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No winning bets found',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Winning bets will appear here',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                  return  Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -994,8 +1221,8 @@ class _WinningBetsScreenState extends State<WinningBetsScreen> {
               );
             }),
           ),
-        ],
+          )],
       ),
-    );
+    )));
   }
 }
