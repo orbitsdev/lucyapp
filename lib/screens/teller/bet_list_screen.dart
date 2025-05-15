@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -651,11 +652,15 @@ class _BetListScreenState extends State<BetListScreen> {
                                             ),
                                             child: InkWell(
                                               onTap: () {
+                                                // Toggle row selection
                                                 if (selectedRowIndex.value == index) {
                                                   selectedRowIndex.value = -1;
                                                 } else {
                                                   selectedRowIndex.value = index;
                                                 }
+                                                
+                                                // Show bet details modal
+                                                _showBetDetails(bet);
                                               },
                                               child: Row(
                                                 children: [
@@ -913,27 +918,27 @@ class _BetListScreenState extends State<BetListScreen> {
 
   // Method to handle printing bet ticket
   void _printBetTicket(bet) async {
-    // Show confirmation dialog first
-    final shouldPrint = await Get.dialog<bool>(
-      AlertDialog(
-        title: const Text('Print Bet Ticket'),
-        content: const Text('Do you want to print this bet ticket?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Get.back(result: true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.printerColor,
-            ),
-            child: const Text('Print'),
-          ),
-        ],
-      ),
-    ) ?? false;
+    // Show confirmation dialog using the app's Modal system
+    Completer<bool> completer = Completer<bool>();
     
+    Modal.showConfirmationModal(
+      title: 'Print Bet Ticket',
+      message: 'Do you want to print this bet ticket?\n\n'
+              'Ticket ID: ${bet.ticketId}\n'
+              'Bet Number: ${bet.betNumber}\n'
+              'Amount: ₱${bet.amount?.toInt() ?? bet.amount}\n',
+      confirmText: 'Print',
+      cancelText: 'Cancel',
+      animation: 'assets/animations/questionmark.json',
+      onConfirm: () {
+        completer.complete(true);
+      },
+      onCancel: () {
+        completer.complete(false);
+      },
+    );
+    
+    bool shouldPrint = await completer.future;
     if (!shouldPrint) return;
     
     // Check if connected to a printer
@@ -945,30 +950,46 @@ class _BetListScreenState extends State<BetListScreen> {
     }
     
     if (!isConnected) {
+      Completer<bool> setupCompleter = Completer<bool>();
+      
       Modal.showConfirmationModal(
         title: 'Printer Not Connected',
         message: 'You need to connect to a printer first. Would you like to set up a printer now?',
         confirmText: 'Setup Printer',
         cancelText: 'Cancel',
         animation: 'assets/animations/questionmark.json',
-        onConfirm: () async {
-          await Get.to(() => const PrinterSetupScreen());
-          // Check connection again after returning from setup screen
-          try {
-            isConnected = await BluetoothPrintPlus.isConnected;
-            if (isConnected) {
-              // If now connected, try printing again
-              _printBetTicket(bet);
-            }
-          } catch (e) {
-            // Error checking connection
-            Modal.showErrorModal(
-              title: 'Connection Error',
-              message: 'Could not verify printer connection. Please try again.',
-            );
-          }
+        onConfirm: () {
+          setupCompleter.complete(true);
+        },
+        onCancel: () {
+          setupCompleter.complete(false);
         },
       );
+      
+      bool shouldSetupPrinter = await setupCompleter.future;
+      
+      if (shouldSetupPrinter) {
+        await Get.to(() => const PrinterSetupScreen());
+        // Check connection again after returning from setup screen
+        try {
+          isConnected = await BluetoothPrintPlus.isConnected;
+          if (isConnected) {
+            // If now connected, try printing again
+            _printBetTicket(bet);
+          } else {
+            Modal.showErrorModal(
+              title: 'Printer Not Connected',
+              message: 'Could not connect to a printer. Please try again.',
+            );
+          }
+        } catch (e) {
+          // Error checking connection
+          Modal.showErrorModal(
+            title: 'Connection Error',
+            message: 'Could not verify printer connection. Please try again.',
+          );
+        }
+      }
       return;
     }
     
