@@ -1,10 +1,13 @@
 import 'dart:typed_data';
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:bluetooth_print_plus/bluetooth_print_plus.dart';
 import 'package:bettingapp/utils/app_colors.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../services/printer_service.dart';
 
 class PrinterSetupScreen extends StatefulWidget {
   const PrinterSetupScreen({super.key});
@@ -21,11 +24,69 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
   late StreamSubscription<Uint8List> _receivedDataSubscription;
   late StreamSubscription<List<BluetoothDevice>> _scanResultsSubscription;
   List<BluetoothDevice> _scanResults = [];
+  
+  // Track connection state
+  bool _isConnecting = false;
+  bool _isConnected = false;
+  String _lastConnectedAddress = "";
 
   @override
   void initState() {
     super.initState();
     initBluetoothPrintPlusListen();
+    _loadSavedPrinter();
+  }
+  
+  // Load saved printer from SharedPreferences
+  Future<void> _loadSavedPrinter() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedAddress = prefs.getString('printer_address');
+      final savedName = prefs.getString('printer_name');
+      
+      if (savedAddress != null && savedAddress.isNotEmpty) {
+        setState(() {
+          _lastConnectedAddress = savedAddress;
+        });
+        
+        // Try to connect to the saved printer
+        if (await BluetoothPrintPlus.isBlueOn) {
+          // Start scanning for printers
+          await BluetoothPrintPlus.startScan(timeout: const Duration(seconds: 5));
+          
+          // Wait for scan results and then try to connect to the saved printer
+          await Future.delayed(const Duration(seconds: 2));
+          
+          // Create a device with the saved address and name
+          // This is a workaround since we can't easily iterate through the scan results
+          final savedDevice = BluetoothDevice(
+            savedName ?? 'Unknown Printer',
+            savedAddress,
+          );
+          
+          // Try to connect to the saved printer
+          _connectToDevice(savedDevice);
+        }
+      }
+    } catch (e) {
+      print('Error loading saved printer: $e');
+    }
+  }
+  
+  // Save printer to SharedPreferences
+  Future<void> _savePrinter(BluetoothDevice device) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('printer_address', device.address);
+      await prefs.setString('printer_name', device.name);
+      
+      // Update the saved printer info
+      setState(() {
+        _lastConnectedAddress = device.address;
+      });
+    } catch (e) {
+      print('Error saving printer: $e');
+    }
   }
 
   @override
@@ -46,6 +107,18 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
         setState(() {
           _scanResults = event;
         });
+        
+        // If we have a saved printer in the scan results, try to auto-connect
+        if (_lastConnectedAddress.isNotEmpty && !_isConnected && !_isConnecting) {
+          final savedDevice = event.firstWhereOrNull(
+            (device) => device.address == _lastConnectedAddress
+          );
+          
+          if (savedDevice != null) {
+            // Auto-connect to the saved printer
+            _connectToDevice(savedDevice);
+          }
+        }
       }
     });
 
@@ -68,51 +141,35 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
     /// listen connect state
     _connectStateSubscription = BluetoothPrintPlus.connectState.listen((event) {
       print('********** connectState change: $event **********');
-      switch (event) {
-        case ConnectState.connected:
+      if (event == ConnectState.connected) {
+        if (_device != null) {
+          // Save the connected printer
+          _savePrinter(_device!);
+          
+          // Update connection state
           setState(() {
-            if (_device == null) return;
-            // Create a simple function page for testing
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => Scaffold(
-                      appBar: AppBar(title: Text('Printer Functions')),
-                      body: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Connected to: ${_device!.name}'),
-                            Text('Address: ${_device!.address}'),
-                            SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () async {
-                                try {
-                                  // Simple test print command
-                                  final List<int> bytes = [];
-                                  // Initialize printer
-                                  bytes.addAll([27, 64]);
-                                  // Text
-                                  bytes.addAll(utf8.encode('TEST PRINT\n'));
-                                  // Print
-                                  await BluetoothPrintPlus.write(Uint8List.fromList(bytes));
-                                } catch (e) {
-                                  print('Error printing: $e');
-                                }
-                              },
-                              child: Text('Print Test'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )));
+            _isConnected = true;
+            _isConnecting = false;
+            _lastConnectedAddress = _device!.address;
           });
-          break;
-        case ConnectState.disconnected:
-          setState(() {
-            _device = null;
-          });
-          break;
+          
+          // Show success message
+          Get.snackbar(
+            'Printer Connected', 
+            'Successfully connected to ${_device!.name}',
+            backgroundColor: Colors.green.shade100,
+            colorText: Colors.green.shade800,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 2),
+          );
+        }
+      } else {
+        // Any other state means not connected
+        setState(() {
+          _isConnected = false;
+          _isConnecting = false;
+        });
       }
     });
 
@@ -124,14 +181,27 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
     });
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text('PRINTER SETUP'),
-        backgroundColor: AppColors.printerColor,
+        backgroundColor: AppColors.primaryRed,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white,),
+          onPressed: () => Get.back(),
+        ),
         actions: [
+          _isConnected
+            ? IconButton(
+                icon: const Icon(Icons.print),
+                onPressed: () => PrinterService().printTestPage(),
+                tooltip: 'Test Print',
+              )
+            : const SizedBox.shrink(),
           BluetoothPrintPlus.isScanningNow
               ? Container(
                   margin: const EdgeInsets.only(right: 16),
@@ -293,14 +363,15 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side: BorderSide(
-                        color: isConnected ? AppColors.printerColor : Colors.transparent,
+                        color: (_isConnected && device.address == _lastConnectedAddress)
+                            ? AppColors.primaryRed 
+                            : Colors.transparent,
                         width: 2,
                       ),
                     ),
                     child: InkWell(
-                      onTap: () async {
-                        _device = device;
-                        await BluetoothPrintPlus.connect(device);
+                      onTap: () {
+                        _connectToDevice(device);
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
@@ -350,46 +421,89 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
                             ),
                             
                             // Connection Status
-                            isConnected
-                                ? Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade100,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.check_circle,
-                                          color: Colors.green.shade700,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Connected',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.green.shade700,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : OutlinedButton(
-                                    onPressed: () async {
-                                      _device = device;
-                                      await BluetoothPrintPlus.connect(device);
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.printerColor,
-                                      side: BorderSide(color: AppColors.printerColor),
-                                    ),
-                                    child: const Text('Connect'),
+                            Builder(builder: (context) {
+                              if (_isConnected && device.address == _lastConnectedAddress) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade100,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green.shade700,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Connected',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.green.shade700,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else if (_isConnecting && _device?.address == device.address) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade100,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.amber.shade700,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Connecting...',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.amber.shade700,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else if (!_isConnected && device.address == _lastConnectedAddress) {
+                                return OutlinedButton(
+                                  onPressed: () => _connectToDevice(device),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.amber.shade800,
+                                    side: BorderSide(color: Colors.amber.shade800),
+                                  ),
+                                  child: const Text('Reconnect'),
+                                );
+                              } else {
+                                return OutlinedButton(
+                                  onPressed: () => _connectToDevice(device),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.primaryRed,
+                                    side: BorderSide(color: AppColors.primaryRed),
+                                  ),
+                                  child: const Text('Connect'),
+                                );
+                              }
+                            }),
+                            
                           ],
                         ),
                       ),
@@ -403,7 +517,7 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
       floatingActionButton: BluetoothPrintPlus.isBlueOn && !BluetoothPrintPlus.isScanningNow
           ? FloatingActionButton(
               onPressed: onScanPressed,
-              backgroundColor: AppColors.printerColor,
+              backgroundColor: AppColors.primaryRed,
               child: Icon(Icons.refresh),
             )
           : null,
@@ -435,19 +549,63 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
     }
   }
 
+  // Connect to a device with loading state
+  Future<void> _connectToDevice(BluetoothDevice device) async {
+    try {
+      // Set connecting state
+      setState(() {
+        _isConnecting = true;
+        _device = device;
+      }); // Update UI to show connecting state
+      
+      // Try to connect
+      await BluetoothPrintPlus.connect(device);
+      
+      // Connection state will be updated by the listener
+    } catch (e) {
+      print('Error connecting to printer: $e');
+      setState(() {
+        _isConnecting = false;
+      });
+      
+      // Show error message
+      Get.snackbar(
+        'Connection Failed', 
+        'Could not connect to ${device.name}. Please try again.',
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade800,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+  
+
+
   Future onScanPressed() async {
     try {
       await BluetoothPrintPlus.startScan(timeout: Duration(seconds: 10));
     } catch (e) {
       print("onScanPressed error: $e");
+      Get.snackbar(
+        'Scan Error', 
+        'Could not scan for printers: $e',
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade800,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: EdgeInsets.all(16),
+      );
     }
   }
 
   Future onStopPressed() async {
+
     try {
       BluetoothPrintPlus.stopScan();
     } catch (e) {
       print("onStopPressed error: $e");
     }
+    
   }
+
 }

@@ -60,6 +60,9 @@ class BettingController extends GetxController {
   final Rx<double> betAmount = 0.0.obs;
   final RxBool isCombination = false.obs;
   
+  // Last placed bet ticket ID
+  final RxString lastPlacedTicketId = ''.obs;
+  
   // Search and filter
   final RxString searchQuery = ''.obs;
   final Rx<String?> selectedDate = Rx<String?>(null);
@@ -84,6 +87,7 @@ class BettingController extends GetxController {
     betNumber.value = '';
     betAmount.value = 0.0;
     isCombination.value = false;
+    // Don't reset lastPlacedTicketId here as it might be needed for printing
   }
   
   // Fetch available draws for betting
@@ -173,13 +177,14 @@ class BettingController extends GetxController {
   }
   
   // Place a new bet
-  Future<bool> placeBet() async {
+  // Returns the bet data if successful, null otherwise
+  Future<Map<String, dynamic>?> placeBet() async {
     if (betNumber.value.isEmpty) {
       Modal.showErrorModal(
         title: 'Validation Error',
         message: 'Please enter a bet number',
       );
-      return false;
+      return null;
     }
     
     if (betAmount.value <= 0) {
@@ -187,7 +192,7 @@ class BettingController extends GetxController {
         title: 'Validation Error',
         message: 'Please enter a valid bet amount',
       );
-      return false;
+      return null;
     }
     
     if (selectedGameTypeId.value == null) {
@@ -195,7 +200,7 @@ class BettingController extends GetxController {
         title: 'Validation Error',
         message: 'Please select a game type',
       );
-      return false;
+      return null;
     }
     
     if (selectedDrawId.value == null) {
@@ -203,7 +208,7 @@ class BettingController extends GetxController {
         title: 'Validation Error',
         message: 'Please select a draw',
       );
-      return false;
+      return null;
     }
     
     isPlacingBet.value = true;
@@ -235,7 +240,7 @@ class BettingController extends GetxController {
             title: 'Error Placing Bet',
             message: error.message,
           );
-          return false;
+          return null;
         },
         (response) {
           print('------------------');
@@ -251,6 +256,9 @@ class BettingController extends GetxController {
             final ticketId = betData['ticket_id']?.toString() ?? 'Unknown';
             final betNumber = betData['bet_number']?.toString() ?? 'Unknown';
             final amount = betData['amount'];
+            
+            // Store the ticket ID for later use (e.g., printing)
+            lastPlacedTicketId.value = ticketId;
             
             // Format amount with proper currency using our smart formatter
             final formattedAmount = 'PHP ${formatAmount(amount)}';
@@ -277,13 +285,13 @@ class BettingController extends GetxController {
             
             // Reset form
             resetBetForm();
-            return true;
+            return Map<String, dynamic>.from(betData);
           } else {
             Modal.showErrorModal(
               title: 'Error Processing Response',
               message: 'Could not process the server response',
             );
-            return false;
+            return null;
           }
         },
       );
@@ -292,7 +300,7 @@ class BettingController extends GetxController {
         title: 'Error',
         message: 'Failed to place bet: ${e.toString()}',
       );
-      return false;
+      return null;
     } finally {
       isPlacingBet.value = false;
     }

@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:bluetooth_print_plus/bluetooth_print_plus.dart';
 
 import '../../controllers/betting_controller.dart';
 import '../../controllers/report_controller.dart';
@@ -15,7 +12,7 @@ import '../../models/draw.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/common/local_lottie_image.dart';
 import '../../widgets/common/modal.dart';
-import '../teller/printer_setup_screen.dart';
+import '../../services/printer_service.dart';
 
 class BetListScreen extends StatefulWidget {
   const BetListScreen({super.key});
@@ -941,176 +938,27 @@ class _BetListScreenState extends State<BetListScreen> {
     bool shouldPrint = await completer.future;
     if (!shouldPrint) return;
     
-    // Check if connected to a printer
-    bool isConnected = false;
-    try {
-      isConnected = await BluetoothPrintPlus.isConnected;
-    } catch (e) {
-      isConnected = false;
-    }
+    // Get current user info if available
+    final authController = Get.find<AuthController>();
+    final String tellerName = authController.user.value?.name ?? 'Unknown Teller';
+    final String tellerUsername = authController.user.value?.username ?? '';
+    final String locationName = authController.user.value?.location?.name ?? 'Unknown Location';
     
-    if (!isConnected) {
-      Completer<bool> setupCompleter = Completer<bool>();
-      
-      Modal.showConfirmationModal(
-        title: 'Printer Not Connected',
-        message: 'You need to connect to a printer first. Would you like to set up a printer now?',
-        confirmText: 'Setup Printer',
-        cancelText: 'Cancel',
-        animation: 'assets/animations/questionmark.json',
-        onConfirm: () {
-          setupCompleter.complete(true);
-        },
-        onCancel: () {
-          setupCompleter.complete(false);
-        },
-      );
-      
-      bool shouldSetupPrinter = await setupCompleter.future;
-      
-      if (shouldSetupPrinter) {
-        await Get.to(() => const PrinterSetupScreen());
-        // Check connection again after returning from setup screen
-        try {
-          isConnected = await BluetoothPrintPlus.isConnected;
-          if (isConnected) {
-            // If now connected, try printing again
-            _printBetTicket(bet);
-          } else {
-            Modal.showErrorModal(
-              title: 'Printer Not Connected',
-              message: 'Could not connect to a printer. Please try again.',
-            );
-          }
-        } catch (e) {
-          // Error checking connection
-          Modal.showErrorModal(
-            title: 'Connection Error',
-            message: 'Could not verify printer connection. Please try again.',
-          );
-        }
-      }
-      return;
-    }
-    
-    try {
-      // Show loading dialog
-      Modal.showProgressModal(
-        title: 'Printing Ticket',
-        message: 'Please wait while the ticket is being printed...',
-      );
-      
-      // Get current user info if available
-      final authController = Get.find<AuthController>();
-      final String tellerName = authController.user.value?.name ?? 'Unknown Teller';
-      final String tellerUsername = authController.user.value?.username ?? '';
-      final String locationName = authController.user.value?.location?.name ?? 'Unknown Location';
-      
-      // Generate receipt content
-      final List<int> bytes = [];
-      
-      // Initialize printer
-      bytes.addAll([27, 64]); // ESC @
-      
-      // Center align
-      bytes.addAll([27, 97, 1]); // ESC a 1
-      
-      // Bold on
-      bytes.addAll([27, 69, 1]); // ESC E 1
-      
-      // Title
-      bytes.addAll(utf8.encode('BETTING RECEIPT\n'));
-      
-      // Bold off
-      bytes.addAll([27, 69, 0]); // ESC E 0
-      
-      // Company name
-      bytes.addAll([27, 33, 16]); // ESC ! 16 (Double height)
-      bytes.addAll(utf8.encode('LUCY BETTING\n'));
-      bytes.addAll([27, 33, 0]); // ESC ! 0 (Normal)
-      
-      // Location
-      bytes.addAll(utf8.encode('$locationName\n'));
-      bytes.addAll(utf8.encode('--------------------------------\n'));
-      
-      // Left align
-      bytes.addAll([27, 97, 0]); // ESC a 0
-      
-      // QR code for ticket ID (if supported by printer)
-      // Center align for QR code
-      bytes.addAll([27, 97, 1]); // ESC a 1
-      
-      // QR Code - Model 2
-      bytes.addAll([29, 40, 107, 3, 0, 49, 65, 50, 0]); // GS ( k 3 0 49 65 50 0
-      // QR Code - Set size (6)
-      bytes.addAll([29, 40, 107, 3, 0, 49, 67, 6, 0]); // GS ( k 3 0 49 67 6 0
-      // QR Code - Set error correction level (48 - L)
-      bytes.addAll([29, 40, 107, 3, 0, 49, 69, 48, 0]); // GS ( k 3 0 49 69 48 0
-      // QR Code - Store data in symbol storage area
-      final qrData = bet.ticketId ?? 'Unknown';
-      bytes.addAll([29, 40, 107, qrData.length + 3, 0, 49, 80, 48]); // GS ( k (data length + 3) 0 49 80 48
-      bytes.addAll(utf8.encode(qrData));
-      // QR Code - Print symbol data in symbol storage area
-      bytes.addAll([29, 40, 107, 3, 0, 49, 81, 48, 0]); // GS ( k 3 0 49 81 48 0
-      
-      // Add some space after QR code
-      bytes.addAll(utf8.encode('\n'));
-      
-      // Left align for details
-      bytes.addAll([27, 97, 0]); // ESC a 0
-      
-      // Add ticket details
-      bytes.addAll(utf8.encode('--------------------------------\n'));
-      bytes.addAll(utf8.encode('Ticket ID: ${bet.ticketId}\n'));
-      bytes.addAll(utf8.encode('Bet Number: ${bet.betNumber}\n'));
-      bytes.addAll(utf8.encode('Amount: ₱${bet.amount?.toInt() ?? bet.amount}\n'));
-      bytes.addAll(utf8.encode('Game Type: ${bet.gameType?.name ?? 'Unknown'}\n'));
-      bytes.addAll(utf8.encode('Draw Time: ${bet.draw?.drawTimeFormatted ?? 'Unknown'}\n'));
-      bytes.addAll(utf8.encode('Date: ${bet.betDateFormatted ?? 'Unknown'}\n'));
-      bytes.addAll(utf8.encode('Status: ${bet.isRejected == true ? 'Cancelled' : (bet.isClaimed == true ? 'Claimed' : 'Active')}\n'));
-      bytes.addAll(utf8.encode('--------------------------------\n'));
-      
-      // Add teller information
-      bytes.addAll(utf8.encode('Teller: $tellerName\n'));
-      if (tellerUsername.isNotEmpty) {
-        bytes.addAll(utf8.encode('ID: $tellerUsername\n'));
-      }
-      bytes.addAll(utf8.encode('Printed: ${DateFormat('MM/dd/yyyy hh:mm a').format(DateTime.now())}\n'));
-      bytes.addAll(utf8.encode('--------------------------------\n'));
-      
-      // Center align for footer
-      bytes.addAll([27, 97, 1]); // ESC a 1
-      
-      // Bold on for watermark
-      bytes.addAll([27, 69, 1]); // ESC E 1
-      bytes.addAll(utf8.encode('REPRINT - NOT FOR BETTING\n'));
-      bytes.addAll([27, 69, 0]); // ESC E 0
-      
-      bytes.addAll(utf8.encode('Thank you for playing!\n'));
-      bytes.addAll(utf8.encode('www.lucybetting.com\n\n'));
-      
-      // Cut paper
-      bytes.addAll([29, 86, 66, 0]); // GS V B 0
-      
-      // Send to printer
-      await BluetoothPrintPlus.write(Uint8List.fromList(bytes));
-      
-      // Close dialog and show success message
-      Modal.closeDialog();
-      Modal.showSuccessModal(
-        title: 'Printing Complete',
-        message: 'The ticket has been sent to the printer.',
-        showButton: true,
-        buttonText: 'OK',
-      );
-    } catch (e) {
-      // Close dialog and show error message
-      Modal.closeDialog();
-      Modal.showErrorModal(
-        title: 'Printing Failed',
-        message: 'Failed to print the ticket. Error: $e',
-      );
-    }
+    // Use the printer service to print the ticket
+    final printerService = PrinterService();
+    await printerService.printBetTicket(
+      ticketId: bet.ticketId ?? 'Unknown',
+      betNumber: bet.betNumber ?? 'Unknown',
+      amount: bet.amount,
+      gameTypeName: bet.gameType?.name ?? 'Unknown',
+      drawTime: bet.draw?.drawTimeFormatted ?? 'Unknown',
+      betDate: bet.betDateFormatted ?? 'Unknown',
+      status: bet.isRejected == true ? 'Cancelled' : (bet.isClaimed == true ? 'Claimed' : 'Active'),
+      tellerName: tellerName,
+      tellerUsername: tellerUsername,
+      locationName: locationName,
+      isReprint: true, // This is a reprint from bet list
+    );
   }
 }
           
