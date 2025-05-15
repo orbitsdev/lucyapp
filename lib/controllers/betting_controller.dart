@@ -726,7 +726,7 @@ class BettingController extends GetxController {
 
     try {
       final result = await _dioService.authPost<void>(
-        '${ApiConfig.claimBetByTicketId}$ticketId',
+        '${ApiConfig.claimBetByTicketId}/$ticketId',
         fromJson: (_) => null,
       );
 

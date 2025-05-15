@@ -438,7 +438,11 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
       () => QrScannerPage(
         onScanned: (ticket) {
           ticketIdController.text = ticket;
-          _showClaimConfirmation();
+          // The QR scanner will automatically close due to Get.back() in the QrScannerPage
+          // We just need to show the claim confirmation after returning
+          Future.delayed(const Duration(milliseconds: 300), () {
+            _showClaimConfirmation();
+          });
         },
         title: 'Scan Winning Ticket',
       ),
