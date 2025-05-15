@@ -22,10 +22,67 @@ class PrinterService {
   final RxBool isConnected = false.obs;
   final RxString lastConnectedAddress = "".obs;
   final RxString lastConnectedName = "".obs;
+  final RxBool isScanning = false.obs;
+  final RxBool isConnecting = false.obs;
   
   // Initialize printer service
   Future<void> init() async {
     await _loadSavedPrinter();
+    
+    // Set up connection state listener
+    BluetoothPrintPlus.connectState.listen((state) {
+      isConnected.value = state == ConnectState.connected;
+      // Update connecting state based on the connection state
+      // ConnectState can be: connected, disconnected, or other intermediate states
+      isConnecting.value = state != ConnectState.connected && state != ConnectState.disconnected;
+      debugPrint('Printer connection state changed: $state');
+    });
+    
+    // Set up scanning state listener
+    BluetoothPrintPlus.isScanning.listen((scanning) {
+      isScanning.value = scanning;
+      debugPrint('Printer scanning state changed: $scanning');
+    });
+    
+    // Try to auto-connect on startup if Bluetooth is available
+    _autoConnectIfPossible();
+  }
+  
+  // Auto-connect to saved printer if possible
+  Future<void> _autoConnectIfPossible() async {
+    try {
+      // Check if Bluetooth is on and we have a saved printer
+      final isBlueOn = await BluetoothPrintPlus.isBlueOn;
+      if (isBlueOn && lastConnectedAddress.value.isNotEmpty) {
+        debugPrint('Auto-scanning for printers on startup...');
+        
+        // Start scanning for printers
+        await BluetoothPrintPlus.startScan(timeout: const Duration(seconds: 5));
+        
+        // Wait a moment for scan results
+        await Future.delayed(const Duration(seconds: 2));
+        
+        // Check if already connected
+        final alreadyConnected = await BluetoothPrintPlus.isConnected;
+        if (!alreadyConnected) {
+          // Try to connect to the saved printer
+          final savedDevice = BluetoothDevice(
+            lastConnectedName.value.isNotEmpty ? lastConnectedName.value : 'Saved Printer',
+            lastConnectedAddress.value
+          );
+          
+          debugPrint('Attempting to auto-connect to saved printer: ${savedDevice.name}');
+          await connectToPrinter(savedDevice);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in auto-connect: $e');
+    } finally {
+      // Stop scanning if it's still going
+      if (isScanning.value) {
+        BluetoothPrintPlus.stopScan();
+      }
+    }
   }
   
   // Load saved printer from SharedPreferences
@@ -54,12 +111,107 @@ class PrinterService {
     }
   }
   
+  // Save printer to SharedPreferences
+  Future<void> _savePrinterToPrefs(String address, String name) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('printer_address', address);
+      await prefs.setString('printer_name', name);
+      debugPrint('Saved printer to preferences: $name ($address)');
+    } catch (e) {
+      debugPrint('Error saving printer to preferences: $e');
+    }
+  }
+  
+  // Connect to a specific printer
+  Future<bool> connectToPrinter(BluetoothDevice device) async {
+    try {
+      isConnecting.value = true;
+      await BluetoothPrintPlus.connect(device);
+      
+      // Wait a moment for connection to establish
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Check if connected
+      final connected = await BluetoothPrintPlus.isConnected;
+      isConnected.value = connected;
+      
+      if (connected) {
+        // Save the printer info
+        lastConnectedAddress.value = device.address;
+        lastConnectedName.value = device.name;
+        await _savePrinterToPrefs(device.address, device.name);
+        debugPrint('Successfully connected to printer: ${device.name}');
+      }
+      
+      return connected;
+    } catch (e) {
+      debugPrint('Error connecting to printer: $e');
+      return false;
+    } finally {
+      isConnecting.value = false;
+    }
+  }
+  
+  // Disconnect from current printer
+  Future<bool> disconnectPrinter() async {
+    try {
+      await BluetoothPrintPlus.disconnect();
+      isConnected.value = false;
+      debugPrint('Disconnected from printer');
+      return true;
+    } catch (e) {
+      debugPrint('Error disconnecting from printer: $e');
+      return false;
+    }
+  }
+  
+  // Start scanning for printers
+  Future<void> startScan({Duration timeout = const Duration(seconds: 10)}) async {
+    try {
+      await BluetoothPrintPlus.startScan(timeout: timeout);
+    } catch (e) {
+      debugPrint('Error starting scan: $e');
+    }
+  }
+  
+  // Stop scanning for printers
+  Future<void> stopScan() async {
+    try {
+      await BluetoothPrintPlus.stopScan();
+    } catch (e) {
+      debugPrint('Error stopping scan: $e');
+    }
+  }
+  
   // Check printer connection and prompt to connect if needed
   Future<bool> ensurePrinterConnected() async {
     bool connected = false;
     try {
       connected = await BluetoothPrintPlus.isConnected;
       isConnected.value = connected;
+      
+      // If not connected but we have saved printer info, try to reconnect
+      if (!connected && lastConnectedAddress.value.isNotEmpty) {
+        try {
+          // Check if Bluetooth is on
+          final isBlueOn = await BluetoothPrintPlus.isBlueOn;
+          if (isBlueOn) {
+            debugPrint('Attempting to reconnect to saved printer: ${lastConnectedAddress.value}');
+            
+            // Create device with saved info
+            final savedDevice = BluetoothDevice(
+              lastConnectedName.value.isNotEmpty ? lastConnectedName.value : 'Saved Printer',
+              lastConnectedAddress.value
+            );
+            
+            // Try to connect using our connect method
+            connected = await connectToPrinter(savedDevice);
+          }
+        } catch (reconnectError) {
+          debugPrint('Error reconnecting to saved printer: $reconnectError');
+        }
+      }
     } catch (e) {
       debugPrint('Error checking printer connection: $e');
       isConnected.value = false;
@@ -193,7 +345,7 @@ class PrinterService {
       bytes.addAll(utf8.encode('--------------------------------\n'));
       bytes.addAll(utf8.encode('Ticket ID: $ticketId\n'));
       bytes.addAll(utf8.encode('Bet Number: $betNumber\n'));
-      bytes.addAll(utf8.encode('Amount: ₱${amount is int ? amount : (amount is double ? amount.toInt() : amount)}\n'));
+      bytes.addAll(utf8.encode('Amount: PHP ${amount is int ? amount : (amount is double ? amount.toInt() : amount)}\n'));
       bytes.addAll(utf8.encode('Game Type: $gameTypeName\n'));
       bytes.addAll(utf8.encode('Draw Time: $drawTime\n'));
       bytes.addAll(utf8.encode('Date: $betDate\n'));

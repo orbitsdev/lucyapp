@@ -4,6 +4,7 @@ import 'package:bettingapp/core/dio/dio_base.dart';
 import 'package:bettingapp/models/bet.dart';
 import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
+import 'package:bettingapp/utils/printer_utils.dart';
 import 'package:dio/dio.dart';
 
 class BettingController extends GetxController {
@@ -247,46 +248,45 @@ class BettingController extends GetxController {
           print('Response: $response');
           print('---------------------YOWW');
           
-          // The response is already the bet data object
-          if (response is Map) {
-            final betData = response;
-            print('Bet data: $betData');
+          try {
+            // Parse the response into a Bet object
+            final Bet placedBet = Bet.fromJson(response);
             
-            // Extract values directly from the response data
-            final ticketId = betData['ticket_id']?.toString() ?? 'Unknown';
-            final betNumber = betData['bet_number']?.toString() ?? 'Unknown';
-            final amount = betData['amount'];
+            // Store the ticket ID for later use
+            lastPlacedTicketId.value = placedBet.ticketId ?? 'Unknown';
             
-            // Store the ticket ID for later use (e.g., printing)
-            lastPlacedTicketId.value = ticketId;
-            
-            // Format amount with proper currency using our smart formatter
-            final formattedAmount = 'PHP ${formatAmount(amount)}';
-            
-            print('Extracted values - Ticket ID: $ticketId, Bet Number: $betNumber, Amount: $amount');
-            
-            // Create a Bet object and add it to the list
-            try {
-              final bet = Bet.fromJson(betData);
-              if (bet.id != null) {
-                bets.insert(0, bet);
-              }
-            } catch (e) {
-              print('Error creating Bet object: $e');
-              // Still continue to show success message even if bet object creation fails
+            // Add the bet to the list if it has an ID
+            if (placedBet.id != null) {
+              bets.insert(0, placedBet);
             }
+            
+            // Format amount with proper currency
+            final formattedAmount = 'PHP ${formatAmount(placedBet.amount)}';
             
             // Show success message with the extracted values
             Modal.showSuccessModal(
               title: 'Bet Placed Successfully',
-              message: 'Ticket ID: $ticketId\nBet Number: $betNumber\nAmount: $formattedAmount',
+              message: 'Ticket ID: ${placedBet.ticketId}\nBet Number: ${placedBet.betNumber}\nAmount: $formattedAmount',
               showButton: true,
+              onClose: () async {
+                // Print the bet ticket right after showing success message
+                try {
+                  // Print directly from the Bet model
+                  await PrinterUtils.printBetTicketFromModel(placedBet, isReprint: false);
+                } catch (e) {
+                  print('Error printing bet ticket: $e');
+                  // Don't show error here as it would disrupt the success flow
+                }
+              },
             );
             
             // Reset form
             resetBetForm();
-            return Map<String, dynamic>.from(betData);
-          } else {
+            
+            // Return the original response as a Map for backward compatibility
+            return Map<String, dynamic>.from(response);
+          } catch (e) {
+            print('Error processing bet response: $e');
             Modal.showErrorModal(
               title: 'Error Processing Response',
               message: 'Could not process the server response',

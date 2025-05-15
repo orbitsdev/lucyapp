@@ -7,8 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
-import 'package:bettingapp/services/printer_service.dart';
-import 'package:intl/intl.dart';
 
 class NewBetScreen extends StatefulWidget {
   const NewBetScreen({super.key});
@@ -141,8 +139,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
       onConfirm: () async {
         final betData = await bettingController.placeBet();
         if (betData != null) {
-          // Print the bet ticket using the response data
-          await _printBetTicket(betData);
+          // Printing is now handled in BettingController
           
           // Clear form fields
           betNumberController.clear();
@@ -386,84 +383,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
     );
   }
   
-  // Print the bet ticket
-  Future<void> _printBetTicket([Map<String, dynamic>? betData]) async {
-    try {
-      // If we have bet data from the response, use it; otherwise use form values
-      final String ticketId;
-      final String betNumber;
-      final dynamic amount;
-      final String gameTypeName;
-      final String drawTime;
-      final String betDate;
-      
-      if (betData != null) {
-        // Use data directly from the API response
-        ticketId = betData['ticket_id']?.toString() ?? 'Unknown';
-        betNumber = betData['bet_number']?.toString() ?? 'Unknown';
-        amount = betData['amount'];
-        
-        // Get game type name from the response
-        final gameTypeData = betData['game_type'];
-        gameTypeName = gameTypeData != null ? gameTypeData['name']?.toString() ?? 'Unknown' : 'Unknown';
-        
-        // Format the bet date from the response
-        betDate = betData['bet_date_formatted']?.toString() ?? 
-                 (betData['bet_date']?.toString() ?? 'Unknown');
-                 
-        // Get draw time - we may need to use the form value if not in response
-        drawTime = betData['draw_time']?.toString() ?? 
-                  bettingController.availableDraws
-                    .firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)
-                    ?.drawTimeFormatted ?? 'Unknown';
-      } else {
-        // Fallback to form values
-        ticketId = bettingController.lastPlacedTicketId.value;
-        betNumber = betNumberController.text;
-        amount = double.tryParse(amountController.text) ?? 0.0;
-        
-        final gameType = dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!);
-        gameTypeName = gameType?.name ?? 'Unknown';
-        
-        final draw = bettingController.availableDraws.firstWhereOrNull(
-          (d) => d.id == bettingController.selectedDrawId.value
-        );
-        drawTime = draw?.drawTimeFormatted ?? 'Unknown';
-        
-        // Get current date
-        final now = DateTime.now();
-        final dateFormatter = DateFormat('yyyy-MM-dd');
-        betDate = dateFormatter.format(now);
-      }
-      
-      // Use the printer service to print the ticket
-      final printerService = PrinterService();
-      await printerService.printBetTicket(
-        ticketId: ticketId,
-        betNumber: betNumber,
-        amount: amount,
-        gameTypeName: gameTypeName,
-        drawTime: drawTime,
-        betDate: betDate,
-        status: 'Placed',
-        tellerName: 'Current Teller', // Replace with actual teller name if available
-        tellerUsername: 'teller', // Replace with actual username if available
-        locationName: 'Current Location', // Replace with actual location if available
-        isReprint: false, // This is a new bet, not a reprint
-      );
-    } catch (e) {
-      debugPrint('Error printing bet ticket: $e');
-      // Show error message but don't block the bet process
-      Get.snackbar(
-        'Printing Error',
-        'Could not print the bet ticket. Please check printer connection.',
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade800,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
-    }
-  }
+  // Printing is now handled directly in BettingController
   
   @override
   void dispose() {

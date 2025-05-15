@@ -7,6 +7,8 @@ import 'package:bettingapp/models/user.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
 
 class AuthController extends GetxController {
+
+  static AuthController controller = Get.find();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   

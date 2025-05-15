@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:bluetooth_print_plus/bluetooth_print_plus.dart';
 import 'package:bettingapp/utils/app_colors.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/printer_service.dart';
 
@@ -17,6 +16,9 @@ class PrinterSetupScreen extends StatefulWidget {
 }
 
 class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
+  // Get the global printer service
+  final PrinterService _printerService = Get.find<PrinterService>();
+  
   BluetoothDevice? _device;
   late StreamSubscription<bool> _isScanningSubscription;
   late StreamSubscription<BlueState> _blueStateSubscription;
@@ -25,68 +27,38 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
   late StreamSubscription<List<BluetoothDevice>> _scanResultsSubscription;
   List<BluetoothDevice> _scanResults = [];
   
-  // Track connection state
-  bool _isConnecting = false;
-  bool _isConnected = false;
+  // Local variables to track UI state
   String _lastConnectedAddress = "";
 
   @override
   void initState() {
     super.initState();
     initBluetoothPrintPlusListen();
-    _loadSavedPrinter();
+    
+    // Initialize local state from the global service
+    _lastConnectedAddress = _printerService.lastConnectedAddress.value;
+    
+    // Start scanning for printers
+    _startScan();
   }
   
-  // Load saved printer from SharedPreferences
-  Future<void> _loadSavedPrinter() async {
+  // Start scanning for printers
+  Future<void> _startScan() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedAddress = prefs.getString('printer_address');
-      final savedName = prefs.getString('printer_name');
-      
-      if (savedAddress != null && savedAddress.isNotEmpty) {
-        setState(() {
-          _lastConnectedAddress = savedAddress;
-        });
-        
-        // Try to connect to the saved printer
-        if (await BluetoothPrintPlus.isBlueOn) {
-          // Start scanning for printers
-          await BluetoothPrintPlus.startScan(timeout: const Duration(seconds: 5));
-          
-          // Wait for scan results and then try to connect to the saved printer
-          await Future.delayed(const Duration(seconds: 2));
-          
-          // Create a device with the saved address and name
-          // This is a workaround since we can't easily iterate through the scan results
-          final savedDevice = BluetoothDevice(
-            savedName ?? 'Unknown Printer',
-            savedAddress,
-          );
-          
-          // Try to connect to the saved printer
-          _connectToDevice(savedDevice);
-        }
+      if (await BluetoothPrintPlus.isBlueOn) {
+        // Use the printer service to start scanning
+        await _printerService.startScan(timeout: const Duration(seconds: 5));
       }
     } catch (e) {
-      print('Error loading saved printer: $e');
+      print('Error starting scan: $e');
     }
   }
   
-  // Save printer to SharedPreferences
-  Future<void> _savePrinter(BluetoothDevice device) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('printer_address', device.address);
-      await prefs.setString('printer_name', device.name);
-      
-      // Update the saved printer info
-      setState(() {
-        _lastConnectedAddress = device.address;
-      });
-    } catch (e) {
-      print('Error saving printer: $e');
-    }
+  // Update local state when a printer is connected
+  void _updateLocalState() {
+    setState(() {
+      _lastConnectedAddress = _printerService.lastConnectedAddress.value;
+    });
   }
 
   @override
@@ -109,7 +81,7 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
         });
         
         // If we have a saved printer in the scan results, try to auto-connect
-        if (_lastConnectedAddress.isNotEmpty && !_isConnected && !_isConnecting) {
+        if (_lastConnectedAddress.isNotEmpty && !_printerService.isConnected.value && !_printerService.isConnecting.value) {
           final savedDevice = event.firstWhereOrNull(
             (device) => device.address == _lastConnectedAddress
           );
@@ -143,15 +115,8 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
       print('********** connectState change: $event **********');
       if (event == ConnectState.connected) {
         if (_device != null) {
-          // Save the connected printer
-          _savePrinter(_device!);
-          
-          // Update connection state
-          setState(() {
-            _isConnected = true;
-            _isConnecting = false;
-            _lastConnectedAddress = _device!.address;
-          });
+          // Update local state
+          _updateLocalState();
           
           // Show success message
           Get.snackbar(
@@ -164,13 +129,10 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
             duration: const Duration(seconds: 2),
           );
         }
-      } else {
-        // Any other state means not connected
-        setState(() {
-          _isConnected = false;
-          _isConnecting = false;
-        });
       }
+      
+      // Always update UI when connection state changes
+      setState(() {});
     });
 
     /// listen received data
@@ -195,13 +157,14 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
           onPressed: () => Get.back(),
         ),
         actions: [
-          _isConnected
+          // Use Obx to reactively update based on connection state
+          Obx(() => _printerService.isConnected.value
             ? IconButton(
                 icon: const Icon(Icons.print),
-                onPressed: () => PrinterService().printTestPage(),
+                onPressed: () => _printerService.printTestPage(),
                 tooltip: 'Test Print',
               )
-            : const SizedBox.shrink(),
+            : const SizedBox.shrink()),
           BluetoothPrintPlus.isScanningNow
               ? Container(
                   margin: const EdgeInsets.only(right: 16),
@@ -356,14 +319,13 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
                     itemCount: _scanResults.length,
                     itemBuilder: (context, index) {
                       final device = _scanResults[index];
-                      final bool isConnected = _device?.address == device.address;
                   
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side: BorderSide(
-                        color: (_isConnected && device.address == _lastConnectedAddress)
+                        color: (_printerService.isConnected.value && device.address == _lastConnectedAddress)
                             ? AppColors.primaryRed 
                             : Colors.transparent,
                         width: 2,
@@ -422,7 +384,7 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
                             
                             // Connection Status
                             Builder(builder: (context) {
-                              if (_isConnected && device.address == _lastConnectedAddress) {
+                              if (_printerService.isConnected.value && device.address == _lastConnectedAddress) {
                                 return Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
@@ -451,7 +413,7 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
                                     ],
                                   ),
                                 );
-                              } else if (_isConnecting && _device?.address == device.address) {
+                              } else if (_printerService.isConnecting.value && _device?.address == device.address) {
                                 return Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
@@ -483,7 +445,7 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
                                     ],
                                   ),
                                 );
-                              } else if (!_isConnected && device.address == _lastConnectedAddress) {
+                              } else if (!_printerService.isConnected.value && device.address == _lastConnectedAddress) {
                                 return OutlinedButton(
                                   onPressed: () => _connectToDevice(device),
                                   style: OutlinedButton.styleFrom(
@@ -552,26 +514,32 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
   // Connect to a device with loading state
   Future<void> _connectToDevice(BluetoothDevice device) async {
     try {
-      // Set connecting state
+      // Store the device reference for UI updates
       setState(() {
-        _isConnecting = true;
         _device = device;
-      }); // Update UI to show connecting state
+      });
       
-      // Try to connect
-      await BluetoothPrintPlus.connect(device);
+      // Use the printer service to connect
+      final success = await _printerService.connectToPrinter(device);
       
-      // Connection state will be updated by the listener
+      if (!success) {
+        // Show error message if connection failed
+        Get.snackbar(
+          'Connection Failed', 
+          'Could not connect to ${device.name}. Please try again.',
+          backgroundColor: Colors.red.shade100,
+          colorText: Colors.red.shade800,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+      }
     } catch (e) {
       print('Error connecting to printer: $e');
-      setState(() {
-        _isConnecting = false;
-      });
       
       // Show error message
       Get.snackbar(
-        'Connection Failed', 
-        'Could not connect to ${device.name}. Please try again.',
+        'Connection Error', 
+        'Error connecting to ${device.name}: $e',
         backgroundColor: Colors.red.shade100,
         colorText: Colors.red.shade800,
         snackPosition: SnackPosition.BOTTOM,
@@ -584,7 +552,8 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
 
   Future onScanPressed() async {
     try {
-      await BluetoothPrintPlus.startScan(timeout: Duration(seconds: 10));
+      // Use the printer service to start scanning
+      await _printerService.startScan(timeout: const Duration(seconds: 10));
     } catch (e) {
       print("onScanPressed error: $e");
       Get.snackbar(
@@ -593,19 +562,18 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
         backgroundColor: Colors.red.shade100,
         colorText: Colors.red.shade800,
         snackPosition: SnackPosition.BOTTOM,
-        margin: EdgeInsets.all(16),
+        margin: const EdgeInsets.all(16),
       );
     }
   }
 
   Future onStopPressed() async {
-
     try {
-      BluetoothPrintPlus.stopScan();
+      // Use the printer service to stop scanning
+      await _printerService.stopScan();
     } catch (e) {
       print("onStopPressed error: $e");
     }
-    
   }
 
 }

@@ -7,12 +7,11 @@ import 'package:intl/intl.dart';
 import '../../controllers/betting_controller.dart';
 import '../../controllers/report_controller.dart';
 import '../../controllers/dropdown_controller.dart';
-import '../../controllers/auth_controller.dart';
 import '../../models/draw.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/printer_utils.dart';
 import '../../widgets/common/local_lottie_image.dart';
 import '../../widgets/common/modal.dart';
-import '../../services/printer_service.dart';
 
 class BetListScreen extends StatefulWidget {
   const BetListScreen({super.key});
@@ -915,50 +914,8 @@ class _BetListScreenState extends State<BetListScreen> {
 
   // Method to handle printing bet ticket
   void _printBetTicket(bet) async {
-    // Show confirmation dialog using the app's Modal system
-    Completer<bool> completer = Completer<bool>();
-    
-    Modal.showConfirmationModal(
-      title: 'Print Bet Ticket',
-      message: 'Do you want to print this bet ticket?\n\n'
-              'Ticket ID: ${bet.ticketId}\n'
-              'Bet Number: ${bet.betNumber}\n'
-              'Amount: ₱${bet.amount?.toInt() ?? bet.amount}\n',
-      confirmText: 'Print',
-      cancelText: 'Cancel',
-      animation: 'assets/animations/questionmark.json',
-      onConfirm: () {
-        completer.complete(true);
-      },
-      onCancel: () {
-        completer.complete(false);
-      },
-    );
-    
-    bool shouldPrint = await completer.future;
-    if (!shouldPrint) return;
-    
-    // Get current user info if available
-    final authController = Get.find<AuthController>();
-    final String tellerName = authController.user.value?.name ?? 'Unknown Teller';
-    final String tellerUsername = authController.user.value?.username ?? '';
-    final String locationName = authController.user.value?.location?.name ?? 'Unknown Location';
-    
-    // Use the printer service to print the ticket
-    final printerService = PrinterService();
-    await printerService.printBetTicket(
-      ticketId: bet.ticketId ?? 'Unknown',
-      betNumber: bet.betNumber ?? 'Unknown',
-      amount: bet.amount,
-      gameTypeName: bet.gameType?.name ?? 'Unknown',
-      drawTime: bet.draw?.drawTimeFormatted ?? 'Unknown',
-      betDate: bet.betDateFormatted ?? 'Unknown',
-      status: bet.isRejected == true ? 'Cancelled' : (bet.isClaimed == true ? 'Claimed' : 'Active'),
-      tellerName: tellerName,
-      tellerUsername: tellerUsername,
-      locationName: locationName,
-      isReprint: true, // This is a reprint from bet list
-    );
+    // Use the reusable PrinterUtils class to print the bet ticket
+    await PrinterUtils.printBetTicketFromModel(bet, isReprint: true);
   }
 }
           
