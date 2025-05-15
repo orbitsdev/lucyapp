@@ -16,12 +16,12 @@ class ApiConfig {
   static const String bets = '/betting/list';
   static const String createBet = '/betting/place';
   static const String cancelBet = '/betting/cancel';
-  static const String cancelBetByTicket = '/betting/cancel-by-ticket/';
+  static const String cancelBetByTicketId = '/betting/cancel-by-ticket';
   static const String availableDraws = '/betting/available-draws';
   static const String cancelledBets = '/betting/cancelled';
   static const String claimedBets = '/betting/claimed';
-  static const String claimBetByTicket = '/betting/claim-ticket/';
-  static const String winningBets = '/betting/hits';
+  static const String claimBetByTicketId = '/betting/claim-ticket';
+  static const String hits = '/betting/hits';
   
   // Dropdown endpoints
   static const String gameTypes = '/dropdown/game-types';

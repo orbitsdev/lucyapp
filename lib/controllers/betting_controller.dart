@@ -576,7 +576,7 @@ class BettingController extends GetxController {
 
     try {
       final result = await _dioService.authPost<void>(
-        '${ApiConfig.cancelBetByTicket}/$ticketId',
+        '${ApiConfig.cancelBetByTicketId}/$ticketId',
         fromJson: (_) => null,
       );
 
@@ -612,7 +612,7 @@ class BettingController extends GetxController {
         );
       });
       return false;
-    } finally {
+  } finally {
       isCancellingBet.value = false;
     }
   }
@@ -726,7 +726,7 @@ class BettingController extends GetxController {
 
     try {
       final result = await _dioService.authPost<void>(
-        '${ApiConfig.claimBetByTicket}$ticketId',
+        '${ApiConfig.claimBetByTicketId}$ticketId',
         fromJson: (_) => null,
       );
 
@@ -806,7 +806,7 @@ class BettingController extends GetxController {
       if (isClaimed != null) queryParams['is_claimed'] = isClaimed;
       
       final result = await _dioService.authGet<Map<String, dynamic>>(
-        ApiConfig.winningBets,
+        ApiConfig.hits,
         queryParameters: queryParams,
         fromJson: (data) {
           if (data is Map<String, dynamic>) {
