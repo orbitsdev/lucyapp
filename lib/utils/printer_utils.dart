@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:bettingapp/controllers/auth_controller.dart';
-import 'package:bettingapp/services/printer_service.dart';
+import 'package:bettingapp/controllers/printer_controller.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
 import 'package:bettingapp/models/bet.dart';
 import 'package:bettingapp/models/draw.dart';
@@ -42,11 +42,11 @@ class PrinterUtils {
     final authController = AuthController.controller;
     final currentUser = authController.user.value;
     
-    // Use the global printer service to print the ticket
-    final printerService = Get.find<PrinterService>();
+    // Use the global printer controller to print the ticket
+    final printerController = Get.find<PrinterController>();
     
     try {
-      await printerService.printBetTicket(
+      await printerController.printBetTicket(
         ticketId: bet.ticketId ?? 'Unknown',
         betNumber: bet.betNumber ?? 'Unknown',
         amount: bet.amount,
@@ -170,10 +170,10 @@ class PrinterUtils {
                            actualData['bet_date']?.toString() ?? 
                            DateFormat('yyyy-MM-dd').format(DateTime.now());
       
-      // Use the global printer service to print the ticket
-      final printerService = Get.find<PrinterService>();
+      // Use the global printer controller to print the ticket
+      final printerController = Get.find<PrinterController>();
       
-      await printerService.printBetTicket(
+      await printerController.printBetTicket(
         ticketId: ticketId,
         betNumber: betNumber,
         amount: amount,

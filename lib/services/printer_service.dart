@@ -417,12 +417,6 @@ class PrinterService {
     }
     
     try {
-      // Show loading indicator
-      Modal.showProgressModal(
-        title: 'Printing Test Page',
-        message: 'Please wait while the test page is being printed...',
-      );
-      
       // Simple test print command
       final List<int> bytes = [];
       // Initialize printer
@@ -454,28 +448,9 @@ class PrinterService {
       // Print
       await BluetoothPrintPlus.write(Uint8List.fromList(bytes));
       
-      // Close dialog
-      Modal.closeDialog();
-      
-      // Show success message
-      Modal.showSuccessModal(
-        title: 'Test Print Complete',
-        message: 'The test page has been sent to the printer.',
-        showButton: true,
-        buttonText: 'OK',
-      );
-      
       return true;
     } catch (e) {
-      // Close dialog if open
-      Modal.closeDialog();
-      
       debugPrint('Error printing: $e');
-      Modal.showErrorModal(
-        title: 'Printing Failed', 
-        message: 'Error: $e',
-      );
-      
       return false;
     }
   }
