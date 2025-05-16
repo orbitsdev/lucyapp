@@ -256,11 +256,16 @@ class BettingController extends GetxController {
           print('---------------------YOWW');
           
           try {
-            // Parse the response into a Bet object
-            final Bet placedBet = Bet.fromJson(response);
+            print('Attempting to parse response: $response');
+            
+            // Extract key fields directly from response first
+            final String ticketId = response['ticket_id']?.toString() ?? 'Unknown';
             
             // Store the ticket ID for later use
-            lastPlacedTicketId.value = placedBet.ticketId ?? 'Unknown';
+            lastPlacedTicketId.value = ticketId;
+            
+            // Now try to create a Bet object
+            final Bet placedBet = Bet.fromJson(response);
             
             // Add the bet to the list if it has an ID
             if (placedBet.id != null) {
@@ -294,9 +299,11 @@ class BettingController extends GetxController {
             return Map<String, dynamic>.from(response);
           } catch (e) {
             print('Error processing bet response: $e');
+            
+            // Show the actual error message instead of a generic one
             Modal.showErrorModal(
               title: 'Error Processing Response',
-              message: 'Could not process the server response',
+              message: 'Could not process the server response: ${e.toString()}',
             );
             return null;
           }

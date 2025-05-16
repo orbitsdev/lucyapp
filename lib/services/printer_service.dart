@@ -304,7 +304,7 @@ class PrinterService {
       bytes.addAll([27, 69, 1]); // ESC E 1
       
       // Title
-      bytes.addAll(utf8.encode('BETTING RECEIPT\n'));
+      bytes.addAll(utf8.encode('LUCKY BET RECEIPT\n'));
       
       // Bold off
       bytes.addAll([27, 69, 0]); // ESC E 0

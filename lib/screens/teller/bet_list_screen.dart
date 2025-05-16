@@ -856,8 +856,8 @@ class _BetListScreenState extends State<BetListScreen> {
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
-          _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
-          _buildDetailRow('Winning Amount', bet.winningAmount != null ? '₱ ${bet.winningAmount}' : 'Not set', isHighlighted: bet.isLowWin == true),
+          _buildDetailRow('Amount', 'PHP ${bet.amount?.toInt() ?? bet.amount}'),
+          _buildDetailRow('Winning Amount', bet.winningAmount != null ? 'PHP ${bet.winningAmount}' : 'Not set', isHighlighted: bet.isLowWin == true),
           _buildDetailRow('Status', bet.isRejected == true ? 'Cancelled' : (bet.isClaimed == true ? 'Claimed' : 'Active')),
           const SizedBox(height: 16),
           Row(

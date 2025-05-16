@@ -8,7 +8,7 @@ class Bet {
   final String? ticketId;
   final String? betNumber;
   final double? amount;
-  final int? winningAmount;
+  final dynamic winningAmount;
   final bool? isLowWin;
   final bool? isClaimed;
   final bool? isRejected;
@@ -64,12 +64,29 @@ class Bet {
       return null;
     }
     
+    // Handle winning amount conversion safely
+    dynamic parseWinningAmount() {
+      final winningAmount = json['winning_amount'];
+      if (winningAmount == null) return null;
+      if (winningAmount is int) return winningAmount;
+      if (winningAmount is double) return winningAmount;
+      if (winningAmount is String) {
+        // Try to parse as int first
+        final intValue = int.tryParse(winningAmount);
+        if (intValue != null) return intValue;
+        
+        // If not an int, try as double
+        return double.tryParse(winningAmount);
+      }
+      return winningAmount; // Return as is if can't parse
+    }
+    
     return Bet(
       id: json['id'],
       ticketId: json['ticket_id']?.toString(),
       betNumber: json['bet_number']?.toString(),
       amount: parseAmount(),
-      winningAmount: json['winning_amount'],
+      winningAmount: parseWinningAmount(),
       isLowWin: json['is_low_win'],
       isClaimed: json['is_claimed'],
       isRejected: json['is_rejected'],
@@ -110,12 +127,29 @@ class Bet {
       return null;
     }
     
+    // Handle winning amount conversion safely
+    dynamic parseWinningAmount() {
+      final winningAmount = map['winning_amount'];
+      if (winningAmount == null) return null;
+      if (winningAmount is int) return winningAmount;
+      if (winningAmount is double) return winningAmount;
+      if (winningAmount is String) {
+        // Try to parse as int first
+        final intValue = int.tryParse(winningAmount);
+        if (intValue != null) return intValue;
+        
+        // If not an int, try as double
+        return double.tryParse(winningAmount);
+      }
+      return winningAmount; // Return as is if can't parse
+    }
+    
     return Bet(
       id: map['id'],
       ticketId: map['ticket_id']?.toString(),
       betNumber: map['bet_number']?.toString(),
       amount: parseAmount(),
-      winningAmount: map['winning_amount'],
+      winningAmount: parseWinningAmount(),
       isLowWin: map['is_low_win'],
       isClaimed: map['is_claimed'],
       isRejected: map['is_rejected'],
