@@ -27,6 +27,7 @@ class TableColumnWidths {
   static const double betTypeWidth = 100.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
+  static const double winningAmountWidth = 120.0;
   static const double ticketIdWidth = 130.0;
   static const double drawTimeWidth = 160.0;
   static const double dateWidth = 200.0;
@@ -34,7 +35,7 @@ class TableColumnWidths {
   
   // Total width of all columns (drawTimeWidth removed)
   static const double actionWidth = 100.0;
-  static const double totalWidth = betTypeWidth + betNumberWidth + amountWidth + ticketIdWidth + dateWidth + statusWidth + actionWidth;
+  static const double totalWidth = betTypeWidth + betNumberWidth + amountWidth + winningAmountWidth + ticketIdWidth + dateWidth + statusWidth + actionWidth;
 }
 
 class _BetListScreenState extends State<BetListScreen> {
@@ -574,6 +575,10 @@ class _BetListScreenState extends State<BetListScreen> {
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                       child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                     )),
+                                    SizedBox(width: TableColumnWidths.winningAmountWidth, child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      child: Text('Winning', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    )),
                                     SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                       child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
@@ -714,6 +719,20 @@ class _BetListScreenState extends State<BetListScreen> {
                                                       child: Text(
                                                         '₱${bet.amount?.toInt() ?? bet.amount}',
                                                         style: const TextStyle(fontWeight: FontWeight.w500),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  // Winning Amount
+                                                  SizedBox(
+                                                    width: TableColumnWidths.winningAmountWidth,
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                      child: Text(
+                                                        bet.winningAmount != null ? '₱${bet.winningAmount}' : '-',
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.w500,
+                                                          color: bet.winningAmount != null && bet.winningAmount != 0 ? Colors.green : null,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
