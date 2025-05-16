@@ -8,6 +8,8 @@ class Bet {
   final String? ticketId;
   final String? betNumber;
   final double? amount;
+  final int? winningAmount;
+  final bool? isLowWin;
   final bool? isClaimed;
   final bool? isRejected;
   final bool? isCombination;
@@ -29,6 +31,8 @@ class Bet {
     this.ticketId,
     this.betNumber,
     this.amount,
+    this.winningAmount,
+    this.isLowWin,
     this.isClaimed,
     this.isRejected,
     this.isCombination,
@@ -65,6 +69,8 @@ class Bet {
       ticketId: json['ticket_id']?.toString(),
       betNumber: json['bet_number']?.toString(),
       amount: parseAmount(),
+      winningAmount: json['winning_amount'],
+      isLowWin: json['is_low_win'],
       isClaimed: json['is_claimed'],
       isRejected: json['is_rejected'],
       isCombination: json['is_combination'],
@@ -109,6 +115,8 @@ class Bet {
       ticketId: map['ticket_id']?.toString(),
       betNumber: map['bet_number']?.toString(),
       amount: parseAmount(),
+      winningAmount: map['winning_amount'],
+      isLowWin: map['is_low_win'],
       isClaimed: map['is_claimed'],
       isRejected: map['is_rejected'],
       isCombination: map['is_combination'],
@@ -143,6 +151,8 @@ class Bet {
       'ticket_id': ticketId,
       'bet_number': betNumber,
       'amount': amount,
+      'winning_amount': winningAmount,
+      'is_low_win': isLowWin,
       'is_claimed': isClaimed,
       'is_rejected': isRejected,
       'is_combination': isCombination,
@@ -166,6 +176,8 @@ class Bet {
     String? ticketId,
     String? betNumber,
     double? amount,
+    int? winningAmount,
+    bool? isLowWin,
     bool? isClaimed,
     bool? isRejected,
     bool? isCombination,
@@ -187,6 +199,8 @@ class Bet {
       ticketId: ticketId ?? this.ticketId,
       betNumber: betNumber ?? this.betNumber,
       amount: amount ?? this.amount,
+      winningAmount: winningAmount ?? this.winningAmount,
+      isLowWin: isLowWin ?? this.isLowWin,
       isClaimed: isClaimed ?? this.isClaimed,
       isRejected: isRejected ?? this.isRejected,
       isCombination: isCombination ?? this.isCombination,

@@ -268,6 +268,8 @@ class PrinterService {
     required String ticketId,
     required String betNumber,
     required dynamic amount,
+    int? winningAmount,
+    bool? isLowWin,
     required String gameTypeName,
     required String drawTime,
     required String betDate,
@@ -346,6 +348,12 @@ class PrinterService {
       bytes.addAll(utf8.encode('Ticket ID: $ticketId\n'));
       bytes.addAll(utf8.encode('Bet Number: $betNumber\n'));
       bytes.addAll(utf8.encode('Amount: PHP ${amount is int ? amount : (amount is double ? amount.toInt() : amount)}\n'));
+      
+      // Add winning amount if available
+      if (winningAmount != null) {
+        bytes.addAll(utf8.encode('Winning Amount: PHP $winningAmount\n'));
+      }
+      
       bytes.addAll(utf8.encode('Game Type: $gameTypeName\n'));
       bytes.addAll(utf8.encode('Draw Time: $drawTime\n'));
       bytes.addAll(utf8.encode('Date: $betDate\n'));

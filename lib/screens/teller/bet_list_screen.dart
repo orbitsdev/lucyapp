@@ -857,6 +857,7 @@ class _BetListScreenState extends State<BetListScreen> {
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
           _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
+          _buildDetailRow('Winning Amount', bet.winningAmount != null ? '₱ ${bet.winningAmount}' : 'Not set', isHighlighted: bet.isLowWin == true),
           _buildDetailRow('Status', bet.isRejected == true ? 'Cancelled' : (bet.isClaimed == true ? 'Claimed' : 'Active')),
           const SizedBox(height: 16),
           Row(
@@ -882,7 +883,7 @@ class _BetListScreenState extends State<BetListScreen> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(String label, String value, {bool isHighlighted = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -894,16 +895,18 @@ class _BetListScreenState extends State<BetListScreen> {
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: isHighlighted ? AppColors.primaryRed : Colors.grey.shade600,
+                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
+                color: isHighlighted ? AppColors.primaryRed : null,
               ),
             ),
           ),

@@ -22,7 +22,8 @@ class PrinterUtils {
       message: 'Do you want to print this bet ticket?\n\n'
               'Ticket ID: ${bet.ticketId}\n'
               'Bet Number: ${bet.betNumber}\n'
-              'Amount: PHP ${bet.amount?.toInt() ?? bet.amount}\n',
+              'Amount: PHP ${bet.amount?.toInt() ?? bet.amount}\n'
+              'Winning Amount: ${bet.winningAmount != null ? "PHP ${bet.winningAmount}" : "Not set"}\n',
       confirmText: 'Print',
       cancelText: 'Cancel',
       animation: 'assets/animations/questionmark.json',
@@ -49,6 +50,8 @@ class PrinterUtils {
         ticketId: bet.ticketId ?? 'Unknown',
         betNumber: bet.betNumber ?? 'Unknown',
         amount: bet.amount,
+        winningAmount: bet.winningAmount,
+        isLowWin: bet.isLowWin,
         gameTypeName: bet.gameType?.name ?? 'Unknown',
         drawTime: bet.draw?.drawTimeFormatted ?? 'Unknown',
         betDate: bet.betDateFormatted ?? 'Unknown',
