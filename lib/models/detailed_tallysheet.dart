@@ -115,6 +115,8 @@ class BetDetail {
   final String? drawTime;
   final String? drawTimeFormatted;
   final String? drawTimeSimple;
+  final String? d4SubSelection;
+  final String? displayType;
 
   BetDetail({
     this.betNumber,
@@ -127,6 +129,8 @@ class BetDetail {
     this.drawTime,
     this.drawTimeFormatted,
     this.drawTimeSimple,
+    this.d4SubSelection,
+    this.displayType,
   });
 
   factory BetDetail.fromJson(Map<String, dynamic> json) {
@@ -188,6 +192,8 @@ class BetDetail {
       drawTime: json['draw_time'],
       drawTimeFormatted: json['draw_time_formatted'],
       drawTimeSimple: json['draw_time_simple'],
+      d4SubSelection: json['d4_sub_selection'],
+      displayType: json['display_type'],
     );
   }
 
@@ -203,6 +209,8 @@ class BetDetail {
       'draw_time': drawTime,
       'draw_time_formatted': drawTimeFormatted,
       'draw_time_simple': drawTimeSimple,
+      'd4_sub_selection': d4SubSelection,
+      'display_type': displayType,
     };
   }
 }

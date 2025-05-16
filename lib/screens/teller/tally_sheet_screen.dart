@@ -83,8 +83,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         ),
       );
       
-      // Preferred order for game type codes
-      final preferredOrder = ['S2', 'S3', 'D4', 'D6', 'D8', 'D10'];
+      // Preferred order for game type codes - include D4 sub-selections
+      final preferredOrder = ['S2', 'S3', 'D4', 'D4-S2', 'D4-S3', 'D6', 'D8', 'D10'];
       final allCodes = report.betsByGameType!.keys.toList();
       allCodes.sort((a, b) {
         final aIndex = preferredOrder.indexOf(a);
@@ -257,9 +257,11 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
     final betNumber = bet.betNumber?.toString() ?? '';
     final gameTypeCode = bet.gameTypeCode ?? '';
     final drawTimeSimple = bet.drawTimeSimple ?? '';
+    // Use the displayType if available, otherwise fallback to gameTypeCode
+    final displayType = bet.displayType ?? gameTypeCode;
 
     // Use system palette for game type color
-    final gameTypeColor = colorFromCode(gameTypeCode);
+    final gameTypeColor = colorFromCode(displayType);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -284,7 +286,7 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '$drawTimeSimple$gameTypeCode',
+                      '$drawTimeSimple$displayType',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: gameTypeColor,
