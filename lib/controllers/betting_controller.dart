@@ -60,6 +60,7 @@ class BettingController extends GetxController {
   final Rx<String> betNumber = ''.obs;
   final Rx<double> betAmount = 0.0.obs;
   final RxBool isCombination = false.obs;
+  final Rx<String?> d4SubSelection = Rx<String?>(null);
   
   // Last placed bet ticket ID
   final RxString lastPlacedTicketId = ''.obs;
@@ -88,6 +89,7 @@ class BettingController extends GetxController {
     betNumber.value = '';
     betAmount.value = 0.0;
     isCombination.value = false;
+    d4SubSelection.value = null;
     // Don't reset lastPlacedTicketId here as it might be needed for printing
   }
   
@@ -223,6 +225,11 @@ class BettingController extends GetxController {
         'is_combination': isCombination.value,
         'customer_id': null, // Optional, can be null
       };
+      
+      // Add d4_sub_selection if it's set
+      if (d4SubSelection.value != null) {
+        payload['d4_sub_selection'] = d4SubSelection.value!;
+      }
       
       // Use dynamic type to get the raw response first
       final result = await _dioService.authPost<dynamic>(

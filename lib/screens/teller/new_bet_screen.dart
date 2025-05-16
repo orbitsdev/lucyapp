@@ -134,7 +134,8 @@ class _NewBetScreenState extends State<NewBetScreen> {
           'Bet Number: ${betNumberController.text}\n'
           'Amount: PHP ${amountController.text}\n'
           'Bet Type: ${dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)?.name ?? ''}\n'
-          'Draw: ${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawTimeFormatted ?? ''} (${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDateFormatted ?? bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDate ?? ''})',
+          'Draw: ${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawTimeFormatted ?? ''} (${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDateFormatted ?? bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDate ?? ''})'
+          '${bettingController.d4SubSelection.value != null ? '\nD4 Sub-selection: ${bettingController.d4SubSelection.value}' : ''}',
       confirmText: 'Place Bet',
       onConfirm: () async {
         final betData = await bettingController.placeBet();
@@ -237,6 +238,8 @@ class _NewBetScreenState extends State<NewBetScreen> {
                         bettingController.selectedGameTypeId.value = value;
                         // Clear bet number when game type changes
                         betNumberController.clear();
+                        // Reset D4 sub-selection when game type changes
+                        bettingController.d4SubSelection.value = null;
                       },
                     ),
                   ),
@@ -274,12 +277,88 @@ class _NewBetScreenState extends State<NewBetScreen> {
                       }).toList(),
                       onChanged: (value) {
                         bettingController.selectedDrawId.value = value;
+                        
+                        // Reset D4 sub-selection if draw time changes and it's not 9PM
+                        final selectedDraw = bettingController.availableDraws.firstWhereOrNull(
+                          (draw) => draw.id == value
+                        );
+                        final selectedGameType = bettingController.selectedGameTypeId.value != null
+                            ? dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)
+                            : null;
+                        
+                        if (!(selectedGameType?.isD4 ?? false) || selectedDraw?.drawTimeSimple != '9PM') {
+                          bettingController.d4SubSelection.value = null;
+                        }
                       },
                     ),
                   ),
                 ),
                 
                 const SizedBox(height: 24),
+                
+                // D4 Sub-selection (only shown for D4 game type and 9PM draw)
+                Obx(() {
+                  // Check if we need to show the D4 sub-selection dropdown
+                  final selectedGameType = bettingController.selectedGameTypeId.value != null
+                      ? dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)
+                      : null;
+                  final selectedDraw = bettingController.availableDraws.firstWhereOrNull(
+                    (draw) => draw.id == bettingController.selectedDrawId.value
+                  );
+                  
+                  final bool isD4 = selectedGameType?.isD4 ?? false;
+                  final bool is9PMDraw = selectedDraw?.drawTimeSimple == '9PM';
+                  
+                  if (isD4 && is9PMDraw) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'D4 Sub-selection',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              hint: const Text('Select Sub-type'),
+                              value: bettingController.d4SubSelection.value,
+                              items: const [
+                                DropdownMenuItem<String>(
+                                  value: 'S2',
+                                  child: Text('S2 (2-digit)'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: 'S3',
+                                  child: Text('S3 (3-digit)'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                bettingController.d4SubSelection.value = value;
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  } else {
+                    // Reset D4 sub-selection when not applicable
+                    if (bettingController.d4SubSelection.value != null) {
+                      bettingController.d4SubSelection.value = null;
+                    }
+                    return const SizedBox.shrink();
+                  }
+                }),
                 
                 // Bet Number Input
                 const Text(
