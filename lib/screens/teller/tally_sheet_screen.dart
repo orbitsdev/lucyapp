@@ -70,19 +70,32 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
   void _updateTabsFromResponse() {
     final report = reportController.detailedTallysheet.value;
     
-    // Only update tabs if we have valid data
-    if (report?.betsByGameType != null && report!.betsByGameType!.isNotEmpty) {
-      final newTabs = <TabData>[];
-      
-      // Add ALL tab
-      newTabs.add(
+    // Reset tabs if we have no data
+    if (report == null || report.bets == null || report.bets!.isEmpty) {
+      _tabs.value = <TabData>[
         TabData(
           index: 0,
           title: const Tab(text: 'ALL'),
-          content: Obx(() => _buildBetsGrid(reportController.detailedTallysheet.value?.bets ?? [])),
+          content: _buildBetsGrid([]),
         ),
-      );
-      
+      ];
+      return;
+    }
+    
+    // Process tabs if we have valid data
+    final newTabs = <TabData>[];
+    
+    // Add ALL tab
+    newTabs.add(
+      TabData(
+        index: 0,
+        title: const Tab(text: 'ALL'),
+        content: Obx(() => _buildBetsGrid(reportController.detailedTallysheet.value?.bets ?? [])),
+      ),
+    );
+    
+    // Only add game type tabs if we have valid betsByGameType data
+    if (report.betsByGameType != null && report.betsByGameType!.isNotEmpty) {
       // Preferred order for game type codes - include D4 sub-selections
       final preferredOrder = ['S2', 'S3', 'D4', 'D4-S2', 'D4-S3', 'D6', 'D8', 'D10'];
       final allCodes = report.betsByGameType!.keys.toList();
@@ -105,10 +118,10 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
           ),
         );
       }
-      
-      // Update tabs list
-      _tabs.value = newTabs;
     }
+    
+    // Update tabs list
+    _tabs.value = newTabs;
   }
   
   Future<void> _loadAvailableDates() async {
@@ -254,7 +267,16 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
   
   // Build a row for each bet
   Widget _buildBetRow(BetDetail bet, int index) {
-    final betNumber = bet.betNumber?.toString() ?? '';
+    // Safely handle potentially null or dynamic values
+    String betNumber = '';
+    if (bet.betNumber != null) {
+      try {
+        betNumber = bet.betNumber.toString();
+      } catch (e) {
+        betNumber = 'Error';
+      }
+    }
+    
     final gameTypeCode = bet.gameTypeCode ?? '';
     final drawTimeSimple = bet.drawTimeSimple ?? '';
     // Use the displayType if available, otherwise fallback to gameTypeCode
@@ -286,7 +308,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '$drawTimeSimple$displayType',
+                      // Ensure we have valid strings to display
+                      '$drawTimeSimple${displayType.isNotEmpty ? displayType : "Unknown"}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: gameTypeColor,
@@ -313,10 +336,12 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
               // Amount (right aligned and centered vertically)
               Expanded(
                 flex: 2,
-                child: Align(
+                child: Container(
                   alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 8),
                   child: Text(
-                    '₱${bet.amountFormatted ?? '0'}',
+                    // Safely handle amount formatting
+                    '₱${bet.amountFormatted ?? (bet.amount?.toString() ?? '0')}',
                     textAlign: TextAlign.right,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,

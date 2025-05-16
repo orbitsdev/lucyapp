@@ -29,16 +29,21 @@ class DetailedTallysheet {
     }
     
     // Parse bets by game type
-    Map<String, List<BetDetail>>? betsByGameType;
+    Map<String, List<BetDetail>>? betsByGameType = {};
     if (json['bets_by_game_type'] != null) {
-      betsByGameType = {};
-      json['bets_by_game_type'].forEach((key, value) {
-        if (value is List) {
-          betsByGameType![key] = List<BetDetail>.from(
-            value.map((x) => BetDetail.fromJson(x))
-          );
-        }
-      });
+      // Handle case where bets_by_game_type is an empty array
+      if (json['bets_by_game_type'] is List) {
+        // If it's an empty array, just leave betsByGameType as an empty map
+      } else if (json['bets_by_game_type'] is Map) {
+        // If it's a map/object, process it normally
+        json['bets_by_game_type'].forEach((key, value) {
+          if (value is List) {
+            betsByGameType[key] = List<BetDetail>.from(
+              value.map((x) => BetDetail.fromJson(x))
+            );
+          }
+        });
+      }
     }
     
     return DetailedTallysheet(
