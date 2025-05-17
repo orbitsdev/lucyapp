@@ -142,57 +142,58 @@ class AuthController extends GetxController {
       Modal.showErrorModal(message: 'Please enter both username and password');
       return false;
     }
-    
+
     isLoading.value = true;
     Modal.showProgressModal(message: 'Logging in...');
     print('Attempting login with username: ${usernameController.text}');
-    
-    // Use username only for login
-    final Map<String, dynamic> loginData = {
-      'username': usernameController.text,
-      'password': passwordController.text,
-    };
-    
-    final result = await _dioService.post(
-      ApiConfig.login,
-      data: loginData,
-      fromJson: (data) => data,
-    );
-    
-    if (Get.isDialogOpen ?? false) {
-      Get.back();
+
+    bool navigationDone = false;
+    try {
+      // Use username only for login
+      final Map<String, dynamic> loginData = {
+        'username': usernameController.text,
+        'password': passwordController.text,
+      };
+
+      final result = await _dioService.post(
+        ApiConfig.login,
+        data: loginData,
+        fromJson: (data) => data,
+      );
+
+      isLoading.value = false;
+
+      return await result.fold(
+        (error) async {
+          print('Login error: ${error.message} (code: ${error.code})');
+          // Ensure modal is closed before showing error
+          if (Get.isDialogOpen ?? false) {
+            Get.back();
+          }
+          _showApiError(error);
+          return false;
+        },
+        (data) async {
+          print('Login successful');
+          await _dioService.setToken(data['access_token']);
+          user.value = User.fromJson(data['user']);
+          await fetchAndUpdateUserDetails(showModal: false);
+          // Ensure modal is closed before navigation
+          if (Get.isDialogOpen ?? false) {
+            Get.back();
+          }
+          navigationDone = true;
+          _navigateBasedOnRole();
+          return true;
+        },
+      );
+    } finally {
+      isLoading.value = false;
+      // Defensive: close modal if still open and navigation hasn't happened
+      if (!navigationDone && (Get.isDialogOpen ?? false)) {
+        Get.back();
+      }
     }
-    isLoading.value = false;
-    
-    return result.fold(
-      (error) {
-        print('Login error: ${error.message}');
-        Modal.showErrorModal(message: error.message);
-        return false;
-      },
-      (data) async {
-        print('Login successful');
-        // Save token
-        await _dioService.setToken(data['access_token']);
-        print('Token saved');
-        
-        // Set user data
-        print('Setting user data from login response');
-        user.value = User.fromJson(data['user']);
-        print('User set from login: ${user.value?.toMap()}');
-        print('isLoggedIn after login: $isLoggedIn');
-        
-        // Fetch additional user details if needed
-        print('Fetching additional user details...');
-        await fetchAndUpdateUserDetails(showModal: false);
-        print('User details fetched, isLoggedIn: $isLoggedIn');
-        
-        // Navigate based on role
-        _navigateBasedOnRole();
-        
-        return true;
-      },
-    );
   }
   
   Future<bool> register(String name, String username, String email, String password, String passwordConfirmation) async {
@@ -218,7 +219,7 @@ class AuthController extends GetxController {
     
     return result.fold(
       (error) {
-        Modal.showErrorModal(message: error.message);
+        _showApiError(error);
         return false;
       },
       (data) async {
@@ -260,7 +261,7 @@ class AuthController extends GetxController {
     
     return result.fold(
       (error) {
-        Modal.showErrorModal(message: error.message);
+        _showApiError(error);
         return false;
       },
       (data) {
@@ -287,6 +288,30 @@ class AuthController extends GetxController {
     }
   }
   
+  Future<void> _showApiError(dynamic error) async {
+    // Accepts ApiError or Failure-like object with message/code
+    final code = error.code;
+    final message = error.message ?? 'An unexpected error occurred.';
+    // Add a short delay to ensure dialog stack is clear
+    await Future.delayed(const Duration(milliseconds: 100));
+    switch (code) {
+      case 'no_connection':
+        Modal.showNoInternetModal();
+        break;
+      case 'timeout':
+        Modal.showErrorModal(message: 'Request timed out. Please try again.');
+        break;
+      case 'unauthorized':
+        Modal.showErrorModal(message: 'Unauthorized. Please login again.');
+        break;
+      case 'validation_error':
+        Modal.showErrorModal(message: message);
+        break;
+      default:
+        Modal.showErrorModal(message: message);
+    }
+  }
+
   @override
   void onClose() {
     usernameController.dispose();
