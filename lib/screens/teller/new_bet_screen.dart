@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:bettingapp/utils/app_colors.dart';
+import 'package:flutter/services.dart';
 
 class NewBetScreen extends StatefulWidget {
   const NewBetScreen({super.key});
@@ -400,7 +401,11 @@ class _NewBetScreenState extends State<NewBetScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: amountController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    // Only allow digits and a single decimal point, up to 2 decimal places
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
+                  ],
                   style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
                     hintText: 'Enter bet amount',
