@@ -81,7 +81,17 @@ class DioService {
   }
   
   Future<String?> getToken() async {
-    return await _storage.read(key: _tokenKey);
+    try {
+      return await _storage.read(key: _tokenKey);
+    } catch (e) {
+      // Handle decryption error (e.g., after app reinstall or signing key change)
+      if (e.toString().contains('BAD_DECRYPT')) {
+        await _storage.deleteAll();
+        // Optionally, you can log out the user or trigger a re-login here
+        return null;
+      }
+      rethrow;
+    }
   }
   
   Future<bool> hasToken() async {
