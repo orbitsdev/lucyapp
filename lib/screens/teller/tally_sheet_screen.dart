@@ -394,7 +394,67 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         
         return Column(
           children: [
-            // Header with date and game type info
+            // Date picker always at the top, like commission screen
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: GestureDetector(
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                    builder: (context, child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: AppColors.primaryRed,
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
+                  );
+                  if (picked != null) {
+                    final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
+                    final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
+                    selectedDateFormatted.value = displayDateFormat;
+                    reportController.isLoadingDetailedTallysheet.value = true;
+                    await reportController.fetchDetailedTallysheet(
+                      date: apiDateFormat,
+                      gameTypeId: reportController.selectedGameTypeId.value,
+                      page: 1,
+                      perPage: reportController.perPage.value,
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.calendar_today, color: AppColors.primaryRed, size: 22),
+                      const SizedBox(width: 10),
+                      Obx(() => Text(
+                            selectedDateFormatted.value,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                            ),
+                          )),
+                      const Spacer(),
+                      const Icon(Icons.arrow_drop_down, color: Colors.black45, size: 26),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Total Amount and Bet Type info
             Container(
               width: double.infinity,
               color: AppColors.primaryRed,
@@ -402,16 +462,13 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Total Amount display at the top
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                      
-                      ],
+                      boxShadow: [],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -435,12 +492,9 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       ],
                     ),
                   ),
-                  
-                  // Group Bet Type and Date together
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Bet Type display
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         margin: const EdgeInsets.only(right: 10),
@@ -464,131 +518,63 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                           ],
                         ),
                       ),
-                      
-                      // Date selection button
-                      GestureDetector(
-                        onTap: () async {
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2030),
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: const ColorScheme.light(
-                                    primary: AppColors.primaryRed,
-                                  ),
-                                ),
-                                child: child!,
-                              );
-                            },
-                          );
-                          if (picked != null) {
-                            // Format date for API (yyyy-MM-dd)
-                            final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
-                            
-                            // Format date for display (Month d, yyyy)
-                            final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
-                            
-                            // Immediately update the displayed date
-                            selectedDateFormatted.value = displayDateFormat;
-                            
-                            // Clear any existing data to show loading state
-                            reportController.isLoadingDetailedTallysheet.value = true;
-                            
-                            // Update the date parameter only, don't pass drawId
-                            await reportController.fetchDetailedTallysheet(
-                              date: apiDateFormat,
-                              gameTypeId: reportController.selectedGameTypeId.value,
-                              page: 1,
-                              perPage: reportController.perPage.value,
-                            );
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.calendar_today, color: Colors.white, size: 16),
-                              const SizedBox(width: 8),
-                              Obx(() => Text(
-                                selectedDateFormatted.value,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              )),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            
-            // Dynamic TabBar
+            // Dynamic TabBar or Empty State
             Expanded(
               child: isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
-                    ),
-                  )
-                : report?.bets != null && report!.bets!.isNotEmpty
-                  ? DynamicTabBarWidget(
-                    tabAlignment: TabAlignment.center,
-                      dynamicTabs: _tabs,
-                      isScrollable: true,
-                      labelColor: AppColors.primaryRed,
-                      unselectedLabelColor: Colors.grey[600],
-                      indicatorColor: AppColors.primaryRed,
-                      backIcon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryRed, size: 20),
-                      nextIcon: Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primaryRed, size: 20),
-                      onTabChanged: (index) {
-                        _currentTabIndex.value = index ?? 0;
-                      },
-                      onTabControllerUpdated: (controller) {
-                        // Handle tab controller updates if needed
-                      },
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
+                      ),
                     )
-                  : Center(
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Container(
-                          height: 300,
-                          alignment: Alignment.center,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              LocalLottieImage(
-                                path: 'assets/animations/empty_state.json',
-                                width: 180,
-                                height: 180,
+                  : report?.bets != null && report!.bets!.isNotEmpty
+                      ? DynamicTabBarWidget(
+                          tabAlignment: TabAlignment.center,
+                          dynamicTabs: _tabs,
+                          isScrollable: true,
+                          labelColor: AppColors.primaryRed,
+                          unselectedLabelColor: Colors.grey[600],
+                          indicatorColor: AppColors.primaryRed,
+                          backIcon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryRed, size: 20),
+                          nextIcon: Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primaryRed, size: 20),
+                          onTabChanged: (index) {
+                            _currentTabIndex.value = index ?? 0;
+                          },
+                          onTabControllerUpdated: (controller) {},
+                        )
+                      : Center(
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Container(
+                              height: 300,
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  LocalLottieImage(
+                                    path: 'assets/animations/empty_state.json',
+                                    width: 180,
+                                    height: 180,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No bet details available',
+                                    style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'for ${report?.dateFormatted ?? selectedDateFormatted.value}',
+                                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No bet details available',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'for ${report?.dateFormatted ?? selectedDateFormatted.value}',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
             ),
           ],
         );
