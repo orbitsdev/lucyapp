@@ -425,7 +425,9 @@ class _PrinterSetupScreenState extends State<PrinterSetupScreen> {
                 Obx(() {
                   final connectedName = _printerController.lastConnectedName.value.isNotEmpty
                       ? _printerController.lastConnectedName.value
-                      : _lastConnectedAddress;
+                      : (_lastConnectedAddress.isNotEmpty
+                          ? _lastConnectedAddress
+                          : 'Unknown Printer');
                   
                   return Text(
                     _printerController.isConnected.value
