@@ -379,6 +379,10 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                         // Refresh the list
                                         _fetchCancelledBets();
                                         
+                                        // Refresh today's sales data
+                                        final reportController = Get.find<ReportController>();
+                                        await reportController.fetchTodaySales();
+                                        
                                         // Show success message
                                         Modal.showSuccessModal(
                                           title: 'Bet Cancelled',
