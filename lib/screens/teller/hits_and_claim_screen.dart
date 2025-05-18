@@ -333,6 +333,16 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
               ),
             ],
           ),
+            const SizedBox(height: 16),
+          // Bet Type + Draw Time + D4 Sub-selection (if any)
+          Text(
+  bet.betTypeDrawLabel,
+  style: const TextStyle(
+    color: Colors.grey,
+    fontWeight: FontWeight.w500,
+    fontSize: 16,
+  ),
+),
           const SizedBox(height: 16),
           _buildDetailRow('Ticket ID', bet.ticketId ?? 'Unknown'),
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
