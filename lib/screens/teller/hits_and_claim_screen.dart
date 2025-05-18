@@ -297,7 +297,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
           _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
           _buildDetailRow('Status', bet.isClaimed == true ? 'Claimed' : 'Unclaimed', 
-            textColor: bet.isClaimed == true ? Colors.green : AppColors.primaryRed),
+            textColor: bet.isClaimed == true ? AppColors.primaryRed : AppColors.primaryRed),
           if (bet.isClaimed == true && bet.claimedAtFormatted != null)
             _buildDetailRow('Claimed At', bet.claimedAtFormatted!),
           const SizedBox(height: 16),
@@ -312,7 +312,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                       _showClaimConfirmation();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppColors.primaryRed,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -328,7 +328,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                     onPressed: () => Get.back(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.grey.shade800,
+                      foregroundColor: AppColors.primaryRed,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -747,13 +747,13 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppColors.primaryRed,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          disabledBackgroundColor: Colors.green.withOpacity(0.5),
+                          disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.5),
                           elevation: 1,
                         ),
                       )),
