@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../controllers/betting_controller.dart';
 import '../../controllers/dropdown_controller.dart';
+import '../../controllers/report_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../models/bet.dart';
 import '../../models/draw.dart';
