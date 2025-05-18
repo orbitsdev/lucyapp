@@ -24,7 +24,7 @@ class BetListScreen extends StatefulWidget {
 
 /// Defines the fixed column widths for the bet list table
 class TableColumnWidths {
-  static const double betTypeWidth = 100.0;
+  static const double betTypeWidth = 125.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
   static const double winningAmountWidth = 120.0;
@@ -39,6 +39,8 @@ class TableColumnWidths {
 }
 
 class _BetListScreenState extends State<BetListScreen> {
+ 
+
   final BettingController bettingController = Get.find<BettingController>();
   final DropdownController dropdownController = Get.find<DropdownController>();
   final TextEditingController searchController = TextEditingController();
@@ -110,7 +112,7 @@ class _BetListScreenState extends State<BetListScreen> {
       message: 'Are you sure you want to cancel this bet?\n\n' 
               'Ticket ID: ${bet.ticketId}\n'
               'Bet Number: ${bet.betNumber}\n'
-              'Amount: ₱${bet.amount?.toInt() ?? bet.amount}\n'
+              'Amount: ${bet.formattedAmount}\n'
               'Draw Time: $drawTime\n'
               'Date: $betDate\n\n'
               'This action cannot be undone and will update your sales records.', 
@@ -670,33 +672,19 @@ class _BetListScreenState extends State<BetListScreen> {
                                                     width: TableColumnWidths.betTypeWidth,
                                                     child: Padding(
                                                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                      child: Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          RichText(
-                                                            text: TextSpan(
-                                                              style:  TextStyle(color: Colors.grey[600]),
-                                                              children: <TextSpan>[
-                                                                TextSpan(
-                                                                  text: bet.draw?.drawTimeSimple ?? 'Unknown',
-                                                                  style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                ),
-                                                                TextSpan(
-                                                                  text: bet.gameType?.code ?? 'Unknown',
-                                                                  style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                ),
-                                                              ],
-                                                            ),
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                                Text(
+                                                          bet.betTypeDrawLabel,
+                                                          style: const TextStyle(
+                                                            color: Colors.grey,
+                                                            fontWeight: FontWeight.w500,
+                                                            fontSize: 16,
                                                           ),
-                                                          // if ((bet.draw?.drawTimeFormatted ?? '').isNotEmpty)
-                                                          //   Padding(
-                                                          //     padding: const EdgeInsets.only(top: 2.0),
-                                                          //     child: Text(
-                                                          //       bet.draw?.drawTimeFormatted ?? '',
-                                                          //       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                                          //     ),
-                                                          //   ),
-                                                        ],
+                                                        ),
+                                                            
+                                                            ],
                                                       ),
                                                     ),
                                                   ),
@@ -717,7 +705,7 @@ class _BetListScreenState extends State<BetListScreen> {
                                                     child: Padding(
                                                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                       child: Text(
-                                                        '₱${bet.amount?.toInt() ?? bet.amount}',
+                                                        bet.formattedAmount,
                                                         style: const TextStyle(fontWeight: FontWeight.w500),
                                                       ),
                                                     ),
@@ -728,7 +716,7 @@ class _BetListScreenState extends State<BetListScreen> {
                                                     child: Padding(
                                                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                       child: Text(
-                                                        bet.winningAmount != null ? '₱${bet.winningAmount}' : '-',
+                                                        bet.formattedWinningAmount,
                                                         style: TextStyle(
                                                           fontWeight: FontWeight.w500,
                                                           color: bet.winningAmount != null && bet.winningAmount != 0 ? Colors.green : null,
@@ -871,12 +859,22 @@ class _BetListScreenState extends State<BetListScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          // Bet Type + Draw Time + D4 Sub-selection (if any)
+          Text(
+  bet.betTypeDrawLabel,
+  style: const TextStyle(
+    color: Colors.grey,
+    fontWeight: FontWeight.w500,
+    fontSize: 16,
+  ),
+),
+          const SizedBox(height: 8),
           _buildDetailRow('Ticket ID', bet.ticketId ?? 'Unknown'),
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
-          _buildDetailRow('Amount', 'PHP ${bet.amount?.toInt() ?? bet.amount}'),
-          _buildDetailRow('Winning Amount', bet.winningAmount != null ? 'PHP ${bet.winningAmount}' : 'Not set', isHighlighted: bet.isLowWin == true),
+          _buildDetailRow('Amount', bet.formattedAmount),
+          _buildDetailRow('Winning Amount', bet.formattedWinningAmount, isHighlighted: bet.isLowWin == true),
           _buildDetailRow('Status', bet.isRejected == true ? 'Cancelled' : (bet.isClaimed == true ? 'Claimed' : 'Active')),
           const SizedBox(height: 16),
           Row(

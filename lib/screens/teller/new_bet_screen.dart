@@ -136,7 +136,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
           'Amount: PHP ${amountController.text}\n'
           'Bet Type: ${dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)?.name ?? ''}\n'
           'Draw: ${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawTimeFormatted ?? ''} (${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDateFormatted ?? bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDate ?? ''})'
-          '${bettingController.d4SubSelection.value != null ? '\nD4 Sub-selection: ${bettingController.d4SubSelection.value}' : ''}',
+          '${bettingController.d4SubSelection.value != null && bettingController.d4SubSelection.value != '' ? '\nD4 Sub-selection: ${bettingController.d4SubSelection.value}' : ''}',
       confirmText: 'Place Bet',
       onConfirm: () async {
         final betData = await bettingController.placeBet();
@@ -368,8 +368,12 @@ class _NewBetScreenState extends State<NewBetScreen> {
                             child: DropdownButton<String>(
                               isExpanded: true,
                               hint: const Text('Select Sub-type'),
-                              value: bettingController.d4SubSelection.value,
+                              value: bettingController.d4SubSelection.value ?? '',
                               items: const [
+                                DropdownMenuItem<String>(
+                                  value: '',
+                                  child: Text('No Sub-selection'),
+                                ),
                                 DropdownMenuItem<String>(
                                   value: 'S2',
                                   child: Text('S2 (2-digit)'),
@@ -380,7 +384,11 @@ class _NewBetScreenState extends State<NewBetScreen> {
                                 ),
                               ],
                               onChanged: (value) {
-                                bettingController.d4SubSelection.value = value;
+                                if (value == '') {
+                                  bettingController.d4SubSelection.value = null;
+                                } else {
+                                  bettingController.d4SubSelection.value = value;
+                                }
                               },
                             ),
                           ),

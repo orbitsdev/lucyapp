@@ -276,7 +276,7 @@ class _ClaimedBetsScreenState extends State<ClaimedBetsScreen> {
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
-          _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
+          _buildDetailRow('Amount', bet.formattedAmount),
           _buildDetailRow('Claimed At', bet.claimedAtFormatted ?? 'Unknown'),
           _buildDetailRow('Winner', bet.isWinner == true ? 'Yes' : 'No', 
           textColor: bet.isWinner == true ? Colors.green : null),
@@ -879,7 +879,7 @@ class _ClaimedBetsScreenState extends State<ClaimedBetsScreen> {
                                                             child: Padding(
                                                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                               child: Text(
-                                                                '₱${bet.amount?.toInt() ?? bet.amount}',
+                                                                bet.formattedAmount,
                                                                 style: const TextStyle(fontWeight: FontWeight.w500),
                                                               ),
                                                             ),

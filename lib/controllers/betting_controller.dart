@@ -797,6 +797,7 @@ class BettingController extends GetxController {
     int? drawId,
     int? gameTypeId,
     bool? isClaimed,
+    String? d4SubSelection,
     int page = 1,
     int perPage = 50,
     bool refresh = false,
@@ -826,6 +827,7 @@ class BettingController extends GetxController {
       if (drawId != null) queryParams['draw_id'] = drawId;
       if (gameTypeId != null) queryParams['game_type_id'] = gameTypeId;
       if (isClaimed != null) queryParams['is_claimed'] = isClaimed;
+      if (d4SubSelection != null && d4SubSelection.isNotEmpty) queryParams['d4_sub_selection'] = d4SubSelection;
       
       final result = await _dioService.authGet<Map<String, dynamic>>(
         ApiConfig.hits,

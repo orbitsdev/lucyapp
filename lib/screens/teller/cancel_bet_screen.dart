@@ -14,7 +14,7 @@ import '../../widgets/common/qr_scanner.dart';
 
 /// Defines the fixed column widths for the cancelled bet list table
 class TableColumnWidths {
-  static const double typeWidth = 100.0;
+  static const double typeWidth = 120.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
   static const double winningAmountWidth = 120.0;
@@ -764,25 +764,13 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                             width: TableColumnWidths.typeWidth,
                                                             child: Padding(
                                                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                              child: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  RichText(
-                                                                    text: TextSpan(
-                                                                      style: TextStyle(color: Colors.grey[600]),
-                                                                      children: <TextSpan>[
-                                                                        TextSpan(
-                                                                          text: bet.draw?.drawTimeSimple ?? 'Unknown',
-                                                                          style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                        ),
-                                                                        TextSpan(
-                                                                          text: bet.gameType?.code ?? 'Unknown',
-                                                                          style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ],
+                                                              child: Text(
+                                                                bet.betTypeDrawLabel,
+                                                                style: const TextStyle(
+                                                                  color: Colors.grey,
+                                                                  fontWeight: FontWeight.w500,
+                                                                  fontSize: 16,
+                                                                ),
                                                               ),
                                                             ),
                                                           ),
@@ -803,7 +791,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                             child: Padding(
                                                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                               child: Text(
-                                                                '₱${bet.amount?.toInt() ?? bet.amount}',
+                                                                bet.formattedAmount,
                                                                 style: const TextStyle(fontWeight: FontWeight.w500),
                                                               ),
                                                             ),
@@ -814,7 +802,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                             child: Padding(
                                                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                               child: Text(
-                                                                bet.winningAmount != null ? '₱${bet.winningAmount}' : '-',
+                                                                bet.formattedWinningAmount,
                                                                 style: TextStyle(
                                                                   fontWeight: FontWeight.w500,
                                                                   color: bet.winningAmount != null && bet.winningAmount != 0 ? Colors.green : null,
@@ -900,13 +888,13 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
           Row(
             children: [
               Icon(
-                Icons.info_outline,
+                Icons.cancel,
                 color: AppColors.primaryRed,
                 size: 24,
               ),
               const SizedBox(width: 8),
               Text(
-                'Cancellation Details',
+                'Cancelled Bet Details',
                 style: TextStyle(
                   color: AppColors.primaryRed,
                   fontWeight: FontWeight.bold,
@@ -920,7 +908,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
-          _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
+          _buildDetailRow('Amount', bet.formattedAmount),
           _buildDetailRow('Status', 'Cancelled'),
           const SizedBox(height: 16),
           Row(

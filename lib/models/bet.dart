@@ -3,8 +3,46 @@ import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/models/user.dart';
 import 'package:bettingapp/models/location.dart';
 
+import 'package:intl/intl.dart';
+
 class Bet {
   final int? id;
+
+  /// Returns a formatted amount, using API value if present, else fallback
+  String get formattedAmount {
+    if (amountFormatted?.isNotEmpty == true) {
+      return '₱$amountFormatted';
+    }
+    if (amount == null) return '-';
+    return '₱${NumberFormat('#,##0.##').format(amount)}';
+  }
+
+  /// Returns a formatted winning amount, using API value if present, else fallback
+  String get formattedWinningAmount {
+    if (winningAmountFormatted?.isNotEmpty == true) {
+      return '₱$winningAmountFormatted';
+    }
+    if (winningAmount == null) return '-';
+    return '₱${NumberFormat('#,##0.##').format(winningAmount)}';
+  }
+
+  // These fields are only set by the fromJson/factory
+  final String? amountFormatted;
+  final String? winningAmountFormatted;
+
+  /// Returns a formatted label for Bet Type + Draw Time + D4 Sub-selection (if any)
+  String get betTypeDrawLabel {
+    final drawTime = draw?.drawTimeSimple ?? 'Unknown';
+    final code = gameType?.code ?? 'Unknown';
+    final isD4 = code.toUpperCase() == 'D4' || code.toUpperCase() == '4D';
+    final d4Sub = d4SubSelection;
+    if (isD4 && d4Sub != null && d4Sub.isNotEmpty) {
+      return '$drawTime$code-$d4Sub';
+    } else {
+      return '$drawTime$code';
+    }
+  }
+
   final String? ticketId;
   final String? betNumber;
   final double? amount;
@@ -48,7 +86,10 @@ class Bet {
     this.teller,
     this.location,
     this.customer,
+    this.amountFormatted,
+    this.winningAmountFormatted,
   });
+
   
   factory Bet.fromJson(Map json) {
     // Print the json for debugging
@@ -113,6 +154,8 @@ class Bet {
       customer: json['customer'] != null 
           ? User.fromJson(json['customer']) 
           : null,
+      amountFormatted: json['amount_formatted'],
+      winningAmountFormatted: json['winning_amount_formatted'],
     );
   }
   
@@ -176,6 +219,8 @@ class Bet {
       customer: map['customer'] != null 
           ? User.fromMap(map['customer'] as Map) 
           : null,
+      amountFormatted: map['amount_formatted'],
+      winningAmountFormatted: map['winning_amount_formatted'],
     );
   }
   

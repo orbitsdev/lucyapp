@@ -14,7 +14,7 @@ import '../../widgets/common/qr_scanner.dart';
 
 /// Defines the fixed column widths for the winning bet list table
 class TableColumnWidths {
-  static const double typeWidth = 100.0;
+  static const double typeWidth = 120.0;
   static const double betNumberWidth = 120.0;
   static const double amountWidth = 100.0;
   static const double winningAmountWidth = 120.0;
@@ -42,6 +42,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
   final Rx<String?> selectedDate = Rx<String?>(null);
   final RxInt selectedDrawId = RxInt(-1);
   final RxInt selectedGameTypeId = RxInt(-1);
+  final RxString selectedD4SubSelection = ''.obs; // D4 sub-selection filter
   final RxBool showOnlyUnclaimed = RxBool(true);
   final ScrollController scrollController = ScrollController();
   final ScrollController horizontalScrollController = ScrollController();
@@ -89,6 +90,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
       drawId: selectedDrawId.value != -1 ? selectedDrawId.value : null,
       gameTypeId: selectedGameTypeId.value != -1 ? selectedGameTypeId.value : null,
       isClaimed: showOnlyUnclaimed.value ? false : null,
+      d4SubSelection: selectedD4SubSelection.value.isNotEmpty ? selectedD4SubSelection.value : null,
     );
   }
 
@@ -148,6 +150,47 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                 },
               )),
               SizedBox(height: 16),
+              // D4 Sub-selection filter (only for D4)
+              Obx(() {
+                final d4GameType = dropdownController.gameTypes.firstWhereOrNull((g) => g.id == selectedGameTypeId.value);
+                final code = d4GameType?.code?.toUpperCase() ?? '';
+                if (code == 'D4' || code == '4D') {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'D4 Sub-selection',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: selectedD4SubSelection.value.isEmpty ? null : selectedD4SubSelection.value,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                        items: const [
+                          DropdownMenuItem<String>(value: null, child: Text('All Sub-selections')),
+                          DropdownMenuItem<String>(value: 'S2', child: Text('S2 (2-digit)')),
+                          DropdownMenuItem<String>(value: 'S3', child: Text('S3 (3-digit)')),
+                        ],
+                        onChanged: (value) {
+                          selectedD4SubSelection.value = value ?? '';
+                        },
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                  );
+                }
+                // Clear the filter if not D4
+                if (selectedD4SubSelection.value.isNotEmpty) selectedD4SubSelection.value = '';
+                return SizedBox.shrink();
+              }),
               // Date filter
               Text(
                 'Date',
@@ -295,7 +338,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),
-          _buildDetailRow('Amount', '₱ ${bet.amount?.toInt() ?? bet.amount}'),
+          _buildDetailRow('Amount', bet.formattedAmount),
           _buildDetailRow('Status', bet.isClaimed == true ? 'Claimed' : 'Unclaimed', 
             textColor: bet.isClaimed == true ? AppColors.primaryRed : AppColors.primaryRed),
           if (bet.isClaimed == true && bet.claimedAtFormatted != null)
@@ -514,6 +557,16 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
         ));
       }
       
+      // Add D4 sub-selection filter if selected
+      if (selectedD4SubSelection.value.isNotEmpty) {
+        filters.add(_buildFilterChip(
+          'D4: ${selectedD4SubSelection.value}',
+          onTap: () {
+            selectedD4SubSelection.value = '';
+            _fetchWinningBets();
+          },
+        ));
+      }
       // Add draw filter if selected
       if (selectedDrawId.value != -1) {
         final drawIndex = bettingController.availableDraws.indexWhere(
@@ -598,6 +651,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                 selectedDate.value = null;
                 selectedDrawId.value = -1;
                 selectedGameTypeId.value = -1;
+                selectedD4SubSelection.value = '';
                 searchQuery.value = '';
                 searchController.clear();
                 showOnlyUnclaimed.value = true;
@@ -1158,7 +1212,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                                                   child: Padding(
                                                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                     child: Text(
-                                                      '₱${bet.amount?.toInt() ?? bet.amount}',
+                                                      bet.formattedAmount,
                                                       style: const TextStyle(fontWeight: FontWeight.w500),
                                                     ),
                                                   ),
@@ -1169,7 +1223,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                                                   child: Padding(
                                                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                     child: Text(
-                                                      bet.winningAmount != null ? '₱${bet.winningAmount}' : '-',
+                                                      bet.formattedWinningAmount,
                                                       style: TextStyle(
                                                         fontWeight: FontWeight.w500,
                                                         color: bet.winningAmount != null && bet.winningAmount != 0 ? Colors.green : null,

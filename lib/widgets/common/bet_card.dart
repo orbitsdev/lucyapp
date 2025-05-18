@@ -77,7 +77,7 @@ class BetCard extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    '₱ ${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
+                    bet.formattedAmount,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
@@ -218,7 +218,7 @@ class BetCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '₱ ${bet.amount?.toStringAsFixed(2) ?? '0.00'}',
+                      bet.formattedAmount,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
