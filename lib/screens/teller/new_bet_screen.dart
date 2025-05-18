@@ -210,12 +210,17 @@ class _NewBetScreenState extends State<NewBetScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Draw Selection
-                const Text(
-                  'Draw Schedule',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: const [
+                    Text(
+                      'Draw Schedule',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(' *', style: TextStyle(color: AppColors.primaryRed, fontSize: 18)),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -265,12 +270,17 @@ class _NewBetScreenState extends State<NewBetScreen> {
                 const SizedBox(height: 24),
 
                 // Game Type Selection
-                const Text(
-                  'Bet Type',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: const [
+                    Text(
+                      'Bet Type',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(' *', style: TextStyle(color: AppColors.primaryRed, fontSize: 18)),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -335,12 +345,17 @@ class _NewBetScreenState extends State<NewBetScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'D4 Sub-selection',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: const [
+                            Text(
+                              'D4 Sub-selection',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(' (optional)', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         Container(
@@ -383,12 +398,17 @@ class _NewBetScreenState extends State<NewBetScreen> {
                 }),
                 
                 // Bet Number Input
-                const Text(
-                  'Bet Number',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: const [
+                    Text(
+                      'Bet Number',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(' *', style: TextStyle(color: AppColors.primaryRed, fontSize: 18)),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -412,12 +432,17 @@ class _NewBetScreenState extends State<NewBetScreen> {
                 const SizedBox(height: 24),
                 
                 // Bet Amount Input
-                const Text(
-                  'Bet Amount',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: const [
+                    Text(
+                      'Bet Amount',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(' *', style: TextStyle(color: AppColors.primaryRed, fontSize: 18)),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 TextField(
