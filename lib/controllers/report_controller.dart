@@ -3,6 +3,7 @@ import 'package:bettingapp/config/api_config.dart';
 import 'package:bettingapp/core/dio/dio_base.dart';
 import 'package:bettingapp/models/tallysheet_report.dart';
 import 'package:bettingapp/models/sales_report.dart';
+import 'package:bettingapp/models/commission_report.dart';
 import 'package:bettingapp/models/draw.dart';
 import 'package:bettingapp/models/detailed_tallysheet.dart';
 import 'package:bettingapp/widgets/common/modal.dart';
@@ -18,6 +19,10 @@ class ReportController extends GetxController {
   final Rx<DetailedTallysheet?> detailedTallysheet = Rx<DetailedTallysheet?>(null);
   final Rx<List<Draw>> availableDates = Rx<List<Draw>>([]);
   
+  // Commission report data
+  final Rx<CommissionReport?> commissionReport = Rx<CommissionReport?>(null);
+  final RxBool isLoadingCommissionReport = false.obs;
+
   // Today's sales data
   final RxString salesFormatted = '₱ 0'.obs;
   final RxString commissionRateFormatted = '0%'.obs;
@@ -154,6 +159,43 @@ class ReportController extends GetxController {
     await fetchSalesReport(date: today, drawId: drawId);
   }
   
+  // Fetch commission report (for teller)
+  Future<void> fetchCommissionReport({String? date}) async {
+    isLoadingCommissionReport.value = true;
+    try {
+      final queryParams = <String, dynamic>{};
+      if (date != null) queryParams['date'] = date;
+      final result = await _dioService.authGet<CommissionReport>(
+        ApiConfig.commissionReport,
+        queryParameters: queryParams,
+        fromJson: (data) {
+          if (data is Map && data.containsKey('data')) {
+            return CommissionReport.fromJson(data['data']);
+          }
+          return CommissionReport();
+        },
+      );
+      result.fold(
+        (error) {
+          Modal.showErrorModal(
+            title: 'Error Loading Commission Report',
+            message: error.message,
+          );
+        },
+        (report) {
+          commissionReport.value = report;
+        },
+      );
+    } catch (e) {
+      Modal.showErrorModal(
+        title: 'Error',
+        message: 'Failed to load commission report: [${e.toString()}\u001b[0m',
+      );
+    } finally {
+      isLoadingCommissionReport.value = false;
+    }
+  }
+
   // Fetch today's tallysheet report
   Future<void> fetchTodayTallysheetReport() async {
     final today = DateTime.now();

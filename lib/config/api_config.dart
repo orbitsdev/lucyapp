@@ -35,4 +35,5 @@ class ApiConfig {
   static const String tallySheet = '/reports/tallysheet';
   static const String detailedTallySheet = '/teller/detailed-tallysheet';
   static const String tellerTodaySales = '/teller/today-sales';
+  static const String commissionReport = '/teller/commission-report';
 }
