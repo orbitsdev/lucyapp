@@ -43,7 +43,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
   final RxInt selectedDrawId = RxInt(-1);
   final RxInt selectedGameTypeId = RxInt(-1);
   final RxString selectedD4SubSelection = ''.obs; // D4 sub-selection filter
-  final RxBool showOnlyUnclaimed = RxBool(true);
+  final RxBool showOnlyUnclaimed = RxBool(false);
   final ScrollController scrollController = ScrollController();
   final ScrollController horizontalScrollController = ScrollController();
   
