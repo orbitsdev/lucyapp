@@ -101,8 +101,8 @@ class _NewBetScreenState extends State<NewBetScreen> {
     
     if (bettingController.selectedGameTypeId.value == null) {
       Modal.showErrorModal(
-        title: 'Game Type Required',
-        message: 'Please select a game type',
+        title: 'Bet Type Required',
+        message: 'Please select a bet type',
       );
       return;
     }
@@ -194,7 +194,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
             // Show a snackbar to indicate refresh completed
             Get.snackbar(
               'Refreshed',
-              'Game types and draw schedules updated',
+              'Bet types and draw schedules updated',
               snackPosition: SnackPosition.BOTTOM,
               backgroundColor: Colors.white,
               colorText: AppColors.primaryRed,
@@ -209,45 +209,6 @@ class _NewBetScreenState extends State<NewBetScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Game Type Selection
-                const Text(
-                  'Bet Type',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      hint: const Text('Select Bet Type'),
-                      value: bettingController.selectedGameTypeId.value,
-                      items: dropdownController.gameTypes.map((gameType) {
-                        return DropdownMenuItem<int>(
-                          value: gameType.id,
-                          child: Text('${gameType.name} (${gameType.code})'),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        bettingController.selectedGameTypeId.value = value;
-                        // Clear bet number when game type changes
-                        betNumberController.clear();
-                        // Reset D4 sub-selection when game type changes
-                        bettingController.d4SubSelection.value = null;
-                      },
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
                 // Draw Selection
                 const Text(
                   'Draw Schedule',
@@ -277,22 +238,82 @@ class _NewBetScreenState extends State<NewBetScreen> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        bettingController.selectedDrawId.value = value;
-                        
-                        // Reset D4 sub-selection if draw time changes and it's not 9PM
-                        final selectedDraw = bettingController.availableDraws.firstWhereOrNull(
-                          (draw) => draw.id == value
-                        );
-                        final selectedGameType = bettingController.selectedGameTypeId.value != null
-                            ? dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)
-                            : null;
-                        
-                        if (!(selectedGameType?.isD4 ?? false) || selectedDraw?.drawTimeSimple != '9PM') {
-                          bettingController.d4SubSelection.value = null;
-                        }
-                      },
+  bettingController.selectedDrawId.value = value;
+
+  // After changing draw, check if D4/4D is still valid
+  final selectedDraw = bettingController.availableDraws.firstWhereOrNull(
+    (draw) => draw.id == value
+  );
+  final is9PMDraw = selectedDraw?.drawTimeSimple == '9PM';
+  final selectedGameType = bettingController.selectedGameTypeId.value != null
+      ? dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)
+      : null;
+  final code = selectedGameType?.code?.toUpperCase() ?? '';
+  if ((code == 'D4' || code == '4D') && !is9PMDraw) {
+    // Reset game type if D4/4D is selected and draw is not 9PM
+    bettingController.selectedGameTypeId.value = null;
+  }
+  // Reset D4 sub-selection if not 9PM or not D4
+  if (!(selectedGameType?.isD4 ?? false) || !is9PMDraw) {
+    bettingController.d4SubSelection.value = null;
+  }
+},
                     ),
                   ),
+                ),
+                
+                const SizedBox(height: 24),
+
+                // Game Type Selection
+                const Text(
+                  'Bet Type',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+  child: Builder(
+    builder: (context) {
+      final selectedDraw = bettingController.availableDraws.firstWhereOrNull(
+        (draw) => draw.id == bettingController.selectedDrawId.value
+      );
+      final is9PMDraw = selectedDraw?.drawTimeSimple == '9PM';
+      final filteredGameTypes = dropdownController.gameTypes.where((gameType) {
+        final code = gameType.code?.toUpperCase() ?? '';
+        if (code == 'D4' || code == '4D') {
+          return is9PMDraw;
+        }
+        return true;
+      }).toList();
+      return DropdownButton<int>(
+        isExpanded: true,
+        hint: const Text('Select Bet Type'),
+        value: bettingController.selectedGameTypeId.value,
+        items: filteredGameTypes.map((gameType) {
+          return DropdownMenuItem<int>(
+            value: gameType.id,
+            child: Text('${gameType.name} (${gameType.code})'),
+          );
+        }).toList(),
+        onChanged: (value) {
+          bettingController.selectedGameTypeId.value = value;
+          // Clear bet number when game type changes
+          betNumberController.clear();
+          // Reset D4 sub-selection when game type changes
+          bettingController.d4SubSelection.value = null;
+        },
+      );
+    }
+  ),
+),
                 ),
                 
                 const SizedBox(height: 24),

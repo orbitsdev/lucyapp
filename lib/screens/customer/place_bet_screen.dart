@@ -347,7 +347,7 @@ class PlaceBetScreen extends StatelessWidget {
                   SizedBox(height: 16),
                   Row(
                     children: [
-                      Text('Game Type: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Bet Type: ', style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(controller.selectedGameType.value),
                     ],
                   ),

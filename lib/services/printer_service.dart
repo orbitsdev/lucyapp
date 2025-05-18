@@ -354,7 +354,7 @@ class PrinterService {
         bytes.addAll(utf8.encode('Winning Amount: PHP $winningAmount\n'));
       }
       
-      bytes.addAll(utf8.encode('Game Type: $gameTypeName\n'));
+      bytes.addAll(utf8.encode('Bet Type: $gameTypeName\n'));
       bytes.addAll(utf8.encode('Draw Time: $drawTime\n'));
       bytes.addAll(utf8.encode('Date: $betDate\n'));
       bytes.addAll(utf8.encode('Status: $status\n'));
