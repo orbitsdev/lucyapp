@@ -1173,21 +1173,16 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                                                     child: Column(
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
-                                                        RichText(
-                                                          text: TextSpan(
-                                                            style: TextStyle(color: Colors.grey[600]),
-                                                            children: <TextSpan>[
-                                                              TextSpan(
-                                                                text: bet.draw?.drawTimeSimple ?? 'Unknown',
-                                                                style: const TextStyle(fontWeight: FontWeight.w500),
-                                                              ),
-                                                              TextSpan(
-                                                                text: bet.gameType?.code ?? 'Unknown',
-                                                                style: const TextStyle(fontWeight: FontWeight.w500),
-                                                              ),
-                                                            ],
+                                                        Text(
+                                                          bet.betTypeDrawLabel,
+                                                          style: TextStyle(
+                                                            color: Colors.grey[600],
+                                                            fontWeight: FontWeight.w500,
+                                                            fontSize: 16,
                                                           ),
                                                         ),
+                                                        // D4 Sub-selection (table row)
+                                                       
                                                       ],
                                                     ),
                                                   ),
