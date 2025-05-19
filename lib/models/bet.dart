@@ -30,8 +30,11 @@ class Bet {
   final String? amountFormatted;
   final String? winningAmountFormatted;
 
-  /// Returns a formatted label for Bet Type + Draw Time + D4 Sub-selection (if any)
-  String get betTypeDrawLabel {
+  /// Returns the bet type draw label from the API or constructs a fallback if not available
+  final String? betTypeDrawLabel;
+
+  /// Legacy method to construct a bet type label if API doesn't provide one
+  String get constructedBetTypeDrawLabel {
     final drawTime = draw?.drawTimeSimple ?? 'Unknown';
     final code = gameType?.code ?? 'Unknown';
     final isD4 = code.toUpperCase() == 'D4' || code.toUpperCase() == '4D';
@@ -41,6 +44,11 @@ class Bet {
     } else {
       return '$drawTime$code';
     }
+  }
+
+  /// Gets the bet type draw label, using the API value if available, otherwise falls back to constructed value
+  String get displayBetTypeDrawLabel {
+    return betTypeDrawLabel ?? constructedBetTypeDrawLabel;
   }
 
   final String? ticketId;
@@ -88,6 +96,7 @@ class Bet {
     this.customer,
     this.amountFormatted,
     this.winningAmountFormatted,
+    this.betTypeDrawLabel,
   });
 
   
@@ -156,6 +165,7 @@ class Bet {
           : null,
       amountFormatted: json['amount_formatted'],
       winningAmountFormatted: json['winning_amount_formatted'],
+      betTypeDrawLabel: json['bet_type_draw_label']?.toString(),
     );
   }
   
@@ -221,6 +231,7 @@ class Bet {
           : null,
       amountFormatted: map['amount_formatted'],
       winningAmountFormatted: map['winning_amount_formatted'],
+      betTypeDrawLabel: map['bet_type_draw_label']?.toString(),
     );
   }
   
@@ -247,6 +258,7 @@ class Bet {
       'teller': teller?.toMap(),
       'location': location?.toMap(),
       'customer': customer?.toMap(),
+      'bet_type_draw_label': betTypeDrawLabel,
     };
   }
   
@@ -272,6 +284,7 @@ class Bet {
     User? teller,
     Location? location,
     User? customer,
+    String? betTypeDrawLabel,
   }) {
     return Bet(
       id: id ?? this.id,
@@ -295,6 +308,7 @@ class Bet {
       teller: teller ?? this.teller,
       location: location ?? this.location,
       customer: customer ?? this.customer,
+      betTypeDrawLabel: betTypeDrawLabel ?? this.betTypeDrawLabel,
     );
   }
   

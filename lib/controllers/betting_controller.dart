@@ -62,6 +62,9 @@ class BettingController extends GetxController {
   final RxBool isCombination = false.obs;
   final Rx<String?> d4SubSelection = Rx<String?>(null);
   
+  // Combination bets
+  final RxList<Map<String, dynamic>> combinations = <Map<String, dynamic>>[].obs;
+  
   // Last placed bet ticket ID
   final RxString lastPlacedTicketId = ''.obs;
   
@@ -90,6 +93,7 @@ class BettingController extends GetxController {
     betAmount.value = 0.0;
     isCombination.value = false;
     d4SubSelection.value = null;
+    combinations.clear();
     // Don't reset lastPlacedTicketId here as it might be needed for printing
   }
   
@@ -190,12 +194,36 @@ class BettingController extends GetxController {
       return null;
     }
     
-    if (betAmount.value <= 0) {
-      Modal.showErrorModal(
-        title: 'Validation Error',
-        message: 'Please enter a valid bet amount',
-      );
-      return null;
+    // For combination bets, check if combinations are provided
+    if (isCombination.value && d4SubSelection.value != null) {
+      if (combinations.isEmpty) {
+        Modal.showErrorModal(
+          title: 'Validation Error',
+          message: 'Please add at least one combination',
+        );
+        return null;
+      }
+      
+      // Check if all combinations have valid amounts
+      for (final combo in combinations) {
+        final amount = combo['amount'] as double?;
+        if (amount == null || amount <= 0) {
+          Modal.showErrorModal(
+            title: 'Validation Error',
+            message: 'Please enter valid amounts for all combinations',
+          );
+          return null;
+        }
+      }
+    } else {
+      // For regular bets, check amount
+      if (betAmount.value <= 0) {
+        Modal.showErrorModal(
+          title: 'Validation Error',
+          message: 'Please enter a valid bet amount',
+        );
+        return null;
+      }
     }
     
     if (selectedGameTypeId.value == null) {
@@ -219,7 +247,7 @@ class BettingController extends GetxController {
     try {
       final payload = {
         'bet_number': betNumber.value,
-        'amount': betAmount.value,
+        'amount': isCombination.value ? 0 : betAmount.value, // Set to 0 for combination bets
         'draw_id': selectedDrawId.value,
         'game_type_id': selectedGameTypeId.value,
         'is_combination': isCombination.value,
@@ -229,6 +257,16 @@ class BettingController extends GetxController {
       // Add d4_sub_selection if it's set
       if (d4SubSelection.value != null) {
         payload['d4_sub_selection'] = d4SubSelection.value!;
+      }
+      
+      // Add combinations if this is a combination bet
+      if (isCombination.value && combinations.isNotEmpty) {
+        final List<Map<String, dynamic>> combinationsPayload = combinations.map((combo) => {
+          'combination': combo['combination'],
+          'amount': combo['amount'],
+        }).toList();
+        
+        payload['combinations'] = combinationsPayload;
       }
       
       // Use dynamic type to get the raw response first

@@ -770,7 +770,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
                                                             child: Padding(
                                                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                               child: Text(
-                                                                bet.betTypeDrawLabel,
+                                                                bet.betTypeDrawLabel ?? '',
                                                                 style: const TextStyle(
                                                                   color: Colors.grey,
                                                                   fontWeight: FontWeight.w500,
@@ -911,7 +911,7 @@ class _CancelBetScreenState extends State<CancelBetScreen> {
             const SizedBox(height: 16),
           // Bet Type + Draw Time + D4 Sub-selection (if any)
           Text(
-  bet.betTypeDrawLabel,
+  bet.betTypeDrawLabel ?? '',
   style: const TextStyle(
     color: Colors.grey,
     fontWeight: FontWeight.w500,

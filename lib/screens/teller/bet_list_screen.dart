@@ -676,7 +676,7 @@ class _BetListScreenState extends State<BetListScreen> {
                                                           crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
                                                                 Text(
-                                                          bet.betTypeDrawLabel,
+                                                          bet.betTypeDrawLabel ?? '',
                                                           style: const TextStyle(
                                                             color: Colors.grey,
                                                             fontWeight: FontWeight.w500,

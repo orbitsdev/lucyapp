@@ -21,6 +21,8 @@ class _NewBetScreenState extends State<NewBetScreen> {
   final BettingController bettingController = Get.find<BettingController>();
   final TextEditingController betNumberController = TextEditingController();
   final TextEditingController amountController = TextEditingController(text: '10');
+  final List<TextEditingController> combinationControllers = [];
+  final List<TextEditingController> combinationAmountControllers = [];
   
   @override
   void initState() {
@@ -89,16 +91,138 @@ class _NewBetScreenState extends State<NewBetScreen> {
     return number.length == maxLength && int.tryParse(number) != null;
   }
   
-  // Place bet with confirmation
-  void _placeBet() {
-    if (!_isValidBetNumber(betNumberController.text)) {
-      Modal.showErrorModal(
-        title: 'Invalid Bet Number',
-        message: 'Please enter a valid ${_getMaxBetNumberLength()}-digit bet number',
-      );
-      return;
+  // Add a new combination row
+  void _addCombination() {
+    final subSelection = bettingController.d4SubSelection.value;
+    if (subSelection == null) return;
+    
+    // Determine the digit count based on the sub-selection
+    final digitCount = subSelection == 'S2' ? 2 : (subSelection == 'S3' ? 3 : 0);
+    if (digitCount == 0) return;
+    
+    // Create new controllers for this combination
+    final comboController = TextEditingController();
+    final amountController = TextEditingController(text: '10');
+    
+    // Add to our lists
+    combinationControllers.add(comboController);
+    combinationAmountControllers.add(amountController);
+    
+    // Add to the betting controller's combinations list
+    bettingController.combinations.add({
+      'combination': '',
+      'amount': 10.0,
+    });
+    
+    setState(() {});
+  }
+  
+  // Remove a combination at the specified index
+  void _removeCombination(int index) {
+    if (index < 0 || index >= combinationControllers.length) return;
+    
+    // Dispose the controllers
+    combinationControllers[index].dispose();
+    combinationAmountControllers[index].dispose();
+    
+    // Remove from our lists
+    combinationControllers.removeAt(index);
+    combinationAmountControllers.removeAt(index);
+    
+    // Remove from the betting controller's combinations list
+    if (index < bettingController.combinations.length) {
+      bettingController.combinations.removeAt(index);
     }
     
+    setState(() {});
+  }
+  
+  // Update combination value at the specified index
+  void _updateCombination(int index, String value) {
+    if (index < 0 || index >= bettingController.combinations.length) return;
+    
+    final combo = Map<String, dynamic>.from(bettingController.combinations[index]);
+    combo['combination'] = value;
+    bettingController.combinations[index] = combo;
+  }
+  
+  // Update combination amount at the specified index
+  void _updateCombinationAmount(int index, String value) {
+    if (index < 0 || index >= bettingController.combinations.length) return;
+    
+    final amount = double.tryParse(value) ?? 0.0;
+    final combo = Map<String, dynamic>.from(bettingController.combinations[index]);
+    combo['amount'] = amount;
+    bettingController.combinations[index] = combo;
+  }
+  
+  // Clear all combinations
+  void _clearCombinations() {
+    // Dispose all controllers
+    for (final controller in combinationControllers) {
+      controller.dispose();
+    }
+    for (final controller in combinationAmountControllers) {
+      controller.dispose();
+    }
+    
+    // Clear the lists
+    combinationControllers.clear();
+    combinationAmountControllers.clear();
+    bettingController.combinations.clear();
+    
+    setState(() {});
+  }
+  
+  // Validate all combinations
+  bool _validateCombinations() {
+    final subSelection = bettingController.d4SubSelection.value;
+    if (subSelection == null) return false;
+    
+    // Determine the digit count based on the sub-selection
+    final digitCount = subSelection == 'S2' ? 2 : (subSelection == 'S3' ? 3 : 0);
+    if (digitCount == 0) return false;
+    
+    // Check if we have any combinations
+    if (bettingController.combinations.isEmpty) {
+      Modal.showErrorModal(
+        title: 'No Combinations',
+        message: 'Please add at least one combination',
+      );
+      return false;
+    }
+    
+    // Validate each combination
+    for (int i = 0; i < bettingController.combinations.length; i++) {
+      final combo = bettingController.combinations[i];
+      final combination = combo['combination'] as String?;
+      final amount = combo['amount'] as double?;
+      
+      // Check combination format
+      if (combination == null || combination.isEmpty || combination.length != digitCount || int.tryParse(combination) == null) {
+        Modal.showErrorModal(
+          title: 'Invalid Combination',
+          message: 'Please enter a valid $digitCount-digit number for all combinations',
+        );
+        return false;
+      }
+      
+      // Check amount
+      if (amount == null || amount <= 0) {
+        Modal.showErrorModal(
+          title: 'Invalid Amount',
+          message: 'Please enter a valid amount for all combinations',
+        );
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  // Place bet with confirmation
+  void _placeBet() {
+    // Check if game type is selected
     if (bettingController.selectedGameTypeId.value == null) {
       Modal.showErrorModal(
         title: 'Bet Type Required',
@@ -107,6 +231,7 @@ class _NewBetScreenState extends State<NewBetScreen> {
       return;
     }
     
+    // Check if draw is selected
     if (bettingController.selectedDrawId.value == null) {
       Modal.showErrorModal(
         title: 'Draw Required',
@@ -115,28 +240,70 @@ class _NewBetScreenState extends State<NewBetScreen> {
       return;
     }
     
-    final amount = double.tryParse(amountController.text);
-    if (amount == null || amount <= 0) {
-      Modal.showErrorModal(
-        title: 'Invalid Amount',
-        message: 'Please enter a valid bet amount',
-      );
-      return;
+    // Check if this is a combination bet
+    final isCombination = bettingController.d4SubSelection.value != null && 
+                          bettingController.d4SubSelection.value!.isNotEmpty;
+    bettingController.isCombination.value = isCombination;
+    
+    // Validate based on bet type
+    if (isCombination) {
+      // For combination bets, validate combinations
+      if (!_validateCombinations()) {
+        return;
+      }
+    } else {
+      // For regular bets, validate bet number and amount
+      if (!_isValidBetNumber(betNumberController.text)) {
+        Modal.showErrorModal(
+          title: 'Invalid Bet Number',
+          message: 'Please enter a valid ${_getMaxBetNumberLength()}-digit bet number',
+        );
+        return;
+      }
+      
+      final amount = double.tryParse(amountController.text);
+      if (amount == null || amount <= 0) {
+        Modal.showErrorModal(
+          title: 'Invalid Amount',
+          message: 'Please enter a valid bet amount',
+        );
+        return;
+      }
+      
+      // Set values in betting controller
+      bettingController.betNumber.value = betNumberController.text;
+      bettingController.betAmount.value = amount;
     }
     
-    // Set values in betting controller
-    bettingController.betNumber.value = betNumberController.text;
-    bettingController.betAmount.value = amount;
+    // Prepare confirmation message
+    String message = 'Are you sure you want to place a bet with the following details?\n\n';
+    
+    final gameType = dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)?.name ?? '';
+    final draw = bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value);
+    final drawTime = draw?.drawTimeFormatted ?? '';
+    final drawDate = draw?.drawDateFormatted ?? draw?.drawDate ?? '';
+    
+    if (isCombination) {
+      message += 'Bet Type: $gameType\n';
+      message += 'Draw: $drawTime ($drawDate)\n';
+      message += 'D4 Number: ${betNumberController.text}\n';
+      message += 'D4 Sub-selection: ${bettingController.d4SubSelection.value}\n\n';
+      message += 'Combinations:\n';
+      
+      for (final combo in bettingController.combinations) {
+        message += '${combo['combination']} - PHP ${combo['amount']}\n';
+      }
+    } else {
+      message += 'Bet Number: ${betNumberController.text}\n';
+      message += 'Amount: PHP ${amountController.text}\n';
+      message += 'Bet Type: $gameType\n';
+      message += 'Draw: $drawTime ($drawDate)';
+    }
     
     // Show confirmation modal
     Modal.showConfirmationModal(
       title: 'Confirm Bet',
-      message: 'Are you sure you want to place a bet with the following details?\n\n'  
-          'Bet Number: ${betNumberController.text}\n'
-          'Amount: PHP ${amountController.text}\n'
-          'Bet Type: ${dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)?.name ?? ''}\n'
-          'Draw: ${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawTimeFormatted ?? ''} (${bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDateFormatted ?? bettingController.availableDraws.firstWhereOrNull((d) => d.id == bettingController.selectedDrawId.value)?.drawDate ?? ''})'
-          '${bettingController.d4SubSelection.value != null && bettingController.d4SubSelection.value != '' ? '\nD4 Sub-selection: ${bettingController.d4SubSelection.value}' : ''}',
+      message: message,
       confirmText: 'Place Bet',
       onConfirm: () async {
         final betData = await bettingController.placeBet();
@@ -146,11 +313,14 @@ class _NewBetScreenState extends State<NewBetScreen> {
           // Clear form fields
           betNumberController.clear();
           amountController.text = '10';
+          _clearCombinations();
           
           // Reset dropdown values after a short delay to ensure UI updates properly
           Future.delayed(const Duration(milliseconds: 300), () {
             bettingController.selectedGameTypeId.value = null;
             bettingController.selectedDrawId.value = null;
+            bettingController.d4SubSelection.value = null;
+            bettingController.isCombination.value = false;
             setState(() {}); // Ensure UI refreshes
           });
           
@@ -386,20 +556,144 @@ class _NewBetScreenState extends State<NewBetScreen> {
                               onChanged: (value) {
                                 if (value == '') {
                                   bettingController.d4SubSelection.value = null;
+                                  _clearCombinations();
                                 } else {
+                                  // Clear existing combinations when changing sub-selection
+                                  _clearCombinations();
                                   bettingController.d4SubSelection.value = value;
+                                  
+                                  // Add one empty combination row by default
+                                  Future.delayed(const Duration(milliseconds: 100), () {
+                                    _addCombination();
+                                  });
                                 }
                               },
                             ),
                           ),
                         ),
                         const SizedBox(height: 24),
+                        
+                        // Combinations Section (only shown when S2 or S3 is selected)
+                        if (bettingController.d4SubSelection.value != null && 
+                            bettingController.d4SubSelection.value!.isNotEmpty)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${bettingController.d4SubSelection.value} Combinations',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: _addCombination,
+                                    icon: const Icon(Icons.add, size: 16),
+                                    label: const Text('Add'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryRed,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              
+                              // Combination list
+                              for (int i = 0; i < combinationControllers.length; i++)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    children: [
+                                      // Combination input
+                                      Expanded(
+                                        flex: 2,
+                                        child: TextField(
+                                          controller: combinationControllers[i],
+                                          keyboardType: TextInputType.number,
+                                          maxLength: bettingController.d4SubSelection.value == 'S2' ? 2 : 3,
+                                          decoration: InputDecoration(
+                                            hintText: 'Enter ${bettingController.d4SubSelection.value}',
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                            counterText: '',
+                                          ),
+                                          onChanged: (value) => _updateCombination(i, value),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      
+                                      // Amount input
+                                      Expanded(
+                                        flex: 2,
+                                        child: TextField(
+                                          controller: combinationAmountControllers[i],
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
+                                          ],
+                                          decoration: InputDecoration(
+                                            hintText: 'Amount',
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                            prefixText: 'PHP ',
+                                          ),
+                                          onChanged: (value) => _updateCombinationAmount(i, value),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      
+                                      // Remove button
+                                      IconButton(
+                                        icon: const Icon(Icons.remove_circle, color: AppColors.primaryRed),
+                                        onPressed: () => _removeCombination(i),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              
+                              if (combinationControllers.isEmpty)
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'Click "Add" to add combinations',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                              
+                              const SizedBox(height: 24),
+                            ],
+                          ),
                       ],
                     );
                   } else {
                     // Reset D4 sub-selection when not applicable
                     if (bettingController.d4SubSelection.value != null) {
                       bettingController.d4SubSelection.value = null;
+                      _clearCombinations();
                     }
                     return const SizedBox.shrink();
                   }
@@ -527,6 +821,15 @@ class _NewBetScreenState extends State<NewBetScreen> {
   void dispose() {
     betNumberController.dispose();
     amountController.dispose();
+    
+    // Dispose all combination controllers
+    for (final controller in combinationControllers) {
+      controller.dispose();
+    }
+    for (final controller in combinationAmountControllers) {
+      controller.dispose();
+    }
+    
     super.dispose();
   }
 }

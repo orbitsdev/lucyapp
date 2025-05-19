@@ -336,7 +336,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
             const SizedBox(height: 16),
           // Bet Type + Draw Time + D4 Sub-selection (if any)
           Text(
-  bet.betTypeDrawLabel,
+  bet.betTypeDrawLabel ?? '',
   style: const TextStyle(
     color: Colors.grey,
     fontWeight: FontWeight.w500,
@@ -1184,7 +1184,7 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
                                                         Text(
-                                                          bet.betTypeDrawLabel,
+                                                          bet.betTypeDrawLabel ?? '',
                                                           style: TextStyle(
                                                             color: Colors.grey[600],
                                                             fontWeight: FontWeight.w500,
