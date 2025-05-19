@@ -251,6 +251,18 @@ class _NewBetScreenState extends State<NewBetScreen> {
       if (!_validateCombinations()) {
         return;
       }
+      
+      // For D4 with sub-selections, we still need the main 4-digit number
+      if (betNumberController.text.isEmpty || betNumberController.text.length != 4 || int.tryParse(betNumberController.text) == null) {
+        Modal.showErrorModal(
+          title: 'Invalid D4 Number',
+          message: 'Please enter a valid 4-digit D4 number',
+        );
+        return;
+      }
+      
+      // Set the main bet number
+      bettingController.betNumber.value = betNumberController.text;
     } else {
       // For regular bets, validate bet number and amount
       if (!_isValidBetNumber(betNumberController.text)) {
@@ -476,7 +488,9 @@ class _NewBetScreenState extends State<NewBetScreen> {
       return DropdownButton<int>(
         isExpanded: true,
         hint: const Text('Select Bet Type'),
-        value: bettingController.selectedGameTypeId.value,
+        value: filteredGameTypes.any((gameType) => gameType.id == bettingController.selectedGameTypeId.value)
+            ? bettingController.selectedGameTypeId.value
+            : null,
         items: filteredGameTypes.map((gameType) {
           return DropdownMenuItem<int>(
             value: gameType.id,
@@ -535,34 +549,33 @@ class _NewBetScreenState extends State<NewBetScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
+                            child: DropdownButton<String?>(
                               isExpanded: true,
                               hint: const Text('Select Sub-type'),
-                              value: bettingController.d4SubSelection.value ?? '',
-                              items: const [
-                                DropdownMenuItem<String>(
-                                  value: '',
+                              value: bettingController.d4SubSelection.value,
+                              items: [
+                                const DropdownMenuItem<String?>(
+                                  value: null,
                                   child: Text('No Sub-selection'),
                                 ),
-                                DropdownMenuItem<String>(
+                                const DropdownMenuItem<String?>(
                                   value: 'S2',
                                   child: Text('S2 (2-digit)'),
                                 ),
-                                DropdownMenuItem<String>(
+                                const DropdownMenuItem<String?>(
                                   value: 'S3',
                                   child: Text('S3 (3-digit)'),
                                 ),
                               ],
                               onChanged: (value) {
-                                if (value == '') {
-                                  bettingController.d4SubSelection.value = null;
-                                  _clearCombinations();
-                                } else {
-                                  // Clear existing combinations when changing sub-selection
-                                  _clearCombinations();
-                                  bettingController.d4SubSelection.value = value;
-                                  
-                                  // Add one empty combination row by default
+                                // Clear existing combinations when changing sub-selection
+                                _clearCombinations();
+                                
+                                // Set the new value
+                                bettingController.d4SubSelection.value = value;
+                                
+                                // Add one empty combination row by default if S2 or S3 is selected
+                                if (value != null) {
                                   Future.delayed(const Duration(milliseconds: 100), () {
                                     _addCombination();
                                   });
@@ -690,10 +703,13 @@ class _NewBetScreenState extends State<NewBetScreen> {
                       ],
                     );
                   } else {
-                    // Reset D4 sub-selection when not applicable
+                    // We can't modify state during build, so we'll use a post-frame callback
+                    // Only schedule this once when the condition changes
                     if (bettingController.d4SubSelection.value != null) {
-                      bettingController.d4SubSelection.value = null;
-                      _clearCombinations();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        bettingController.d4SubSelection.value = null;
+                        _clearCombinations();
+                      });
                     }
                     return const SizedBox.shrink();
                   }

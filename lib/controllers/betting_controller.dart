@@ -247,7 +247,7 @@ class BettingController extends GetxController {
     try {
       final payload = {
         'bet_number': betNumber.value,
-        'amount': isCombination.value ? 0 : betAmount.value, // Set to 0 for combination bets
+        'amount': betAmount.value, // Use the actual bet amount for all bet types
         'draw_id': selectedDrawId.value,
         'game_type_id': selectedGameTypeId.value,
         'is_combination': isCombination.value,
