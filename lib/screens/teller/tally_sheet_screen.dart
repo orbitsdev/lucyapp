@@ -165,8 +165,8 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
               decoration: BoxDecoration(
                 color: AppColors.primaryRed,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(10),
                 ),
               ),
               child: Padding(
@@ -174,25 +174,13 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      flex: 2,
-                      child: Text(
-                        'Type',
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: Text(
                         'Bet Number',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 15,
                         ),
                       ),
                     ),
@@ -204,7 +192,19 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        'Type',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
                         ),
                       ),
                     ),
@@ -276,13 +276,10 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         betNumber = 'Error';
       }
     }
-    
+
     final gameTypeCode = bet.gameTypeCode ?? '';
     final drawTimeSimple = bet.drawTimeSimple ?? '';
-    // Use the displayType if available, otherwise fallback to gameTypeCode
     final displayType = bet.displayType ?? gameTypeCode;
-
-    // Use system palette for game type color
     final gameTypeColor = colorFromCode(displayType);
 
     return Padding(
@@ -296,7 +293,50 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Type (pill style, centered)
+              // Bet Number (left, bold, with time below)
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      betNumber,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        color: Colors.black,
+                      ),
+                    ),
+                    if (drawTimeSimple.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2.0),
+                        child: Text(
+                          drawTimeSimple,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Amount (center, red, bold)
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    '₱${bet.amountFormatted ?? (bet.amount?.toString() ?? '0')}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.primaryRed,
+                    ),
+                  ),
+                ),
+              ),
+              // Type (right, colored pill)
               Expanded(
                 flex: 2,
                 child: Align(
@@ -308,45 +348,13 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      // Ensure we have valid strings to display
-                      '$drawTimeSimple${displayType.isNotEmpty ? displayType : "Unknown"}',
+                      displayType.isNotEmpty ? displayType : "Unknown",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: gameTypeColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
-                    ),
-                  ),
-                ),
-              ),
-              // Bet number (centered)
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: Text(
-                    betNumber,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              // Amount (right aligned and centered vertically)
-              Expanded(
-                flex: 2,
-                child: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Text(
-                    // Safely handle amount formatting
-                    '₱${bet.amountFormatted ?? (bet.amount?.toString() ?? '0')}',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.primaryRed,
                     ),
                   ),
                 ),
@@ -394,129 +402,134 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         
         return Column(
           children: [
-            // Date picker always at the top, like commission screen
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: GestureDetector(
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: AppColors.primaryRed,
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
-                    final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
-                    selectedDateFormatted.value = displayDateFormat;
-                    reportController.isLoadingDetailedTallysheet.value = true;
-                    await reportController.fetchDetailedTallysheet(
-                      date: apiDateFormat,
-                      gameTypeId: reportController.selectedGameTypeId.value,
-                      page: 1,
-                      perPage: reportController.perPage.value,
-                    );
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.calendar_today, color: AppColors.primaryRed, size: 22),
-                      const SizedBox(width: 10),
-                      Obx(() => Text(
-                            selectedDateFormatted.value,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          )),
-                      const Spacer(),
-                      const Icon(Icons.arrow_drop_down, color: Colors.black45, size: 26),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Total Amount and Bet Type info
+
+            // Total Amount card
             Container(
               width: double.infinity,
               color: AppColors.primaryRed,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [],
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Text(
                           'Total Amount',
                           style: TextStyle(
                             color: Colors.black87,
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        SizedBox(height: 2),
                         Text(
                           '₱${report?.totalAmountFormatted ?? '0'}',
                           style: const TextStyle(
-                            color: AppColors.primaryRed,
+                           color: AppColors.primaryRed,
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 22,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // All Bet pill button (light red background, primary red text/icon)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        margin: const EdgeInsets.only(right: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.primaryRed,
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.category, color: Colors.white, size: 16),
-                            const SizedBox(width: 8),
-                            Text(
-                              gameType,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.category, color: Colors.white, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                gameType,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Date pill button (light red background, primary red text/icon)
+                      GestureDetector(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: AppColors.primaryRed,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
+                            final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
+                            selectedDateFormatted.value = displayDateFormat;
+                            reportController.isLoadingDetailedTallysheet.value = true;
+                            await reportController.fetchDetailedTallysheet(
+                              date: apiDateFormat,
+                              gameTypeId: reportController.selectedGameTypeId.value,
+                              page: 1,
+                              perPage: reportController.perPage.value,
+                            );
+                          }
+                        },
+                        child: Obx(() => Container(
+                          decoration: BoxDecoration(
+                           color: AppColors.primaryRed,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today, color: Colors.white, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  selectedDateFormatted.value,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
                       ),
                     ],
                   ),
