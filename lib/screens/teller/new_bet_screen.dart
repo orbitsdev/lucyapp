@@ -46,23 +46,28 @@ class _NewBetScreenState extends State<NewBetScreen> {
     }
   }
   
-  // Get the max length for bet number based on game type
+  // Get the max length for bet number based on game type and 4D sub-selection
   int _getMaxBetNumberLength() {
     if (bettingController.selectedGameTypeId.value == null) return 3; // Default
-    
+
     final gameType = dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!);
     if (gameType == null) return 3;
-    
-    // First check if digitCount is available
+
+    final code = gameType.code?.toUpperCase();
+    final isD4 = code == 'D4' || code == '4D' || (gameType.isD4 ?? false);
+    final d4Sub = bettingController.d4SubSelection.value;
+    if (isD4) {
+      if (d4Sub == 'S2') return 2;
+      if (d4Sub == 'S3') return 3;
+      // pure 4D
+      return 4;
+    }
+
+    // For other types, fallback to digitCount or pattern
     if (gameType.digitCount != null) {
       return gameType.digitCount!;
     }
-    
-    // Fallback logic based on game type code
-    final code = gameType.code;
     if (code == null) return 3;
-    
-    // Check if code follows pattern like S2, S3, D4, etc.
     if (code.length >= 2 && (code.startsWith('S') || code.startsWith('D'))) {
       final digitPart = code.substring(1);
       final parsedDigits = int.tryParse(digitPart);
@@ -70,8 +75,6 @@ class _NewBetScreenState extends State<NewBetScreen> {
         return parsedDigits;
       }
     }
-    
-    // Default fallback
     switch (code) {
       case 'S2': return 2;
       case 'S3': return 3;
@@ -81,10 +84,27 @@ class _NewBetScreenState extends State<NewBetScreen> {
     }
   }
   
-  // Validate bet number based on game type
+  // Validate bet number based on game type and 4D sub-selection
   bool _isValidBetNumber(String number) {
     if (number.isEmpty) return false;
-    
+
+    final gameType = bettingController.selectedGameTypeId.value != null
+        ? dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)
+        : null;
+    final code = gameType?.code?.toUpperCase();
+    final isD4 = code == 'D4' || code == '4D' || (gameType?.isD4 ?? false);
+    final d4Sub = bettingController.d4SubSelection.value;
+
+    if (isD4) {
+      if (d4Sub == 'S2') {
+        return number.length == 2 && int.tryParse(number) != null;
+      } else if (d4Sub == 'S3') {
+        return number.length == 3 && int.tryParse(number) != null;
+      } else {
+        // pure 4D
+        return number.length == 4 && int.tryParse(number) != null;
+      }
+    }
     final maxLength = _getMaxBetNumberLength();
     return number.length == maxLength && int.tryParse(number) != null;
   }
@@ -425,7 +445,20 @@ class _NewBetScreenState extends State<NewBetScreen> {
                   maxLength: _getMaxBetNumberLength(),
                   style: const TextStyle(fontSize: 18),
                   decoration: InputDecoration(
-                    hintText: 'Enter ${_getMaxBetNumberLength()}-digit number',
+                    hintText: () {
+                      final gameType = bettingController.selectedGameTypeId.value != null
+                        ? dropdownController.getGameTypeById(bettingController.selectedGameTypeId.value!)
+                        : null;
+                      final code = gameType?.code?.toUpperCase();
+                      final isD4 = code == 'D4' || code == '4D' || (gameType?.isD4 ?? false);
+                      final d4Sub = bettingController.d4SubSelection.value;
+                      if (isD4) {
+                        if (d4Sub == 'S2') return 'Enter 2-digit number';
+                        if (d4Sub == 'S3') return 'Enter 3-digit number';
+                        return 'Enter 4-digit number';
+                      }
+                      return 'Enter ${_getMaxBetNumberLength()}-digit number';
+                    }(),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
