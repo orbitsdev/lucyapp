@@ -30,19 +30,22 @@ class _NewBetScreenState extends State<NewBetScreen> {
   }
   
   Future<void> _loadData() async {
-    // Reset selected values before fetching new data
-    bettingController.selectedDrawId.value = null;
-    
     // Fetch game types and available draws
     await Future.wait([
       dropdownController.fetchGameTypes(),
       bettingController.fetchAvailableDraws(),
     ]);
-    
-    // Set default draw ID if available and none is selected
-    if (bettingController.selectedDrawId.value == null && 
-        bettingController.availableDraws.isNotEmpty) {
-      bettingController.selectedDrawId.value = bettingController.availableDraws.first.id;
+
+    // Ensure selectedDrawId is valid
+    if (!bettingController.availableDraws.any((draw) => draw.id == bettingController.selectedDrawId.value)) {
+      bettingController.selectedDrawId.value = bettingController.availableDraws.isNotEmpty
+          ? bettingController.availableDraws.first.id
+          : null;
+    }
+
+    // Ensure selectedGameTypeId is valid
+    if (!dropdownController.gameTypes.any((gameType) => gameType.id == bettingController.selectedGameTypeId.value)) {
+      bettingController.selectedGameTypeId.value = null;
     }
   }
   
