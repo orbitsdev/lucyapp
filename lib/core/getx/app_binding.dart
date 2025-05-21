@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 class AppBinding extends Bindings {
   @override
   void dependencies() {
-    // Register services
+  
     Get.put(ConnectivityService(), permanent: true);
     Get.put(LoadingService(), permanent: true);
     Get.put(AuthController(), permanent: true);
@@ -22,14 +22,14 @@ class AppBinding extends Bindings {
     Get.put(ReportController(), permanent: true);
     Get.put(SalesController(), permanent: true);
     
-    // Initialize printer service first
+   
     final printerService = PrinterService();
     Get.put(printerService, permanent: true);
     
-    // Then initialize the printer controller which depends on the service
+    
     Get.put(PrinterController(), permanent: true);
     
-    // Start the printer service initialization process
+   
     printerService.init();
   }
 }
