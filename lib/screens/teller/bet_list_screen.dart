@@ -35,7 +35,9 @@ class TableColumnWidths {
   
   // Total width of all columns (drawTimeWidth removed)
   static const double actionWidth = 100.0;
-  static const double totalWidth = betTypeWidth + betNumberWidth + amountWidth + winningAmountWidth + ticketIdWidth + dateWidth + statusWidth + actionWidth;
+  static const double totalWidth = betTypeWidth + betNumberWidth + amountWidth + winningAmountWidth 
+  // + ticketIdWidth
+   + dateWidth + statusWidth + actionWidth;
 }
 
 class _BetListScreenState extends State<BetListScreen> {
@@ -581,10 +583,14 @@ class _BetListScreenState extends State<BetListScreen> {
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                       child: Text('Winning', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                     )),
-                                    SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                      child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                                    )),
+                                    // --- TICKET ID HIDDEN (header) ---
+/*
+SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
+  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+  child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+)),
+*/
+                                    // --- END TICKET ID HIDDEN (header) ---
                                     SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                       child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
@@ -724,7 +730,8 @@ class _BetListScreenState extends State<BetListScreen> {
                                                       ),
                                                     ),
                                                   ),
-                                                  // Ticket ID
+                                                  // --- TICKET ID HIDDEN (body) ---
+/*
                                                   SizedBox(
                                                     width: TableColumnWidths.ticketIdWidth,
                                                     child: Padding(
@@ -736,6 +743,7 @@ class _BetListScreenState extends State<BetListScreen> {
                                                       ),
                                                     ),
                                                   ),
+*/ // --- END TICKET ID HIDDEN (body) ---
                                                   // Date
                                                   SizedBox(
                                                     width: TableColumnWidths.dateWidth,
@@ -869,7 +877,9 @@ class _BetListScreenState extends State<BetListScreen> {
   ),
 ),
           const SizedBox(height: 8),
-          _buildDetailRow('Ticket ID', bet.ticketId ?? 'Unknown'),
+          // --- TICKET ID HIDDEN (details modal) ---
+/* _buildDetailRow('Ticket ID', bet.ticketId ?? 'Unknown'), */
+// --- END TICKET ID HIDDEN (details modal) ---
           _buildDetailRow('Bet Number', bet.betNumber ?? 'Unknown'),
           _buildDetailRow('Date', bet.betDateFormatted ?? 'Unknown'),
           _buildDetailRow('Draw Time', bet.draw?.drawTimeFormatted ?? 'Unknown'),

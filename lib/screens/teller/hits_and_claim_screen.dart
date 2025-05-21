@@ -19,11 +19,13 @@ class TableColumnWidths {
   static const double amountWidth = 100.0;
   static const double winningAmountWidth = 120.0;
   static const double ticketIdWidth = 130.0;
-  static const double dateWidth = 150.0;
-  static const double statusWidth = 100.0;
+  static const double dateWidth = 200.0;
+  static const double statusWidth = 120.0;
     
   // Total width of all columns
-  static const double totalWidth = typeWidth + betNumberWidth + amountWidth + winningAmountWidth + ticketIdWidth + dateWidth + statusWidth;
+  static const double totalWidth = typeWidth + betNumberWidth + amountWidth + winningAmountWidth 
+  //+ ticketIdWidth
+   + dateWidth + statusWidth;
 }
 
 class HitsAndClaimScreen extends StatefulWidget {
@@ -1096,10 +1098,13 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                     child: Text('Winning', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                   )),
+                                  // --- TICKET ID HIDDEN (header) ---
+                                  /*
                                   SizedBox(width: TableColumnWidths.ticketIdWidth, child: Padding(
                                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                     child: Text('Ticket ID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                                   )),
+                                  */
                                   SizedBox(width: TableColumnWidths.dateWidth, child: Padding(
                                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                     child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
@@ -1236,18 +1241,20 @@ class _HitsAndClaimScreenState extends State<HitsAndClaimScreen> {
                                                     ),
                                                   ),
                                                 ),
-                                                // Ticket ID
-                                                SizedBox(
-                                                  width: TableColumnWidths.ticketIdWidth,
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                                    child: Text(
-                                                      bet.ticketId ?? 'Unknown',
-                                                      style: const TextStyle(fontWeight: FontWeight.w500),
-                                                      softWrap: false,
-                                                    ),
-                                                  ),
-                                                ),
+                                                // --- TICKET ID HIDDEN (body) ---
+/*
+                                             SizedBox(
+                                               width: TableColumnWidths.ticketIdWidth,
+                                               child: Padding(
+                                                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                                 child: Text(
+                                                   bet.ticketId ?? 'Unknown',
+                                                   style: const TextStyle(fontWeight: FontWeight.w500),
+                                                   softWrap: false,
+                                                 ),
+                                               ),
+                                             ),
+*/ // --- END TICKET ID HIDDEN (body) ---
                                                 // Date
                                                 SizedBox(
                                                   width: TableColumnWidths.dateWidth,

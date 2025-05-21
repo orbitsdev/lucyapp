@@ -371,17 +371,16 @@ class _NewBetScreenState extends State<NewBetScreen> {
                         Row(
                           children: const [
                             Text(
-                              'D4 Sub-selection',
+                              '4D Bet Type',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Text(' (optional)', style: TextStyle(color: Colors.grey, fontSize: 14)),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Container(
+                      Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -395,15 +394,15 @@ class _NewBetScreenState extends State<NewBetScreen> {
                               items: const [
                                 DropdownMenuItem<String>(
                                   value: '',
-                                  child: Text('No Sub-selection'),
+                                  child: Text('4D'),
                                 ),
                                 DropdownMenuItem<String>(
                                   value: 'S2',
-                                  child: Text('S2 (2-digit)'),
+                                  child: Text('4D-S2 (2-digit)'),
                                 ),
                                 DropdownMenuItem<String>(
                                   value: 'S3',
-                                  child: Text('S3 (3-digit)'),
+                                  child: Text('4D-S3 (3-digit)'),
                                 ),
                               ],
                               onChanged: (value) {
