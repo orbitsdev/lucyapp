@@ -395,127 +395,134 @@ class _TallySheetScreenState extends State<TallySheetScreen> {
         return Column(
           children: [
             // Date picker always at the top, like commission screen
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: GestureDetector(
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: AppColors.primaryRed,
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
-                    final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
-                    selectedDateFormatted.value = displayDateFormat;
-                    reportController.isLoadingDetailedTallysheet.value = true;
-                    await reportController.fetchDetailedTallysheet(
-                      date: apiDateFormat,
-                      gameTypeId: reportController.selectedGameTypeId.value,
-                      page: 1,
-                      perPage: reportController.perPage.value,
-                    );
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.calendar_today, color: AppColors.primaryRed, size: 22),
-                      const SizedBox(width: 10),
-                      Obx(() => Text(
-                            selectedDateFormatted.value,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          )),
-                      const Spacer(),
-                      const Icon(Icons.arrow_drop_down, color: Colors.black45, size: 26),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Total Amount and Bet Type info
+           
+            // Top Section: Centered White Card and Centered Red Buttons
             Container(
               width: double.infinity,
               color: AppColors.primaryRed,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Total Amount',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                  // Centered White Card
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
                           ),
-                        ),
-                        Text(
-                          '₱${report?.totalAmountFormatted ?? '0'}',
-                          style: const TextStyle(
-                            color: AppColors.primaryRed,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Total Amount',
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            '₱${report?.totalAmountFormatted ?? '0'}',
+                            style: const TextStyle(
+                              color: AppColors.primaryRed,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  // Centered Row of Red Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        margin: const EdgeInsets.only(right: 10),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(24),
                         ),
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        margin: const EdgeInsets.only(right: 14),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.category, color: Colors.white, size: 16),
-                            const SizedBox(width: 8),
+                            const Icon(Icons.category, color: Colors.white, size: 20),
+                            const SizedBox(width: 10),
                             Text(
                               gameType,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                                fontSize: 16,
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: report?.date != null ? DateTime.parse(report!.date!) : DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: AppColors.primaryRed,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            final apiDateFormat = DateFormat('yyyy-MM-dd').format(picked);
+                            final displayDateFormat = DateFormat('MMMM d, yyyy').format(picked);
+                            selectedDateFormatted.value = displayDateFormat;
+                            reportController.isLoadingDetailedTallysheet.value = true;
+                            await reportController.fetchDetailedTallysheet(
+                              date: apiDateFormat,
+                              gameTypeId: reportController.selectedGameTypeId.value,
+                              page: 1,
+                              perPage: reportController.perPage.value,
+                            );
+                          }
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.calendar_today, color: Colors.white, size: 20),
+                              const SizedBox(width: 10),
+                              Obx(() => Text(
+                                    selectedDateFormatted.value,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  )),
+                            ],
+                          ),
                         ),
                       ),
                     ],
