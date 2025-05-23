@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:bettingapp/config/api_config.dart';
+import 'package:get/get.dart';
+import 'package:bettingapp/controllers/auth_controller.dart';
 import 'package:bettingapp/models/api_error.dart';
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -9,7 +11,7 @@ import 'package:fpdart/fpdart.dart';
 
 class DioService {
   static final DioService _instance = DioService._internal();
-  late Dio _dio;
+  late dio.Dio _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final Connectivity _connectivity = Connectivity();
   
@@ -25,10 +27,10 @@ class DioService {
     _initDio();
   }
   
-  Dio get dio => _dio;
+  dio.Dio get client => _dio;
   
   void _initDio() {
-    _dio = Dio(BaseOptions(
+    _dio = dio.Dio(dio.BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(milliseconds: 15000),
       receiveTimeout: const Duration(milliseconds: 15000),
@@ -47,17 +49,27 @@ class DioService {
       compact: false,
     ));
     
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
+    _dio.interceptors.add(dio.InterceptorsWrapper(
+      onRequest: (dio.RequestOptions options, dio.RequestInterceptorHandler handler) async {
         final token = await getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         return handler.next(options);
       },
-      onError: (DioException error, handler) async {
+      onError: (dio.DioException error, dio.ErrorInterceptorHandler handler) async {
         if (error.response?.statusCode == 401) {
           await _storage.delete(key: _tokenKey);
+          // Force logout via AuthController if available
+          try {
+            // Import is already available, so we can use Get.find
+            final authController = Get.isRegistered<AuthController>()
+                ? Get.find<AuthController>()
+                : null;
+            if (authController != null) {
+              await authController.forceLogout(message: 'Session expired or invalid. Please login again.');
+            }
+          } catch (_) {}
         }
         return handler.next(error);
       },
@@ -117,7 +129,7 @@ class DioService {
   Future<ApiResult<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     try {
@@ -140,7 +152,7 @@ class DioService {
       }
       
       return right(fromJson(response.data));
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       return left(_handleDioError(e));
     } catch (e) {
       return left(ApiError(message: 'Unexpected error: ${e.toString()}'));
@@ -151,7 +163,7 @@ class DioService {
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     try {
@@ -175,7 +187,7 @@ class DioService {
       }
       
       return right(fromJson(response.data));
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       return left(_handleDioError(e));
     } catch (e) {
       return left(ApiError(message: 'Unexpected error: ${e.toString()}'));
@@ -186,7 +198,7 @@ class DioService {
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     try {
@@ -210,7 +222,7 @@ class DioService {
       }
       
       return right(fromJson(response.data));
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       return left(_handleDioError(e));
     } catch (e) {
       return left(ApiError(message: 'Unexpected error: ${e.toString()}'));
@@ -221,7 +233,7 @@ class DioService {
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     try {
@@ -245,7 +257,7 @@ class DioService {
       }
       
       return right(fromJson(response.data));
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       return left(_handleDioError(e));
     } catch (e) {
       return left(ApiError(message: 'Unexpected error: ${e.toString()}'));
@@ -258,7 +270,7 @@ class DioService {
   Future<ApiResult<T>> authGet<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     final token = await getToken();
@@ -269,7 +281,7 @@ class DioService {
       ));
     }
     
-    Options requestOptions = options ?? Options();
+    dio.Options requestOptions = options ?? dio.Options();
     requestOptions.headers = requestOptions.headers ?? {};
     requestOptions.headers!['Authorization'] = 'Bearer $token';
     
@@ -296,7 +308,7 @@ class DioService {
       }
       
       return right(fromJson(response.data));
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       return left(_handleDioError(e));
     } catch (e) {
       return left(ApiError(message: 'Unexpected error: ${e.toString()}'));
@@ -307,7 +319,7 @@ class DioService {
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     final token = await getToken();
@@ -318,7 +330,7 @@ class DioService {
       ));
     }
     
-    Options requestOptions = options ?? Options();
+    dio.Options requestOptions = options ?? dio.Options();
     requestOptions.headers = requestOptions.headers ?? {};
     requestOptions.headers!['Authorization'] = 'Bearer $token';
     
@@ -335,7 +347,7 @@ class DioService {
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     final token = await getToken();
@@ -346,7 +358,7 @@ class DioService {
       ));
     }
     
-    Options requestOptions = options ?? Options();
+    dio.Options requestOptions = options ?? dio.Options();
     requestOptions.headers = requestOptions.headers ?? {};
     requestOptions.headers!['Authorization'] = 'Bearer $token';
     
@@ -363,7 +375,7 @@ class DioService {
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
-    Options? options,
+    dio.Options? options,
     required T Function(dynamic) fromJson,
   }) async {
     final token = await getToken();
@@ -374,7 +386,7 @@ class DioService {
       ));
     }
     
-    Options requestOptions = options ?? Options();
+    dio.Options requestOptions = options ?? dio.Options();
     requestOptions.headers = requestOptions.headers ?? {};
     requestOptions.headers!['Authorization'] = 'Bearer $token';
     
@@ -395,16 +407,16 @@ class DioService {
     String fileFieldName = 'file',
     Map<String, dynamic>? fields,
     Map<String, dynamic>? queryParameters,
-    Options? options,
-    ProgressCallback? onSendProgress,
+    dio.Options? options,
+    dio.ProgressCallback? onSendProgress,
     required T Function(dynamic) fromJson,
   }) async {
     try {
-      final formData = FormData();
+      final formData = dio.FormData();
       
       formData.files.add(MapEntry(
         fileFieldName,
-        await MultipartFile.fromFile(
+        await dio.MultipartFile.fromFile(
           file.path,
           filename: file.path.split('/').last,
         ),
@@ -416,7 +428,7 @@ class DioService {
         });
       }
       
-      Options requestOptions = options ?? Options();
+      dio.Options requestOptions = options ?? dio.Options();
       requestOptions.headers = requestOptions.headers ?? {};
       requestOptions.contentType = 'multipart/form-data';
       
@@ -441,7 +453,7 @@ class DioService {
       }
       
       return right(fromJson(response.data));
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       return left(_handleDioError(e));
     } catch (e) {
       return left(ApiError(message: 'Unexpected error: ${e.toString()}'));
@@ -455,8 +467,8 @@ class DioService {
     String fileFieldName = 'file',
     Map<String, dynamic>? fields,
     Map<String, dynamic>? queryParameters,
-    Options? options,
-    ProgressCallback? onSendProgress,
+    dio.Options? options,
+    dio.ProgressCallback? onSendProgress,
     required T Function(dynamic) fromJson,
   }) async {
     final token = await getToken();
@@ -467,7 +479,7 @@ class DioService {
       ));
     }
     
-    Options requestOptions = options ?? Options();
+    dio.Options requestOptions = options ?? dio.Options();
     requestOptions.headers = requestOptions.headers ?? {};
     requestOptions.headers!['Authorization'] = 'Bearer $token';
     
@@ -483,7 +495,7 @@ class DioService {
     );
   }
   
-  ApiError _handleDioError(DioException exception) {
+  ApiError _handleDioError(dio.DioException exception) {
     print('API error: ${exception.message}');
     print('Status code: ${exception.response?.statusCode}');
     print('Error data: ${exception.response?.data}');
@@ -497,6 +509,18 @@ class DioService {
         exception.response!.data.containsKey('message')) {
       message = exception.response!.data['message'];
       code = exception.response!.data.containsKey('errors') ? 'validation_error' : 'api_error';
+
+      // If 401, force logout
+      if (statusCode == 401) {
+        try {
+          final authController = Get.isRegistered<AuthController>()
+              ? Get.find<AuthController>()
+              : null;
+          if (authController != null) {
+            authController.forceLogout(message: 'Session expired or invalid. Please login again.');
+          }
+        } catch (_) {}
+      }
       
       return ApiError(
         message: message,
@@ -508,24 +532,34 @@ class DioService {
     }
     
     switch (exception.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
+      case dio.DioExceptionType.connectionTimeout:
+      case dio.DioExceptionType.connectionTimeout:
+      case dio.DioExceptionType.sendTimeout:
+      case dio.DioExceptionType.receiveTimeout:
         message = 'Request timed out. Please try again.';
         code = 'timeout';
         break;
-      case DioExceptionType.connectionError:
+      case dio.DioExceptionType.connectionError:
         message = 'No internet connection. Please check your network.';
         code = 'no_connection';
         break;
-      case DioExceptionType.badCertificate:
+      case dio.DioExceptionType.badCertificate:
         message = 'SSL certificate error. Please try again.';
         code = 'bad_certificate';
         break;
-      case DioExceptionType.badResponse:
+      case dio.DioExceptionType.badResponse:
         if (statusCode == 401) {
           message = 'Unauthorized. Please login again.';
           code = 'unauthorized';
+          // Force logout
+          try {
+            final authController = Get.isRegistered<AuthController>()
+                ? Get.find<AuthController>()
+                : null;
+            if (authController != null) {
+              authController.forceLogout(message: message);
+            }
+          } catch (_) {}
         } else if (statusCode == 404) {
           // Check if we have a custom message from the API
           if (exception.response?.data is Map && 
@@ -546,7 +580,7 @@ class DioService {
           code = 'server_error';
         }
         break;
-      case DioExceptionType.cancel:
+      case dio.DioExceptionType.cancel:
         message = 'Request was cancelled.';
         code = 'cancelled';
         break;

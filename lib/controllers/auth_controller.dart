@@ -269,6 +269,20 @@ class AuthController extends GetxController {
       },
     );
   }
+
+  /// Force logout: clear token, user, and navigate to login. Optionally show a modal.
+  Future<void> forceLogout({String? message}) async {
+    await _dioService.clearToken();
+    user.value = null;
+    if (Get.currentRoute != AppRoutes.login) {
+      Get.offAllNamed(AppRoutes.login);
+    }
+    if (message != null && message.isNotEmpty) {
+      // Add a short delay to ensure navigation completes
+      await Future.delayed(const Duration(milliseconds: 200));
+      Modal.showErrorModal(message: message);
+    }
+  }
   
   void _navigateBasedOnRole() {
     switch (user.value?.role?.toLowerCase()) {
